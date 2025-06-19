@@ -2,26 +2,27 @@
 import { useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import {
-    useCompleteRegistrationMutation,
-    useForgotPasswordMutation,
-    useLazyCheckUsernameQuery,
-    useLoginMutation,
-    useResetPasswordMutation,
-    useSendChangeMobileOtpMutation,
-    useSendRegisterOtpMutation,
-    useSocialLoginMutation,
-    useVerifyChangeMobileMutation,
-    useVerifyForgotPasswordOtpMutation,
-    useVerifyRegisterOtpMutation,
+  useCompleteRegistrationMutation,
+  useForgotPasswordMutation,
+  useLazyCheckUsernameQuery,
+  useLoginMutation,
+  useResetPasswordMutation,
+  useSendChangeMobileOtpMutation,
+  useSendRegisterOtpMutation,
+  useSocialLoginMutation,
+  useVerifyChangeMobileMutation,
+  useVerifyForgotPasswordOtpMutation,
+  useVerifyRegisterOtpMutation,
 } from '../api/authApi'
 import { logout as logoutAction, setCredentials } from '../slice/authSlice'
 import type {
-    ChangeMobilePayload,
-    ForgotPasswordPayload,
-    OtpPayload,
-    RegisterCompletePayload,
-    ResetPasswordPayload,
-    SocialLoginPayload,
+  ChangeMobilePayload,
+  ForgotPasswordPayload,
+  OtpPayload,
+  OTPVerifyPayload,
+  RegisterCompletePayload,
+  ResetPasswordPayload,
+  SocialLoginPayload,
 } from '../types'
 
 export function useAuth() {
@@ -65,7 +66,7 @@ export function useAuth() {
   )
 
   const verifyRegistration = useCallback(
-    (payload: OtpPayload) => verifyRegisterOtp(payload).unwrap(),
+    (payload: OTPVerifyPayload) => verifyRegisterOtp(payload).unwrap(),
     [verifyRegisterOtp]
   )
 
@@ -99,7 +100,7 @@ export function useAuth() {
   )
 
   const triggerVerifyForgotOtp = useCallback(
-    (payload: OtpPayload) => verifyForgotOtp(payload).unwrap(),
+    (payload: OTPVerifyPayload) => verifyForgotOtp(payload).unwrap(),
     [verifyForgotOtp]
   )
 

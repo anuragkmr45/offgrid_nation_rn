@@ -59,7 +59,7 @@ export function validateOTP(value: string): string | null {
   if (!value) {
     return 'Please enter the OTP';
   }
-  if (value.length !== 4) {
+  if (value.length !== 6) {
     return 'OTP must be exactly 4 digits';
   }
   return null;

@@ -22,7 +22,7 @@ export interface ButtonProps {
   disabled?: boolean
   style?: object
   textColor?: string
-  icon?: React.ReactNode
+  icon?: string
   iconPosition?: 'left' | 'right'
 }
 
@@ -53,7 +53,8 @@ export const Button: React.FC<ButtonProps> = ({
           },
         ]}
       >
-        {icon && <View style={styles.iconWrapper}>{icon}</View>}
+        {/* {icon && <View style={styles.iconWrapper}>{icon}</View>} */}
+        {icon && <View style={styles.iconWrapper}><Image source={{uri: icon}} style={{width: 20, height: 20}} /></View>}
         <Text style={[styles.buttonText, { color: textColor }]}>
           {text}
         </Text>
@@ -89,8 +90,9 @@ export interface SearchBarProps {
   onChangeText: (text: string) => void
   onSubmitEditing?: () => void
   placeholder?: string
+  style?: any
 }
-export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSubmitEditing, placeholder }) => (
+export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSubmitEditing, placeholder, style }) => (
   <BlurView intensity={20} style={styles.searchContainer}>
     <TextInput
       value={value}
@@ -98,7 +100,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSub
       onSubmitEditing={onSubmitEditing}
       placeholder={placeholder || 'Search...'}
       placeholderTextColor={theme.colors.textSecondary}
-      style={[styles.searchInput, { color: theme.colors.textPrimary }]}
+      style={[styles.searchInput,style, { color: theme.colors.textPrimary }]}
       returnKeyType="search"
     />
   </BlurView>
@@ -127,7 +129,7 @@ export const InputField: React.FC<InputFieldProps> = ({ value, onChangeText, pla
     placeholder={placeholder}
     secureTextEntry={secureTextEntry}
     keyboardType={keyboardType}
-    style={[styles.input, { borderColor: theme.colors.textPrimary, backgroundColor: theme.colors.textPrimary }, style]}
+    style={[styles.input, { borderColor: theme.colors.background, backgroundColor: theme.colors.background }, style]}
     placeholderTextColor={theme.colors.textSecondary}
   />
 )
@@ -200,12 +202,11 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
-    margin: 8,
+    margin: 18,
     borderRadius: 24,
-    backgroundColor: theme.colors.background + 'cc',
+    backgroundColor: theme.colors.background,
   },
-  searchInput: { flex: 1, fontSize: 16 },
+  searchInput: { flex: 1, fontSize: 16, padding: 18},
   loaderContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',

@@ -6,6 +6,7 @@ import type {
   ForgotPasswordPayload,
   LoginResponse,
   OtpPayload,
+  OTPVerifyPayload,
   RegisterCompletePayload,
   ResetPasswordPayload,
   SocialLoginPayload,
@@ -32,7 +33,7 @@ export const authApi = createApi({
     }),
 
     // 2.2 Registration – Verify OTP
-    verifyRegisterOtp: build.mutation<{ message: string }, OtpPayload>({
+    verifyRegisterOtp: build.mutation<{ message: string }, OTPVerifyPayload>({
       query: (body) => ({ url: '/auth/register/verify-otp', method: 'POST', body }),
     }),
 
@@ -72,7 +73,7 @@ export const authApi = createApi({
     }),
 
     // 2.9 Verify Forgot-Password OTP
-    verifyForgotPasswordOtp: build.mutation<{ message: string }, OtpPayload>({
+    verifyForgotPasswordOtp: build.mutation<{ message: string }, OTPVerifyPayload>({
       query: (body) => ({ url: '/auth/verify-forgot-password-otp', method: 'POST', body }),
     }),
 

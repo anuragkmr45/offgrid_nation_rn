@@ -17,7 +17,11 @@ export interface UsernameCheck {
 export interface OtpPayload {
   username?: string
   mobile: string
-  otp?: string
+}
+
+export interface OTPVerifyPayload {
+  mobile: string
+  otp: string
 }
 
 /** Payload to complete registration */

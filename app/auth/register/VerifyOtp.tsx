@@ -1,15 +1,19 @@
 import { Button, InputField } from '@/components/common';
 import { theme } from '@/constants/theme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validateOTP } from '@/utils/validation/signupValidation';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 const VerifyOtp: React.FC = () => {
-    const router = useRouter();
+    const router = useRouter()
+  const { mobile } = useLocalSearchParams<{ mobile: string }>()
     const [otp, setOtp] = useState('');
     const [resending, setResending] = useState(false);
+    const {verifyRegistration} = useAuth();
 
     const otpError = validateOTP(otp);
     const isValid = otpError === null;
@@ -21,9 +25,30 @@ const VerifyOtp: React.FC = () => {
         setResending(false);
     };
 
-    const handleNext = () => {
-        // TODO: verify OTP API call
-        router.push('/auth/register/Complete');
+    const handleNext = async() => {
+        const trimedOTP = otp.trim();
+        if (trimedOTP.trim().length === 0) {
+            Toast.show({
+                type: "error",
+                text1: "OTP should not be empty"
+            })
+        }
+        try {
+            const res =  await verifyRegistration({mobile, otp: trimedOTP}); 
+             Toast.show({
+                type: "success",
+                text1: res.message
+            })
+            setTimeout(() => {
+                router.push({pathname: '/auth/register/Complete', params: { mobile }});
+            }, 1500);
+        } catch (error: any ) {
+            const errorMessage = error?.data?.message || 'OTP verify fails.';
+            Toast.show({
+                type: "error",
+                text1: errorMessage
+            })
+        }
     };
 
     return (

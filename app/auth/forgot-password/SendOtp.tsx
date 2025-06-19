@@ -1,31 +1,50 @@
 // src/app/auth/forgot-password/SendOtp.tsx
 import { Button, InputField } from '@/components/common'
 import { theme } from '@/constants/theme'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { validatePhone } from '@/utils/validation/signupValidation'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 
 const SendOtp: React.FC = () => {
   const router = useRouter()
   const [email, setEmail] = useState('')
+  const { triggerForgotPassword } = useAuth();
 
   const emailError = validatePhone(email)
-  const isValid = emailError === null
+  const isValid = emailError === null;
 
-  const handleNext = () => {
-    // TODO: send reset OTP to email
-    router.push('/auth/forgot-password/VerifyOtp')
-  }
+  const handleNext = async () => {
+    const trimedMobile = email.trim().toLowerCase();
+
+    try {
+      await triggerForgotPassword({ mobile: trimedMobile });
+      Toast.show({
+        type: "success",
+        text1: "OTP send"
+      })
+      setTimeout(() => {
+        router.push({ pathname: '/auth/forgot-password/VerifyOtp', params: { mobile: trimedMobile } });
+      }, 1500);
+    } catch (error: any) {
+      const errorMessage = error?.data?.message || 'Registration fails.';
+      Toast.show({
+        type: "error",
+        text1: errorMessage
+      })
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -53,7 +72,7 @@ const SendOtp: React.FC = () => {
             value={email}
             onChangeText={setEmail}
             placeholder="Enter your Phone number."
-            keyboardType="email-address"
+            keyboardType="phone"
             style={styles.input}
           />
           {emailError && <Text style={styles.errorText}>{emailError}</Text>}
@@ -64,7 +83,7 @@ const SendOtp: React.FC = () => {
           <Button
             text="Continue"
             onPress={handleNext}
-            disabled={!isValid}
+            // disabled={!isValid}
             style={[styles.button, !isValid && styles.buttonDisabled]}
             textColor={theme.colors.primary}
           />
@@ -105,7 +124,7 @@ const styles = StyleSheet.create({
     height: 50,
     paddingHorizontal: 16,
     marginBottom: 4,
-    color: theme.colors.background,
+    color: theme.colors.textPrimary,
   },
   errorText: {
     color: theme.colors.accent,

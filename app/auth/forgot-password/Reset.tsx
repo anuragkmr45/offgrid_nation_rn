@@ -1,23 +1,25 @@
 // src/app/auth/forgot-password/ResetNewPassword.tsx
 import { Button, Modal } from '@/components/common'
 import { theme } from '@/constants/theme'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import {
-    validateConfirmPassword,
-    validatePassword,
+  validateConfirmPassword,
+  validatePassword,
 } from '@/utils/validation/signupValidation'
 import { Ionicons } from '@expo/vector-icons'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 
 const ResetNewPassword: React.FC = () => {
   const router = useRouter()
@@ -26,25 +28,45 @@ const ResetNewPassword: React.FC = () => {
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showModal, setShowModal] = useState(false)
+  const { triggerResetPassword } = useAuth()
+      const { mobile } = useLocalSearchParams<{ mobile: string }>()
 
   // validation
   const passwordError = validatePassword(password)
   const confirmError = validateConfirmPassword(confirm, password)
-  const isValid = passwordError === null && confirmError === null
+  const isValid = passwordError === null && confirmError === null;
 
-  const handleSubmit = () => {
-    // TODO: call reset password API
-    setShowModal(true)
-    // After showing modal, auto-navigate
-    setTimeout(() => router.replace('/auth/login/Login'), 2500)
-  }
+  const handleSubmit = async () => {
+    const trimedPassword = password.trim();
+
+    try {
+      console.log({ mobile: mobile, otp: trimedPassword });
+
+      await triggerResetPassword({ mobile: mobile, newPassword: trimedPassword });
+      // Toast.show({
+      //   type: "success",
+      //   text1: "OTP verified"
+      // })
+      setShowModal(true)
+      // After showing modal, auto-navigate
+      setTimeout(() => router.replace('/auth/login/Login'), 2500)
+    } catch (error: any) {
+      console.log({ error });
+
+      const errorMessage = error?.data?.error || 'Reset password fails.';
+      Toast.show({
+        type: "error",
+        text1: errorMessage
+      })
+    }
+  };
 
   return (
     <>
       <KeyboardAvoidingView
         style={styles.container}
-        // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
       >
         <SafeAreaView style={styles.safeArea}>
 

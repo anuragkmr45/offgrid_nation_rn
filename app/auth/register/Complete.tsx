@@ -1,12 +1,13 @@
 import { Button } from '@/components/common';
 import { theme } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-// import validators
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validateConfirmPassword, validatePassword } from '@/utils/validation/signupValidation';
+import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 const Complete: React.FC = () => {
     const router = useRouter();
@@ -15,21 +16,38 @@ const Complete: React.FC = () => {
     const [showPass, setShowPass] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
-    // use validators for password and confirm
+    const { completeRegistrationFlow } = useAuth();
+    const { mobile } = useLocalSearchParams<{ mobile: string }>()
     const passwordError = validatePassword(password);
     const confirmError = validateConfirmPassword(confirm, password);
     const isValid = passwordError === null && confirmError === null;
 
-    const handleNext = () => {
-        // TODO: call setPassword API
-        router.push('/auth/login/Login');
+    const handleNext = async () => {
+        const trimedPassword = password.trim();
+
+        try {
+            await completeRegistrationFlow({ mobile, password: trimedPassword });
+            Toast.show({
+                type: "success",
+                text1: "Reg complete"
+            })
+            setTimeout(() => {
+                router.push({ pathname: '/auth/login/Login', params: { mobile, password } });
+            }, 1500);
+        } catch (error: any) {
+            const errorMessage = error?.data?.message || 'Registration fails.';
+            Toast.show({
+                type: "error",
+                text1: errorMessage
+            })
+        }
     };
 
     return (
         <KeyboardAvoidingView
             style={styles.container}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+        // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
         >
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.topContainer}>

@@ -1,6 +1,8 @@
 import { Button, InputField } from '@/components/common'
 import { theme } from '@/constants/theme'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+// import { signInWithGoogleAsync } from '@/utils/googleLogin'
+// import { JwtUtil } from '@/utils/jwtUtil'
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
@@ -8,6 +10,7 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -32,23 +35,59 @@ export default function LoginScreen() {
         type: 'success',
         text1: 'Login Successful 🎉',
       });
-      router.replace('/');
+      router.replace('/root/feed');
     } catch (err: any) {
-      const errorMessage = err?.data?.message || 'Login failed, please try again.';
+      const errorMessage = err?.data?.error || 'Login failed, please try again.';
       Toast.show({
         type: 'error',
         text1: 'Login Error',
         text2: errorMessage,
       });
-      // console.error('Login failed', err);
+      console.error('Login failed', err);
     }
   };
+
+  // const handleGoogleLogin = async () => {
+  //   try {
+  //     const googleData = await signInWithGoogleAsync();
+  //     if (!googleData) {
+  //       Toast.show({ type: 'error', text1: 'Google login cancelled' });
+  //       return;
+  //     }
+
+  //     const { idToken, email, name } = googleData;
+
+  //     // Generate JWT locally (⚠️ if needed, but ideally do this on backend)
+  //     const jwt = JwtUtil.generateUserJwt({
+  //       uid: email,  // if no UID, use email as fallback
+  //       email,
+  //       displayName: name,
+  //     });
+
+  //     // Send to backend to get auth key (simulate your Flutter `repository.googleLogin`)
+  //     const authKey = await loginWithGoogle(jwt); // Implement this in your `useAuth()` or service
+
+  //     await saveSession(authKey); // Save session locally
+
+  //     Toast.show({ type: 'success', text1: 'Google Login Successful 🎉' });
+  //     router.replace('/root/feed');
+
+  //   } catch (err) {
+  //     console.error('Google login error:', err);
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Google Login Error',
+  //       text2: 'Something went wrong. Please try again.',
+  //     });
+  //   }
+  // };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.select({ ios: 'padding', android: undefined })}
     >
+      <StatusBar backgroundColor={theme.colors.primary} animated />
       <View style={{ width: '100%', flex: 1 }}>
         <View style={styles.logoContainer}>
           <Image
@@ -58,7 +97,7 @@ export default function LoginScreen() {
         </View>
         <View style={styles.formContainer}>
           <InputField
-            value={identifier}
+            value={identifier.trim().toLowerCase()}
             onChangeText={setIdentifier}
             placeholder="Username, Phone number or email"
             keyboardType="default"
@@ -81,6 +120,7 @@ export default function LoginScreen() {
             loading={isLoginLoading}
             disabled={!isValid}
             style={styles.loginButton}
+            textColor={theme.colors.primary}
           />
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
@@ -89,16 +129,18 @@ export default function LoginScreen() {
           </View>
           {/* Social login buttons */}
           <Button
+            icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/google-icon_sxmrhm.png"
             text="Continue with Google"
             onPress={() => {/* TODO: Google login */ }}
-            style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
+            style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
           // override text color
           />
           <Button
+            icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/apple-icon_quyjuw.png"
             text="Continue with Apple"
             onPress={() => {/* TODO: Apple login */ }}
-            style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
-            textColor={theme.colors.textPrimary}
+            style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
+            textColor={theme.colors.background}
           />
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -144,13 +186,14 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   forgotText: {
-    color: theme.colors.background,
+    color: theme.colors.textPrimary,
     fontWeight: '600',
     fontSize: 14,
   },
   loginButton: {
     marginTop: 12,
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
+    borderRadius: 25,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -160,11 +203,11 @@ const styles = StyleSheet.create({
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
   },
   dividerText: {
     marginHorizontal: 8,
-    color: theme.colors.textPrimary,
+    color: theme.colors.background,
   },
   socialButton: {
     marginBottom: 12,
@@ -175,10 +218,19 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   signUpText: {
-    color: theme.colors.background,
+    color: theme.colors.textPrimary,
+    fontWeight: "500",
   },
   signUpLink: {
-    color: theme.colors.textPrimary,
+    color: theme.colors.background,
     fontWeight: 'bold',
   },
 })
+function loginWithGoogle(jwt: string) {
+  throw new Error('Function not implemented.')
+}
+
+function saveSession(authKey: void) {
+  throw new Error('Function not implemented.')
+}
+

@@ -1,23 +1,27 @@
 import { Button, InputField } from '@/components/common';
 import { theme } from '@/constants/theme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validateOTP } from '@/utils/validation/signupValidation';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 const VerifyOtp: React.FC = () => {
   const router = useRouter();
+    const { mobile } = useLocalSearchParams<{ mobile: string }>()
   const [otp, setOtp] = useState('');
   const [resending, setResending] = useState(false);
+  const { triggerVerifyForgotOtp } = useAuth();
 
   // validate OTP
   const otpError = validateOTP(otp);
@@ -29,9 +33,29 @@ const VerifyOtp: React.FC = () => {
     setResending(false);
   };
 
-  const handleNext = () => {
-    // TODO: verify reset OTP
-    router.push('/auth/forgot-password/Reset');
+  const handleNext = async () => {
+    const trimedOTP= otp.trim();
+
+    try {
+      console.log({ mobile: mobile, otp: trimedOTP });
+      
+      await triggerVerifyForgotOtp({ mobile: mobile, otp: trimedOTP });
+      Toast.show({
+        type: "success",
+        text1: "OTP verified"
+      })
+      setTimeout(() => {
+        router.push({ pathname: '/auth/forgot-password/Reset', params: { mobile } });
+      }, 1500);
+    } catch (error: any) {
+      console.log({error});
+      
+      const errorMessage = error?.data?.error || 'OTP verification fails.';
+      Toast.show({
+        type: "error",
+        text1: errorMessage
+      })
+    }
   };
 
   return (

@@ -1,11 +1,13 @@
 import { Button, InputField } from '@/components/common';
 import { theme } from '@/constants/theme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validatePhone, validateUsername } from '@/utils/validation/signupValidation';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StatusBar, StyleSheet, Text, View } from 'react-native';
 import CountryPicker, { Country } from 'react-native-country-picker-modal';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 const SendOtp: React.FC = () => {
   const router = useRouter();
@@ -14,21 +16,56 @@ const SendOtp: React.FC = () => {
   const [countryCode, setCountryCode] = useState<'US' | 'IN'>('US');
   const [callingCode, setCallingCode] = useState<string[]>('1'.split(','));
 
+  const {
+    checkUsername,
+    register
+  } = useAuth()
+
+
   const isValid = validateUsername(username) === null && validatePhone(phone) === null;
 
-  const handleNext = () => {
-    // TODO: call sendOtp API
-    router.push('/auth/register/VerifyOtp');
-  };
+  const handleNext = async () => {
+    try {
+      const trimedUsername = username.trim().toLowerCase();
+      const data = await checkUsername(trimedUsername).unwrap()
+
+      if (!!data.exists === true) {
+        const phoneWithCountryCode = `+${callingCode} ${phone}`;
+        const reg = await register({username: trimedUsername, mobile:phoneWithCountryCode});
+        Toast.show({
+          type: 'success',
+          text1: reg.message,
+        });
+        setTimeout(() => {
+          router.push({pathname: '/auth/register/VerifyOtp', params: { mobile: phoneWithCountryCode }})
+        }, 2000)
+      } else {
+        Toast.show({
+          type: 'error',
+          text1: 'username not avaiable',
+        });
+      }
+    } catch (err: any) {
+
+      const errorMessage = err?.data?.message || 'OTP send fails.';
+      Toast.show({
+        type: 'error',
+        text1: 'Login Error',
+        text2: errorMessage,
+      });
+    }
+  }
+
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor={theme.colors.primary} animated />
       {/* Top Section */}
       <View style={styles.topContainer}>
         <Text style={styles.title}>Create an Account</Text>
 
         <InputField
-          value={username}
+          value={username.trim().toLowerCase()}
           onChangeText={setUsername}
           placeholder="User name"
         //   style={styles.input}
@@ -44,7 +81,7 @@ const SendOtp: React.FC = () => {
               setCallingCode(c.callingCode);
             }}
             containerButtonStyle={styles.countryPicker}
-            
+
           />
           <InputField
             value={phone}
@@ -96,7 +133,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: theme.fontSizes.headlineSmall,
     fontWeight: "600",
-    color: theme.colors.textPrimary,
+    color: theme.colors.background,
     marginBottom: 32,
   },
   input: {
@@ -126,7 +163,7 @@ const styles = StyleSheet.create({
   button: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
   },
   buttonDisabled: {
     opacity: 0.5,
@@ -136,12 +173,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signInText: {
-    color: theme.colors.background,
+    color: theme.colors.textPrimary,
     fontWeight: "600"
   },
   signInLink: {
     fontWeight: "600",
-    color: theme.colors.textPrimary
+    color: theme.colors.background,
   },
 });
 
