@@ -11,6 +11,7 @@ import { Product } from '@/features/products/types'
 import { RootState } from '@/store/store'
 import { getFormattedLocation, requestLocationPermission } from '@/utils/location'
 import { Ionicons } from '@expo/vector-icons'
+import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
@@ -27,6 +28,9 @@ export default function MarketplaceScreen() {
     const [sortOption, setSortOption] = useState<string>('relevance')
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [readableLocation, setReadableLocation] = useState<string>("");
+    const [searchQuery, setSearchQuery] = useState('');
+
 
     // ---- Top filter buttons ----
     const filters: FilterItem[] = [
@@ -43,50 +47,82 @@ export default function MarketplaceScreen() {
         c.toLowerCase().includes(catQuery.toLowerCase())
     )
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true)
-            try {
-                const granted = await requestLocationPermission();
-                if (!granted) {
-                    return;
-                }
+    const productAPICall = async (lat: number, lng: number) => {
+        const response = await fetch(`https://api.theoffgridnation.com/products?latitude=${lat}&longitude=${lng}&limit=5&sort=${sortOption}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
 
-                const formatted: string | null = await getFormattedLocation();
+        const data = await response.json();
 
-                if (formatted?.length !== 0) {
-                    const [latStr, lngStr] = formatted?.split(',') || "";
-                    const lat = parseFloat(latStr);
-                    const lng = parseFloat(lngStr);
+        const mapped: Product[] = data.map((item: any) => ({
+            id: item._id,
+            title: item.title,
+            price: `$${item.price}`,
+            imageUrl: item.images?.[0],
+        }));
 
-                    const response = await fetch(`https://api.theoffgridnation.com/products?latitude=${lat}&longitude=${lng}&limit=5&sort=${sortOption}`, {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    });
+        setProducts(mapped);
+    }
 
-                    const data = await response.json();
+    const handleSearch = async (lat: number, lng: number, query?: string) => {
+        setSearchQuery(query || "");
+        const response = await fetch(`https://api.theoffgridnation.com/productsproduct/search?q=${query}?&lng=${lng}lat=${lat}&limit=5&page=1`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        const data = await response.json();
 
-                    const mapped: Product[] = data.map((item: any) => ({
-                        id: item._id,
-                        title: item.title,
-                        price: `$${item.price}`, // format price string
-                        imageUrl: item.images?.[0] ?? 'https://placehold.co/300x300', // fallback if image missing
-                    }));
+        const mapped: Product[] = data.map((item: any) => ({
+            id: item._id,
+            title: item.title,
+            price: `$${item.price}`,
+            imageUrl: item.images?.[0],
+        }));
 
-                    setProducts(mapped);
+        setProducts(mapped);
+    }
 
-                } else {
-                    console.warn('Invalid coordinates:', formatted);
-                }
-            } catch (error) {
-                console.error("product not fetched")
-            } finally {
-                setIsLoading(false);
+    const fetchData = async (query?: string) => {
+        setIsLoading(true)
+        try {
+            const granted = await requestLocationPermission();
+            if (!granted) {
+                return;
             }
-        };
-        fetchData();
 
+            const formatted: string | null = await getFormattedLocation();
+
+            if (formatted?.length !== 0) {
+                const [latStr, lngStr] = formatted?.split(',') || "";
+                const lat = parseFloat(latStr);
+                const lng = parseFloat(lngStr);
+                const readableLoc = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng })
+                if (readableLoc.length) {
+                    const place = readableLoc[0]
+                    setReadableLocation(`${place.city ?? place.region}, ${place.country}`)
+                }
+
+                if (query) {
+                    await handleSearch(lng, lat, query)
+                } else {
+                    await productAPICall(lat, lng);
+                }
+
+            } else {
+                console.warn('Invalid coordinates:', formatted);
+            }
+        } catch (error) {
+            console.error("product not fetched")
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
     }, []);
 
     return (
@@ -103,15 +139,19 @@ export default function MarketplaceScreen() {
                     </View>
                 ) : (
                     <>
-                        <FilterBar items={filters} />
+                        <FilterBar
+                            items={filters}
+                            onSearchChange={q => fetchData(q)}
+                        />
+
                         <SectionHeader
                             title="Today’s picks"
-                            location="Pasadena, California"
+                            location={readableLocation}
                         />
 
                         <ProductGrid
                             products={products}
-                            onPress={(id) => router.push('/root/marketplace/ProductDetails')}
+                            onPress={(productId: string) => router.push({ pathname: '/root/marketplace/ProductDetails', params: { productId } })}
                         />
 
                         <BottomSheet

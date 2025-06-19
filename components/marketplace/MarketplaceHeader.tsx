@@ -18,7 +18,7 @@ export interface MarketplaceHeaderProps {
   /** Called when back arrow is tapped */
   onBack: () => void
   /** Called when profile icon is tapped */
-  onProfilePress: () => void
+  onProfilePress?: () => void
 }
 
 export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({
@@ -41,13 +41,13 @@ export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({
     <Text style={styles.title}>{title}</Text>
 
     {/* Profile avatar/icon */}
-    <TouchableOpacity onPress={onProfilePress} style={styles.iconButton}>
+    {onProfilePress && <TouchableOpacity onPress={onProfilePress} style={styles.iconButton}>
       <Ionicons
         name="person-circle-outline"
         size={28}
         color={theme.colors.textPrimary}
       />
-    </TouchableOpacity>
+    </TouchableOpacity>}
   </View>
 )
 
