@@ -11,7 +11,7 @@ export class PusherService {
   private static instance: PusherService;
   private pusher?: Pusher;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance() {
     if (!PusherService.instance) {
@@ -32,6 +32,11 @@ export class PusherService {
   subscribeChannel(name: string) {
     if (!this.pusher) this.init();
     return this.pusher!.subscribe(name);
+  }
+
+  unsubscribeChannel(name: string) {
+    if (!this.pusher) return;
+    this.pusher.unsubscribe(name);
   }
 
   disconnect() {

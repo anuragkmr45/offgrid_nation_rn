@@ -1,41 +1,64 @@
 // components/chat/ConversationScreen.tsx
-import { useLocalSearchParams, useRouter } from 'expo-router'
-import React, { useCallback } from 'react'
+
+import { useMarkReadMutation } from '@/features/chat/api/chatApi';
+import { useChatMessages } from '@/features/chat/hooks/useChat';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    StyleSheet,
-} from 'react-native'
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+} from 'react-native';
 
-import { theme } from '../../constants/theme'
-import { ChatInputBar } from './ChatInputBar'
-import { ConversationHeader } from './ConversationHeader'
-import { MessageBubble, MessageBubbleProps } from './MessageBubble'
+import { theme } from '../../constants/theme';
+import { Loader } from '../common';
+import { ChatInputBar } from './ChatInputBar';
+import { ConversationHeader } from './ConversationHeader';
+import { MessageBubble } from './MessageBubble';
 
-// replace with your real hook/api
-const MOCK_MESSAGES: MessageBubbleProps[] = [
-  { text: 'Hello Bro.!', timestamp: '10:20', outgoing: true },
-  { text: 'Ha Lala!', timestamp: '10:20', outgoing: false },
-  // …etc
-]
+interface ConversationScreenProps {
+  chatId: string;
+  avatarUrl?: string;
+  name?: string;
+}
 
-export const ConversationScreen: React.FC = () => {
-  const { chatId } = useLocalSearchParams<{ chatId: string }>()
-  const router = useRouter()
+export const ConversationScreen: React.FC<ConversationScreenProps> = ({
+  chatId,
+  avatarUrl,
+  name,
+}) => {
+  const router = useRouter();
+
+  // fetch + subscribe
+  const { messages, isLoading, sendMessage, sending, loadMore } = useChatMessages(chatId);
+  const [markRead] = useMarkReadMutation();
+console.log({messages});
+
+  // only clear unread once
+  const didMarkRead = useRef(false);
+  useEffect(() => {
+    if (chatId && !didMarkRead.current) {
+      markRead(chatId);
+      didMarkRead.current = true;
+    }
+  }, [chatId]);
 
   const handleSend = useCallback((text: string) => {
-    // TODO: call send API
-    console.log('send to', chatId, text)
-  }, [chatId])
+    sendMessage({
+      recipient:      chatId,
+      actionType:     'text',
+      text,
+      conversationId: chatId,
+    });
+  }, [chatId, sendMessage]);
 
   return (
     <SafeAreaView style={styles.container}>
       <ConversationHeader
-        avatarUrl={`https://i.pravatar.cc/150?u=${chatId}`}
-        name={`User ${chatId}`}
-        statusText="Active"
+        avatarUrl={avatarUrl ?? 'https://i.pravatar.cc/150'}
+        name={name || 'Chat'}
         onBack={() => router.back()}
       />
 
@@ -44,20 +67,34 @@ export const ConversationScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
       >
+        {isLoading && <Loader />}
+
         <FlatList
-          data={MOCK_MESSAGES}
-          keyExtractor={(_, idx) => idx.toString()}
-          renderItem={({ item }) => <MessageBubble {...item} />}
+          data={messages}
+          inverted
+          keyExtractor={m => m._id}
+          renderItem={({ item }) => (
+            <MessageBubble
+              text={item.text || ''}
+              timestamp={new Date(item.sentAt).toLocaleTimeString([], {
+                hour:   '2-digit',
+                minute: '2-digit',
+              })}
+              outgoing={item.sender._id !== item.recipient._id /* or compare to your userId */}
+            />
+          )}
           contentContainerStyle={styles.messages}
+          onEndReached={loadMore}
         />
-        <ChatInputBar onSend={handleSend} />
+
+        <ChatInputBar onSend={handleSend} loading={sending} />
       </KeyboardAvoidingView>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   flex: { flex: 1 },
   messages: { padding: 12 },
-})
+});

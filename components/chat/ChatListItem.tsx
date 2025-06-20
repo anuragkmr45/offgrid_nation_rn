@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: 'center',
     borderBottomWidth: 1,
-    // borderColor: theme.colors.textSecondary,
+    borderColor: theme.colors.background,
   },
   avatar: {
     width: 48,
@@ -63,9 +63,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  name: { fontSize: 16, fontWeight: '600', color: theme.colors.textPrimary },
-  time: { fontSize: 12, color: theme.colors.textSecondary },
-  lastMessage: { flex: 1, fontSize: 14, color: theme.colors.textSecondary },
+  name: { fontSize: 16, fontWeight: '600', color: theme.colors.background },
+  time: { fontSize: 12, color: theme.colors.background },
+  lastMessage: { flex: 1, fontSize: 14, color: theme.colors.background },
   unreadBubble: {
     backgroundColor: theme.colors.primary,
     borderRadius: 12,
