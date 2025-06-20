@@ -2,8 +2,10 @@
 
 import { Button } from '@/components/common'
 import { MediaCarousel } from '@/components/common/MediaCarousel'
+import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
 import { ProductDetailsInfo } from '@/components/marketplace/ProductDetailsInfo'
 import { theme } from '@/constants/theme'
+import { RootState } from '@/store/store'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import {
@@ -15,6 +17,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { useSelector } from 'react-redux'
 
 interface Owner {
   userId: string
@@ -39,17 +42,22 @@ export interface ProductDetails {
 }
 
 export default function ProductDetailsScreen() {
-  const { productId ="123" } = useLocalSearchParams<{ productId: string }>()
+  const { productId = "" } = useLocalSearchParams<{ productId: string }>()
   const router = useRouter()
+    const token = useSelector((state: RootState) => state.auth.accessToken);
 
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string|undefined>()
-  const [product, setProduct] = useState<ProductDetails|null>(null)
+  const [error, setError] = useState<string | undefined>()
+  const [product, setProduct] = useState<ProductDetails | null>(null)
 
   useEffect(() => {
     if (!productId) return
     setLoading(true)
-    fetch(`https://api.yoursite.com/products/${productId}`)
+    fetch(`https://api.theoffgridnation.com/products/${productId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then(r => {
         if (!r.ok) throw new Error('Network error')
         return r.json()
@@ -73,6 +81,7 @@ export default function ProductDetailsScreen() {
       },
     })
   }
+console.log({product});
 
   if (loading) {
     return (
@@ -84,6 +93,7 @@ export default function ProductDetailsScreen() {
   if (error || !product) {
     return (
       <SafeAreaView style={styles.center}>
+        <StatusBar barStyle="dark-content" animated />
         <Text style={styles.errorText}>Failed to load product details.</Text>
       </SafeAreaView>
     )
@@ -91,8 +101,8 @@ export default function ProductDetailsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" animated />
-
+      <StatusBar barStyle="dark-content" animated backgroundColor={theme.colors.background} />
+      <MarketplaceHeader title={product.title.toUpperCase()} onBack={() => {router.back()}}/>
       {/* Carousel + Info */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <MediaCarousel mediaUrls={product.images} />
@@ -117,7 +127,7 @@ export default function ProductDetailsScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flex:            1,
+    flex: 1,
     backgroundColor: theme.colors.background,
   },
   scrollContent: {
@@ -127,11 +137,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   footer: {
-    position:       'absolute',
-    bottom:         0,
-    left:           0,
-    right:          0,
-    padding:        16,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.textSecondary,
     backgroundColor: theme.colors.background,
@@ -140,13 +150,13 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius,
   },
   center: {
-    flex:           1,
+    flex: 1,
     justifyContent: 'center',
-    alignItems:     'center',
+    alignItems: 'center',
     backgroundColor: theme.colors.background,
   },
   errorText: {
-    color:      theme.colors.textPrimary,
-    fontSize:   theme.fontSizes.bodyLarge,
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSizes.bodyLarge,
   },
 })
