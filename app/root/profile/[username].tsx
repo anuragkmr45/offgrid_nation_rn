@@ -46,7 +46,7 @@ export default function UserProfileRoute() {
         onAvatarEdit={() => { }}
         onFieldEdit={() => { }}
         onUserPress={(u) => router.push(`/root/profile/${u}`)}
-        onPostPress={(id) => router.push(`/root/post/${id}`)}
+        onPostPress={() => {}}
       />
     </>
   )

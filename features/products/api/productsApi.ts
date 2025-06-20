@@ -3,12 +3,12 @@
 import { baseQueryWithLogoutOn401 } from '@/core/api/baseQueryWithLogoutOn401';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import {
-    Category,
-    ChangeStatusRequest,
-    Product,
-    RatingResponse,
-    RatingsMap,
-    SearchParams
+  Category,
+  ChangeStatusRequest,
+  Product,
+  RatingResponse,
+  RatingsMap,
+  SearchParams
 } from '../types';
 
 export const productsApi = createApi({
@@ -126,10 +126,25 @@ export const productsApi = createApi({
       query: (productId) => `/ratings/${productId}`,
       providesTags: (r, e, id) => [{ type: 'Ratings', id }],
     }),
-
     listCategories: build.query<Category[], void>({
-      query: () => '/categories',
-      providesTags: ['Categories'],
+      async queryFn(_arg, _queryApi, _extraOptions, baseQuery) {
+        const result = await baseQuery('/categories');
+        // if no categories exist, treat 404 as “empty list”
+        if (result.error?.status === 404) {
+          return { data: [] };
+        }
+        if (result.data) {
+          return { data: result.data as Category[] };
+        }
+        return { error: result.error! };
+      },
+      providesTags: (result) =>
+        result
+          ? [
+            ...result.map((cat) => ({ type: 'Categories' as const, id: cat._id })),
+            { type: 'Categories', id: 'LIST' },
+          ]
+          : [{ type: 'Categories', id: 'LIST' }],
     }),
 
     getCategory: build.query<Category, string>({

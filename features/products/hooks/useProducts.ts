@@ -1,15 +1,16 @@
 // src/features/products/hooks/useProducts.ts
 
 import {
-    useAddProductMutation,
-    useChangeStatusMutation,
-    useDeleteProductMutation,
-    useEditProductMutation,
-    useGetProductQuery,
-    useListByUsernameQuery,
-    useListMyProductsQuery,
-    useListProductsQuery,
-    useSearchProductsQuery,
+  useAddProductMutation,
+  useChangeStatusMutation,
+  useDeleteProductMutation,
+  useEditProductMutation,
+  useGetProductQuery,
+  useListByUsernameQuery,
+  useListCategoriesQuery,
+  useListMyProductsQuery,
+  useListProductsQuery,
+  useSearchProductsQuery
 } from '../api/productsApi';
 
 export const useProducts = (params: Parameters<typeof useListProductsQuery>[0]) => {
@@ -31,6 +32,17 @@ export const useRemoveProduct = () =>
 
 export const useToggleProductStatus = () =>
   useChangeStatusMutation();
+
+export const useListCategories = () => {
+  const {
+    data: categories = [],
+    isLoading,
+    error,
+    refetch,
+  } = useListCategoriesQuery();
+
+  return { categories, isLoading, error, refetch };
+};
 
 export const useMyProducts = (params: Parameters<typeof useListMyProductsQuery>[0]) => {
   const { data, isLoading, error, refetch } = useListMyProductsQuery(params);

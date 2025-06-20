@@ -7,282 +7,367 @@ import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { SectionHeader } from '@/components/marketplace/SectionHeader'
 import { theme } from '@/constants/theme'
+import { useListProductsQuery } from '@/features/products/api/productsApi'
+import { useListCategories } from '@/features/products/hooks/useProducts'
 import { Product } from '@/features/products/types'
-import { RootState } from '@/store/store'
 import { getFormattedLocation, requestLocationPermission } from '@/utils/location'
 import { Ionicons } from '@expo/vector-icons'
+import { skipToken } from '@reduxjs/toolkit/query/react'
 import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useSelector } from 'react-redux'
 
 export default function MarketplaceScreen() {
-    const token = useSelector((state: RootState) => state.auth.accessToken);
-    const router = useRouter();
-    const [isSellSheetVisible, setSellSheetVisible] = useState(false)
-    const [isCatSheetVisible, setCatSheetVisible] = useState(false)
-    const [catQuery, setCatQuery] = useState('')
-    const [isSortSheetVisible, setSortSheetVisible] = useState(false)
-    const [sortOption, setSortOption] = useState<string>('relevance')
-    const [products, setProducts] = useState<Product[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [readableLocation, setReadableLocation] = useState<string>("");
-    const [searchQuery, setSearchQuery] = useState('');
+  const router = useRouter()
 
+  // Bottom‐sheet visibility
+  const [isSellSheetVisible, setSellSheetVisible] = useState(false)
+  const [isCatSheetVisible, setCatSheetVisible] = useState(false)
+  const [isSortSheetVisible, setSortSheetVisible] = useState(false)
 
-    // ---- Top filter buttons ----
-    const filters: FilterItem[] = [
-        { label: 'Search', icon: 'search-outline', onPress: () => console.log('Search') },
-        { label: 'Sell', icon: 'pricetag-outline', onPress: () => setSellSheetVisible(true) },
-        { label: 'Sort By', icon: 'chevron-down-outline', onPress: () => setSortSheetVisible(true) },
-        { label: 'Category', icon: 'list-outline', onPress: () => setCatSheetVisible(true) },
-    ]
+  // Filters & search
+  const [catQuery, setCatQuery] = useState('')
+  const [sortOption, setSortOption] = useState<string>('relevance')
+  const [searchQuery, setSearchQuery] = useState('')
 
-    const ALL_CATEGORIES = [
-        'Electronics', 'Furniture', 'Clothing', 'Books', 'Toys', 'Art', 'Garden', 'Sports', 'sdf', 'sds'
-    ]
-    const filteredCats = ALL_CATEGORIES.filter(c =>
-        c.toLowerCase().includes(catQuery.toLowerCase())
-    )
+  // Readable location string
+  const [readableLocation, setReadableLocation] = useState<string>('')
 
-    const productAPICall = async (lat: number, lng: number) => {
-        const response = await fetch(`https://api.theoffgridnation.com/products?latitude=${lat}&longitude=${lng}&limit=5&sort=${sortOption}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+  // Store coords so RTK Query can fire
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
 
-        const data = await response.json();
+  // RTK Query for products; skips until coords != null
+  const {
+    data: productsResponse,
+    isLoading: isLoading,
+    error: productsError,
+    refetch: refetchProducts,
+  } = useListProductsQuery(coords ?? skipToken)
 
-        const mapped: Product[] = data.map((item: any) => ({
-            id: item._id,
-            title: item.title,
-            price: `$${item.price}`,
-            imageUrl: item.images?.[0],
-        }));
+  // extract items array
+  const products: Product[] = productsResponse?.items ?? []
 
-        setProducts(mapped);
+  // Categories hook (unchanged)
+  const {
+    categories = [],
+    isLoading: isCatsLoading,
+    error: catsError,
+    refetch: refetchCats,
+  } = useListCategories()
+
+  const filteredCategories = categories.filter((c) =>
+    c.title.toLowerCase().includes(catQuery.toLowerCase())
+  )
+
+  // Master fetch function: gets coords, sets state; RTK Query runs automatically
+  const fetchData = async (query?: string) => {
+    const granted = await requestLocationPermission()
+    if (!granted) return
+
+    const formatted = await getFormattedLocation()
+    if (!formatted?.length) {
+      console.warn('Invalid coordinates:', formatted)
+      return
     }
 
-    const handleSearch = async (lat: number, lng: number, query?: string) => {
-        setSearchQuery(query || "");
-        const response = await fetch(`https://api.theoffgridnation.com/productsproduct/search?q=${query}?&lng=${lng}lat=${lat}&limit=5&page=1`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
-        const data = await response.json();
+    const [latStr, lngStr] = formatted.split(',')
+    const lat = parseFloat(latStr)
+    const lng = parseFloat(lngStr)
+    setCoords({ latitude: lat, longitude: lng })
 
-        const mapped: Product[] = data.map((item: any) => ({
-            id: item._id,
-            title: item.title,
-            price: `$${item.price}`,
-            imageUrl: item.images?.[0],
-        }));
-
-        setProducts(mapped);
+    const rev = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng })
+    if (rev.length) {
+      const place = rev[0]
+      setReadableLocation(`${place.city ?? place.region}, ${place.country}`)
     }
 
-    const fetchData = async (query?: string) => {
-        setIsLoading(true)
-        try {
-            const granted = await requestLocationPermission();
-            if (!granted) {
-                return;
+    if (query) {
+      setSearchQuery(query)
+      // you can hook into useSearchProductsQuery here if desired
+    }
+  }
+
+  // initial load
+  useEffect(() => {
+    fetchData()
+  }, [])
+
+  // Filter buttons (unchanged)
+  const filters: FilterItem[] = [
+    { label: 'Search', icon: 'search-outline', onPress: () => console.log('Search') },
+    { label: 'Sell', icon: 'pricetag-outline', onPress: () => setSellSheetVisible(true) },
+    { label: 'Sort By', icon: 'chevron-down-outline', onPress: () => setSortSheetVisible(true) },
+    { label: 'Category', icon: 'list-outline', onPress: () => setCatSheetVisible(true) },
+  ]
+
+  return (
+    <SafeAreaView>
+      <StatusBar backgroundColor={theme.colors.background} animated />
+      <MarketplaceHeader
+        onBack={() => router.back()}
+        onProfilePress={() => router.push('/root/profile/ProfileScreen')}
+      />
+
+      {isLoading ? (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+        </View>
+      ) : productsError ? (
+        <Text style={styles.errorText}>Error loading products.</Text>
+      ) : (
+        <>
+          <FilterBar items={filters} onSearchChange={(q) => fetchData(q)} />
+
+          <SectionHeader title="Today’s picks" location={readableLocation} />
+
+          <ProductGrid
+            products={productsResponse}
+            onPress={(productId: string) =>
+              router.push({
+                pathname: '/root/marketplace/ProductDetails',
+                params: { productId },
+              })
             }
+          />
 
-            const formatted: string | null = await getFormattedLocation();
+          {/* Sort Sheet */}
+          <BottomSheet
+            visible={isSortSheetVisible}
+            onClose={() => setSortSheetVisible(false)}
+            height="60%"
+          >
+            <Text style={sheetStyles.sheetTitle}>Sort By:</Text>
+            {[
+              { key: 'relevance', label: 'Relevance' },
+              { key: 'popularity', label: 'Popularity' },
+              { key: 'price_low_high', label: 'Price – low to high' },
+              { key: 'price_high_low', label: 'Price – high to low' },
+              { key: 'ratings', label: 'Ratings – high to low' },
+              { key: 'recent', label: 'Recently Uploaded' },
+            ].map((opt) => {
+              const selected = sortOption === opt.key
+              return (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={sheetStyles.row}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSortOption(opt.key)
+                    setSortSheetVisible(false)
+                    // if needed, trigger refetch with new sort:
+                    refetchProducts()
+                  }}
+                >
+                  <Text style={sheetStyles.rowText}>{opt.label}</Text>
+                  <Ionicons
+                    name={selected ? 'radio-button-on' : 'radio-button-off'}
+                    size={20}
+                    color={selected ? theme.colors.primary : theme.colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              )
+            })}
+          </BottomSheet>
 
-            if (formatted?.length !== 0) {
-                const [latStr, lngStr] = formatted?.split(',') || "";
-                const lat = parseFloat(latStr);
-                const lng = parseFloat(lngStr);
-                const readableLoc = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng })
-                if (readableLoc.length) {
-                    const place = readableLoc[0]
-                    setReadableLocation(`${place.city ?? place.region}, ${place.country}`)
-                }
-
-                if (query) {
-                    await handleSearch(lng, lat, query)
-                } else {
-                    await productAPICall(lat, lng);
-                }
-
-            } else {
-                console.warn('Invalid coordinates:', formatted);
-            }
-        } catch (error) {
-            console.error("product not fetched")
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    return (
-        <SafeAreaView>
-            <StatusBar backgroundColor={theme.colors.background} animated />
-            <MarketplaceHeader
-                onBack={() => router.back()}
-                onProfilePress={() => router.push('/profile')}
+          {/* Category Sheet */}
+          <BottomSheet
+            visible={isCatSheetVisible}
+            onClose={() => {
+              setCatSheetVisible(false)
+              setCatQuery('')
+            }}
+            height="70%"
+          >
+            <SearchBar
+              value={catQuery}
+              onChangeText={setCatQuery}
+              placeholder="Search categories"
             />
-            {
-                isLoading ? (
-                    <View style={styles.loaderContainer}>
-                        <ActivityIndicator size="large" color={theme.colors.textPrimary} />
-                    </View>
-                ) : (
-                    <>
-                        <FilterBar
-                            items={filters}
-                            onSearchChange={q => fetchData(q)}
-                        />
 
-                        <SectionHeader
-                            title="Today’s picks"
-                            location={readableLocation}
-                        />
+            {isCatsLoading ? (
+              <ActivityIndicator style={{ marginTop: 20 }} />
+            ) : catsError ? (
+              <Text style={{ marginTop: 20, textAlign: 'center' }}>
+                Failed to load categories.
+              </Text>
+            ) : (
+              <ScrollView style={{ marginTop: 8 }}>
+                {filteredCategories.map((cat) => (
+                  <TouchableOpacity
+                    key={cat._id}
+                    style={sheetStyles.catRow}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      console.log('Chosen category ID:', cat._id)
+                      setCatSheetVisible(false)
+                      setCatQuery('')
+                      // if you want to filter by category, you can call:
+                      // refetchProducts()
+                    }}
+                  >
+                    <Image
+                      source={{ uri: cat.imageUrl }}
+                      style={sheetStyles.catImage}
+                      resizeMode="cover"
+                    />
+                    <Text style={sheetStyles.catText}>{cat.title}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </BottomSheet>
 
-                        <ProductGrid
-                            products={products}
-                            onPress={(productId: string) => router.push({ pathname: '/root/marketplace/ProductDetails', params: { productId } })}
-                        />
-
-                        <BottomSheet
-                            visible={isSortSheetVisible}
-                            onClose={() => setSortSheetVisible(false)}
-                            height="60%"
-                        >
-                            <Text style={sheetStyles.sheetTitle}>Sort By:</Text>
-                            {[
-                                { key: 'relevance', label: 'Relevance' },
-                                { key: 'popularity', label: 'Popularity' },
-                                { key: 'price_low_high', label: 'Price – low to high' },
-                                { key: 'price_high_low', label: 'Price – high to low' },
-                                { key: 'ratings', label: 'Ratings – high to low' },
-                                { key: 'recent', label: 'Recently Uploaded' },
-                            ].map(opt => {
-                                const selected = sortOption === opt.key
-                                return (
-                                    <TouchableOpacity
-                                        key={opt.key}
-                                        style={sheetStyles.row}
-                                        activeOpacity={0.7}
-                                        onPress={() => {
-                                            setSortOption(opt.key)
-                                            setSortSheetVisible(false)
-                                            // TODO: actually sort your products array here
-                                            console.log('Sort by', opt.key)
-                                        }}
-                                    >
-                                        <Text style={sheetStyles.rowText}>{opt.label}</Text>
-                                        <Ionicons
-                                            name={selected ? 'radio-button-on' : 'radio-button-off'}
-                                            size={20}
-                                            color={selected ? theme.colors.primary : theme.colors.textSecondary}
-                                        />
-                                    </TouchableOpacity>
-                                )
-                            })}
-                        </BottomSheet>
-
-                        <BottomSheet
-                            visible={isCatSheetVisible}
-                            onClose={() => { setCatSheetVisible(false); setCatQuery('') }}
-                            height="70%"
-                        >
-                            {/* Search inside sheet */}
-                            <SearchBar
-                                value={catQuery}
-                                onChangeText={setCatQuery}
-                                placeholder="Search categories"
-                            />
-
-                            {/* Scrollable list */}
-                            <ScrollView style={{ marginTop: 8 }}>
-                                {filteredCats.map(cat => (
-                                    <TouchableOpacity
-                                        key={cat}
-                                        style={sheetStyles.catRow}
-                                        activeOpacity={0.7}
-                                        onPress={() => {
-                                            console.log('Chosen category', cat)
-                                            setCatSheetVisible(false)
-                                            setCatQuery('')
-                                        }}
-                                    >
-                                        <Text style={sheetStyles.catText}>{cat}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </BottomSheet>
-
-                        <BottomSheet
-                            visible={isSellSheetVisible}
-                            onClose={() => setSellSheetVisible(false)}
-                            height={300}
-                        >
-                            <Text style={{ fontSize: theme.fontSizes.headlineSmall, fontWeight: "700", marginBottom: 16 }}>Create your listing</Text>
-                            <TouchableOpacity onPress={() => { }} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }}>
-                                <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.colors.textSecondary, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                                    <Ionicons name="add" size={20} color={theme.colors.background} />
-                                </View>
-                                <Text style={{ fontSize: theme.fontSizes.bodyMedium, fontWeight: "600" }}>Add items</Text>
-                            </TouchableOpacity>
-                        </BottomSheet>
-                    </>
-                )
-            }
-        </SafeAreaView>
-    )
+          {/* Sell Sheet */}
+          <BottomSheet
+            visible={isSellSheetVisible}
+            onClose={() => setSellSheetVisible(false)}
+            height={300}
+          >
+            <Text
+              style={{
+                fontSize: theme.fontSizes.headlineSmall,
+                fontWeight: '700',
+                marginBottom: 16,
+              }}
+            >
+              Create your listing
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/root/marketplace/AddProductScreen')}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingVertical: 12,
+              }}
+            >
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  backgroundColor: theme.colors.textSecondary,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 8,
+                }}
+              >
+                <Ionicons name="add" size={20} color={theme.colors.background} />
+              </View>
+              <Text style={{ fontSize: theme.fontSizes.bodyMedium, fontWeight: '600' }}>
+                Add items
+              </Text>
+            </TouchableOpacity>
+          </BottomSheet>
+        </>
+      )}
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: theme.colors.primary,
-    },
-    loaderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingTop: 100,
-    },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  errorText: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: theme.colors.accent,
+  },
 })
 
 const sheetStyles = StyleSheet.create({
-    catRow: {
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: theme.colors.textSecondary,
-    },
-    catText: {
-        fontSize: theme.fontSizes.bodyMedium,
-        color: theme.colors.textPrimary,
-        paddingHorizontal: 8,
-    },
-    sheetTitle: {
-        fontSize: theme.fontSizes.headlineSmall,
-        fontWeight: "700",
-        marginBottom: 12,
-        color: theme.colors.textPrimary,
-    },
-    row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: StyleSheet.hairlineWidth,
-        borderBottomColor: theme.colors.textSecondary,
-    },
-    rowText: {
-        fontSize: theme.fontSizes.bodyMedium,
-        color: theme.colors.textPrimary,
-    },
+  sheetTitle: {
+    fontSize: theme.fontSizes.headlineSmall,
+    fontWeight: '700',
+    marginBottom: 12,
+    color: theme.colors.textPrimary,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.textSecondary,
+  },
+  rowText: {
+    fontSize: theme.fontSizes.bodyMedium,
+    color: theme.colors.textPrimary,
+  },
+  catRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.textSecondary,
+  },
+  catImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  catText: {
+    fontSize: theme.fontSizes.bodyMedium,
+    color: theme.colors.textPrimary,
+  },
 })
+
+
+// app/marketplace/TestProductsScreen.tsx
+
+// import { useListProductsQuery } from '@/features/products/api/productsApi'
+// import { skipToken } from '@reduxjs/toolkit/query/react'
+// import * as Location from 'expo-location'
+// import React, { useEffect, useState } from 'react'
+// import { Text, View } from 'react-native'
+
+// export default function TestProductsScreen() {
+//   // hold coords until we get them
+//   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
+
+//   // RTK Query will skip until coords !== null
+//   const { data: productsData, isLoading, error } = useListProductsQuery(
+//     coords ?? skipToken
+//   )
+
+//   // fetch location once on mount
+//   useEffect(() => {
+//     ;(async () => {
+//       const { status } = await Location.requestForegroundPermissionsAsync()
+//       if (status === 'granted') {
+//         const { coords: { latitude, longitude } } = await Location.getCurrentPositionAsync()
+//         setCoords({ latitude, longitude })
+//       } else {
+//         console.warn('Location permission not granted')
+//       }
+//     })()
+//   }, [])
+
+//   // log the products data whenever it changes
+//   useEffect(() => {
+//     console.log('useListProductsQuery data:', productsData)
+//   }, [productsData])
+
+//   return (
+//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+//       {isLoading && <Text>Loading products…</Text>}
+//       {error && <Text>Error loading products</Text>}
+//       {!isLoading && !error && <Text>Check console for productsData</Text>}
+//     </View>
+//   )
+// }

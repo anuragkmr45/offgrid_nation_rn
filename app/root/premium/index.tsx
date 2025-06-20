@@ -46,7 +46,6 @@ export default function PremiumScreen() {
         <PremiumSubscribeOverlay
           onPayTap={async () => {
             const url = await initiatePayment()
-            console.log("in index page ", { url });
 
             router.push({ pathname: '/root/premium/webview', params: { url } })
           }}

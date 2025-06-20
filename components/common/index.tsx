@@ -132,6 +132,7 @@ export const InputField: React.FC<InputFieldProps> = ({ value, onChangeText, pla
     keyboardType={keyboardType}
     style={[styles.input, { borderColor: theme.colors.background, backgroundColor: theme.colors.background }, style]}
     placeholderTextColor={theme.colors.textSecondary}
+    aria-disabled
   />
 )
 
