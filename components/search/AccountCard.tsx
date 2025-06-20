@@ -1,5 +1,6 @@
 // components/search/AccountCard.tsx
 import { theme } from '@/constants/theme'
+import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
     Image,
@@ -25,6 +26,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
     onToggleFollow,
 }) => {
     const [isFollowing, setIsFollowing] = useState(initial)
+    const router = useRouter()
 
     const toggle = () => {
         const next = !isFollowing
@@ -34,11 +36,19 @@ export const AccountCard: React.FC<AccountCardProps> = ({
 
     return (
         <View style={styles.card}>
-            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-            <View style={styles.textContainer}>
-                <Text style={styles.fullName}>{fullName}</Text>
-                <Text style={styles.handle}>{handle}</Text>
+            <View style={styles.leftSection}>
+                <TouchableOpacity
+                    onPress={() => router.push(`/root/profile/${handle}`)}
+                    style={styles.profileInfo}
+                >
+                    <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+                    <View style={styles.textContainer}>
+                        <Text style={styles.fullName}>{fullName}</Text>
+                        <Text style={styles.handle}>{handle}</Text>
+                    </View>
+                </TouchableOpacity>
             </View>
+
 
             <TouchableOpacity
                 onPress={toggle}
@@ -60,6 +70,37 @@ export const AccountCard: React.FC<AccountCardProps> = ({
 }
 
 const styles = StyleSheet.create({
+    leftSection: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+
+    profileInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexShrink: 1,
+    },
+
+    textContainer: {
+        marginLeft: 12,
+        flexShrink: 1,
+    },
+
+    followButton: {
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 16,
+        backgroundColor: theme.colors.background,
+        marginLeft: 8,
+    },
+
+    followingButton: {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: theme.colors.background,
+    },
+
     card: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -75,10 +116,6 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: theme.colors.background,
     },
-    textContainer: {
-        flex: 1,
-        marginLeft: 12,
-    },
     fullName: {
         fontSize: 16,
         fontWeight: "600",
@@ -89,17 +126,6 @@ const styles = StyleSheet.create({
         color: theme.colors.background,
         opacity: 0.8,
         marginTop: 2,
-    },
-    followButton: {
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        borderRadius: 16,
-        backgroundColor: theme.colors.background,
-    },
-    followingButton: {
-        backgroundColor: 'transparent',
-        borderWidth: 1,
-        borderColor: theme.colors.background,
     },
     followText: {
         fontSize: 14,

@@ -1,10 +1,10 @@
 // src/features/comment/hooks/useComment.ts
 import { skipToken } from '@reduxjs/toolkit/query';
 import {
-    useAddCommentMutation,
-    useAddReplyMutation,
-    useListCommentsQuery,
-    useListRepliesQuery,
+  useAddCommentMutation,
+  useAddReplyMutation,
+  useListCommentsQuery,
+  useListRepliesQuery,
 } from '../api/commentApi';
 
 export function useComment(postId?: string) {
@@ -18,6 +18,9 @@ export function useComment(postId?: string) {
       ? { commentId: listComments.data.comments[0]._id, limit: 20 }
       : skipToken
   );
+  const getReplies = (commentId: string) => useListRepliesQuery(
+    commentId ? { commentId, limit: 20 } : skipToken
+  )
 
   return {
     addComment,
@@ -30,5 +33,6 @@ export function useComment(postId?: string) {
     isLoadingReplies: listReplies.isLoading,
     repliesRefetch: listReplies.refetch,
     hasMoreReplies: Boolean(listReplies.data?.nextCursor),
+    getReplies
   };
 }

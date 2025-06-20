@@ -3,7 +3,9 @@
 import { CommentModal } from '@/components/modals/CommentModal'
 import { ShareModal } from '@/components/modals/ShareModal'
 import { theme } from '@/constants/theme'
+import { usePost } from '@/features/content/post/hooks/usePost'
 import { ResizeMode, Video } from 'expo-av'
+import { useRouter } from 'expo-router'
 import React, { useRef, useState } from 'react'
 import {
   Animated,
@@ -29,10 +31,14 @@ const FALLBACK_IMAGE =
 // ——— Data Shapes ———
 export interface MediaItem { id: string; url: string }
 export interface PostType {
+  postId: string
   user: { avatar: string; username: string }
   timestamp: string
   media: MediaItem[]
   caption: string
+  isLiked: boolean
+  commentsCount: number
+  likesCount: number
 }
 
 interface PostCardProps { post: PostType }
@@ -71,13 +77,22 @@ const MediaItemCard: React.FC<{ item: MediaItem }> = ({ item }) => {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
+  const router = useRouter()
+  const { likePost } = usePost();
+
   // -- Like/Dislike state & animation
-  const [isLiked, setIsLiked] = useState(false)
+  const [isLike, setIsLike] = useState(post.isLiked)
   const scaleAnim = useRef(new Animated.Value(1)).current
   const [isCommentVisible, setCommentVisible] = useState(false);
   const [isShareVisible, setShareVisible] = useState(false);
+  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
+  const CAPTION_LIMIT = 42;
+  const isCaptionLong = post.caption.length > CAPTION_LIMIT;
+  const displayedCaption = isCaptionExpanded ? post.caption : post.caption.slice(0, CAPTION_LIMIT);
+  const [likeCount, setLikeCount] = useState(post.likesCount);
 
-  const toggleLike = () => {
+
+  const toggleLike = async () => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.8,
@@ -89,30 +104,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start()
-    setIsLiked((prev) => !prev)
-  }
+    ]).start();
+
+    try {
+      const response = await likePost({ postId: post.postId }).unwrap();
+      setIsLike(response.isLiked);
+      setLikeCount(response.likesCount);
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+    }
+  };
+
 
   return (
     <View style={[styles.card, { height: CARD_HEIGHT }]}>
       {/* ——— Header ——— */}
-      <View style={styles.header}>
+      <TouchableOpacity style={styles.header} onPress={() => { router.push(`/root/profile/${post.user.username}`) }}>
         <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
         <View style={styles.headerText}>
-          <Text style={styles.username}>{post.user.username}</Text>
-          <Text style={styles.timestamp}>{post.timestamp}</Text>
+          <Text style={styles.username}>{post.user.username || "offgrid user"}</Text>
+          <Text style={styles.timestamp}>{post.timestamp || ""}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* ——— Media Carousel ——— */}
       <FlatList
         data={post.media}
         horizontal
         pagingEnabled
-        showsHorizontalScrollIndicator={false}
+        showsHorizontalScrollIndicator={true}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <MediaItemCard item={item} />}
         style={styles.carousel}
+        contentContainerStyle={{ paddingBottom: 10 }}
       />
 
       {/* ——— Actions Footer ——— */}
@@ -120,14 +144,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         {/* Like/Dislike toggle button */}
         <TouchableOpacity onPress={toggleLike} style={styles.actionButton}>
           <Animated.Image
-            source={isLiked ? likeIcon : dislikeIcon}
+            source={isLike ? likeIcon : dislikeIcon}
             style={[styles.actionIcon, { transform: [{ scale: scaleAnim }] }]}
           />
+          <Text>{likeCount}</Text>
         </TouchableOpacity>
+
 
         {/* Comment button */}
         <TouchableOpacity style={styles.actionButton} onPress={() => setCommentVisible(true)}>
           <Image source={commentIcon} style={styles.actionIcon} />
+          <Text>{post.commentsCount}</Text>
         </TouchableOpacity>
 
         {/* Share button */}
@@ -137,12 +164,28 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </View>
 
       {/* ——— Caption ——— */}
-      <Text style={styles.caption} numberOfLines={3} ellipsizeMode="tail">
-        {post.caption}
-      </Text>
-      <CommentModal visible={isCommentVisible} onClose={() => setCommentVisible(false)} />
-      <ShareModal visible={isShareVisible} onClose={() => setShareVisible(false)} />
+      <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+        <Text style={styles.caption}>
+          {displayedCaption}
+          {(!isCaptionExpanded && isCaptionLong) ? '...' : ''}
+        </Text>
 
+        {isCaptionLong && (
+          <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
+            <Text style={styles.toggleText}>
+              {isCaptionExpanded ? 'Read less' : 'Read more'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <CommentModal postId={post.postId} visible={isCommentVisible} onClose={() => setCommentVisible(false)} />
+      <ShareModal
+        visible={isShareVisible}
+        onClose={() => setShareVisible(false)}
+        mediaUrl={post.media[0]?.url || ''}
+        content={post.caption}
+      />
     </View>
   )
 }
@@ -187,8 +230,8 @@ const styles = StyleSheet.create({
   media: { width: '100%', height: '100%', borderRadius: theme.borderRadius },
 
   footer: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 12 },
-  actionButton: { marginRight: 24 },
-  actionIcon: { width: 24, height: 24 },
+  actionButton: { marginRight: 20, flexDirection: 'row' },
+  actionIcon: { width: 20, height: 20, marginRight: 4 },
 
   caption: {
     paddingHorizontal: 16,
@@ -197,4 +240,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: theme.colors.textPrimary,
   },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginTop: 4,
+  },
+
 })
