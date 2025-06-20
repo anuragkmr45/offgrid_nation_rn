@@ -33,11 +33,10 @@ export default function PremiumScreen() {
       Toast.show({ type: "error", text1: errorMsg })
     }
   }, [checkoutError])
-console.log(premiumFeed);
 
   // Loading state
   if (premiumFeedLoading) {
-    return <PremiumFeedLoader />
+    return <WithLayout><PremiumFeedLoader /></WithLayout>
   }
 
   // Not subscribed yet?
@@ -84,6 +83,5 @@ console.log(premiumFeed);
     )
   }
 
-  // Fallback error / empty state
   return <WithLayout headerBgColor={theme.colors.primary}><PremiumFeedError message="No premium content available." /></WithLayout>
 }
