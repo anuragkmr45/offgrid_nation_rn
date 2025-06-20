@@ -2,12 +2,12 @@ import { theme } from '@/constants/theme'
 import { Ionicons } from '@expo/vector-icons'
 import React, { useState } from 'react'
 import {
-    Image,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Image,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native'
 
 interface Props {
@@ -26,6 +26,7 @@ export const ProfileHeader: React.FC<Props> = ({
   onAvatarEdit, onFieldEdit,
 }) => {
   const [showFullBio, setShowFullBio] = useState(false)
+
   const displayedBio =
     bio.length > 50 && !showFullBio ? bio.slice(0,50) + '…' : bio
 
