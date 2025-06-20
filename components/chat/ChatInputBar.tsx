@@ -6,9 +6,10 @@ import { theme } from '../../constants/theme'
 
 export interface ChatInputBarProps {
   onSend: (text: string) => void
+  loading?: boolean
 }
 
-export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend }) => {
+export const ChatInputBar: React.FC<ChatInputBarProps> = ({ onSend, loading }) => {
   const [text, setText] = useState('')
   const handleSend = () => {
     if (!text.trim()) return

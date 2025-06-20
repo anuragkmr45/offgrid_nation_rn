@@ -1,13 +1,43 @@
+// app.config.js
 import 'dotenv/config';
 
 export default {
   expo: {
-    name: "Offgrid Nation",
-    slug: "offgrid-nation",
+    name: 'Offgrid Nation',
+    slug: 'offgrid-nation',
+    scheme: 'offgrid',
     version: '1.0.0',
-    "scheme": "offgrid",
-    // …copy any other fields you currently have in app.json…
+    orientation: 'portrait',
+    icon: './assets/images/icon.png',
+    userInterfaceStyle: 'automatic',
+    ios: { supportsTablet: true },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/images/adaptive-icon.png',
+        backgroundColor: '#ffffff',
+      },
+      edgeToEdgeEnabled: true,
+    },
+    web: {
+      bundler: 'metro',
+      output: 'static',
+      favicon: './assets/images/favicon.png',
+    },
+    plugins: [
+      'expo-router',
+      [
+        'expo-splash-screen',
+        {
+          image: './assets/images/splash-icon.png',
+          imageWidth: 200,
+          resizeMode: 'contain',
+          backgroundColor: '#ffffff',
+        },
+      ],
+    ],
+    experiments: { typedRoutes: true },
     extra: {
+      CHAT_SERVICE_URL: process.env.CHAT_SERVICE_URL,
       PUSHER_KEY: process.env.PUSHER_KEY,
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
     },

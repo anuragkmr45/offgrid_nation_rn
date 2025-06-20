@@ -1,50 +1,56 @@
 // components/search/AccountCard.tsx
-import { FollowUnfollow } from "@/components/common/FollowUnfollow";
-import { theme } from '@/constants/theme';
-import { useRouter } from 'expo-router';
-import React from 'react';
+import { theme } from '@/constants/theme'
+import { useSocial } from '@/features/social/hooks/useSocial'
+import React, { useState } from 'react'
 import {
-    Image,
     StyleSheet,
     Text,
-    TouchableOpacity,
-    View,
-} from 'react-native';
+    TouchableOpacity
+} from 'react-native'
+import Toast from 'react-native-toast-message'
 
-export interface AccountCardProps {
-    avatarUrl: string
-    fullName: string
-    handle: string   // e.g. "@johndoe"
+export interface FollowUnfollowProps {
+    handle: string
     isFollowing?: boolean
-    onToggleFollow?: (newState: boolean) => void
 }
 
-export const AccountCard: React.FC<AccountCardProps> = ({
-    avatarUrl,
-    fullName,
-    handle,
-    isFollowing: initial = false,
-    onToggleFollow,
+export const FollowUnfollow: React.FC<FollowUnfollowProps> = ({
+    isFollowing: initial = false,handle
 }) => {
-    const router = useRouter()
-    const username = handle.startsWith('@') ? handle.slice(1) : handle;
+    const [isFollowing, setIsFollowing] = useState(initial)
+    const { followUser, isFollowLoading } = useSocial()
+
+    const toggleFollow = async () => {
+        const nextState = !isFollowing
+        // optimistic UI update
+        setIsFollowing(nextState)
+
+        try {
+            await followUser(handle).unwrap()
+            Toast.show({type: "success", text1: `Follow/Unfollow ${handle} succefully` })
+        } catch (err: any) {
+            const error = err?.data?.error || `Error while toggle follow`
+            setIsFollowing(!nextState)
+            Toast.show({type: "error", text1: error })
+        }
+    }
 
     return (
-        <View style={styles.card}>
-            <View style={styles.leftSection}>
-                <TouchableOpacity
-                    onPress={() => router.push(`/root/profile/${handle}`)}
-                    style={styles.profileInfo}
-                >
-                    <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-                    <View style={styles.textContainer}>
-                        <Text style={styles.fullName}>{fullName}</Text>
-                        <Text style={styles.handle}>{handle}</Text>
-                    </View>
-                </TouchableOpacity>
-            </View>
-            <FollowUnfollow handle={username} isFollowing={initial} />
-        </View>
+        <TouchableOpacity
+            onPress={toggleFollow}
+            style={[
+                styles.followButton,
+                isFollowing && styles.followingButton
+            ]}
+            activeOpacity={0.7}
+        >
+            <Text style={[
+                styles.followText,
+                isFollowing && styles.followingText
+            ]}>
+                {isFollowing ? 'Following' : 'Follow'}
+            </Text>
+        </TouchableOpacity>
     )
 }
 
