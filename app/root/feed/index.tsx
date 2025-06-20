@@ -22,13 +22,17 @@ export default function FeedScreen() {
   const renderItem: ListRenderItem<FeedPost> = useCallback(
     ({ item }) => {
       const post: PostType = {
+        postId: item._id,
         user: {
-          avatar:   item.userId.profilePicture,
+          avatar: item.userId.profilePicture,
           username: item.userId.username,
         },
         timestamp: timeAgo(item.createdAt),
-        media:     item.media.map((url, i) => ({ id: `${item._id}-${i}`, url })),
-        caption:   item.content,
+        media: item.media.map((url, i) => ({ id: `${item._id}-${i}`, url })),
+        caption: item.content,
+        isLiked: item.isLiked,
+        commentsCount: item.commentsCount,
+        likesCount: item.likesCount,
       };
       return <PostCard post={post} />;
     },
@@ -69,11 +73,11 @@ export default function FeedScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding:         16,
+    padding: 16,
     backgroundColor: theme.colors.background,
   },
   loader: {
     marginVertical: 16,
-    alignItems:     'center',
+    alignItems: 'center',
   },
 });

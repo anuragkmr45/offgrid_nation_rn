@@ -1,102 +1,112 @@
 import { theme } from '@/constants/theme'
 import React, { useState } from 'react'
-import {
-    Dimensions,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native'
-import { SceneMap, TabView } from 'react-native-tab-view'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { FollowersList } from './FollowersList'
 import { PostsGrid } from './PostsGrid'
 
 interface Props {
+  followerCount: number
+  followingCount: number
+  postCount: number
   followers: any[]
   following: any[]
-  posts:     any[]
-  onUserPress: (username:string)=>void
-  onPostPress: (id:string)=>void
+  posts: any[]
+  onUserPress: (username: string) => void
+  onPostPress: (id: string) => void
 }
 
 export const ProfileTabs: React.FC<Props> = ({
-  followers, following, posts,
-  onUserPress, onPostPress,
+  followerCount,
+  followingCount,
+  postCount,
+  followers,
+  following,
+  posts,
+  onUserPress,
+  onPostPress,
 }) => {
-  const layout = Dimensions.get('window')
-  const [index, setIndex] = useState(0)
-  const routes = [
-    { key:'following', title:`Following ${following.length}` },
-    { key:'posts',     title:`Posts ${posts.length}` },
-    { key:'followers', title:`Followers ${followers.length}` },
-  ]
+  const [activeTab, setActiveTab] = useState<'following' | 'posts' | 'followers'>('following')
 
-  const renderScene = SceneMap({
-    following: () => <FollowersList data={following} onUserPress={onUserPress} />,
-    posts:     () => <PostsGrid     data={posts}     onPostPress={onPostPress} />,
-    followers: () => <FollowersList data={followers} onUserPress={onUserPress} />,
-  })
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'following':
+        return <FollowersList data={following} />
+      case 'posts':
+        return <PostsGrid data={posts} onPostPress={onPostPress} />
+      case 'followers':
+        return <FollowersList data={followers} />
+      default:
+        return <Text style={styles.empty}>Invalid tab</Text>
+    }
+  }
 
   return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={setIndex}
-      initialLayout={{ width: layout.width }}
-      renderTabBar={props => {
-        return (
-          <View style={styles.tabBarContainer}>
-            {props.navigationState.routes.map((route, idx) => {
-              const active = idx === props.navigationState.index
-              return (
-                <TouchableOpacity
-                  key={route.key}
-                  style={styles.tabItem}
-                  activeOpacity={0.7}
-                  onPress={() => props.jumpTo(route.key)}
-                >
-                  <Text
-                    style={[
-                      styles.tabLabel,
-                      active ? styles.tabLabelActive : null,
-                    ]}
-                  >
-                    {route.title}
-                  </Text>
-                  {active && <View style={styles.indicator} />}
-                </TouchableOpacity>
-              )
-            })}
-          </View>
-        )
-      }}
-    />
+    <View style={{ flex: 1 }}>
+      <View style={styles.tabBar}>
+        <TabButton
+          title={`Following (${following.length})`}
+          active={activeTab === 'following'}
+          onPress={() => setActiveTab('following')}
+        />
+        <TabButton
+          title={`Posts (${posts.length})`}
+          active={activeTab === 'posts'}
+          onPress={() => setActiveTab('posts')}
+        />
+        <TabButton
+          title={`Followers (${followers.length})`}
+          active={activeTab === 'followers'}
+          onPress={() => setActiveTab('followers')}
+        />
+      </View>
+      <View style={styles.tabContent}>
+        {renderTabContent()}
+      </View>
+    </View>
   )
 }
 
+const TabButton = ({ title, active, onPress }: { title: string; active: boolean; onPress: () => void }) => (
+  <TouchableOpacity onPress={onPress} style={styles.tabButton}>
+    <Text style={[styles.tabText, active && styles.tabTextActive]}>{title}</Text>
+    {active && <View style={styles.activeIndicator} />}
+  </TouchableOpacity>
+)
+
 const styles = StyleSheet.create({
-  tabBarContainer: {
-    flexDirection:   'row',
+  tabBar: {
+    flexDirection: 'row',
     backgroundColor: theme.colors.primary,
+    justifyContent: 'space-around',
   },
-  tabItem: {
-    flex:            1,
-    alignItems:      'center',
-    paddingVertical: 12,
+  tabButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    flex: 1,
   },
-  tabLabel: {
-    fontSize:   theme.fontSizes.bodyMedium,
-    color:      theme.colors.background,
-    fontWeight: "600",
+  tabText: {
+    color: theme.colors.background,
+    fontSize: theme.fontSizes.bodyMedium,
   },
-  tabLabelActive: {
-    fontWeight: "700",
+  tabTextActive: {
+    fontWeight: 'bold',
   },
-  indicator: {
-    marginTop:     4,
-    height:        3,
-    width:         '60%',
+  activeIndicator: {
+    marginTop: 6,
+    height: 3,
+    width: '60%',
     backgroundColor: theme.colors.background,
-    borderRadius:  2,
+    borderRadius: 2,
+  },
+  tabContent: {
+    flex: 1,
+    paddingTop: 8,
+    backgroundColor: theme.colors.primary,
+    minHeight: "100%"
+  },
+  empty: {
+    textAlign: 'center',
+    marginTop: 16,
+    color: theme.colors.textSecondary,
   },
 })

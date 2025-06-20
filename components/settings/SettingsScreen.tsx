@@ -30,7 +30,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'person-circle-outline' as const,
       title: 'Profiles',
       subtitle: 'Manage your connected experience and profile setups here.',
-      onPress: () => console.log('Go to Profiles'),
+      onPress: () => {router.push('/root/profile/ProfileScreen')},
     },
     {
       key: 'privacy',
@@ -44,7 +44,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'notifications-outline' as const,
       title: 'Notifications',
       subtitle: 'Messages, likes, following & followers',
-      onPress: () => console.log('Go to Notifications'),
+      onPress: () => {router.push('/root/settings/Notifications')},
     },
     {
       key: 'language',

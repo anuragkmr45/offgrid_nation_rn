@@ -41,7 +41,7 @@ export const MarketplaceHeader: React.FC<MarketplaceHeaderProps> = ({
     <Text style={styles.title}>{title}</Text>
 
     {/* Profile avatar/icon */}
-    {onProfilePress && <TouchableOpacity onPress={onProfilePress} style={styles.iconButton}>
+   {onProfilePress && <TouchableOpacity onPress={onProfilePress} style={styles.iconButton}>
       <Ionicons
         name="person-circle-outline"
         size={28}
