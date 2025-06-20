@@ -180,8 +180,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       </View>
 
       <CommentModal postId={post.postId} visible={isCommentVisible} onClose={() => setCommentVisible(false)} />
-      <ShareModal visible={isShareVisible} onClose={() => setShareVisible(false)} />
-
+      <ShareModal
+        visible={isShareVisible}
+        onClose={() => setShareVisible(false)}
+        mediaUrl={post.media[0]?.url || ''}
+        content={post.caption}
+      />
     </View>
   )
 }

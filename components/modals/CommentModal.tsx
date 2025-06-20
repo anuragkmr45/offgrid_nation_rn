@@ -1,6 +1,7 @@
 import { theme } from '@/constants/theme';
 import { useComment } from '@/features/content/comment/hooks/useComment';
 import { timeAgo } from '@/utils/timeAgo';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,6 +27,7 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [commentText, setCommentText] = useState('');
   const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
+  const router = useRouter();
 
   const {
     addComment,
@@ -100,7 +102,9 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
               return (
                 <View style={{ padding: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Image source={{ uri: item.userId.profilePicture }} style={styles.avatar} />
+                    <TouchableOpacity onPress={() => router.push(`/root/profile/${item.userId.username}`)}>
+                      <Image source={{ uri: item.userId.profilePicture }} style={styles.avatar} />
+                    </TouchableOpacity>
                     <View style={{ marginLeft: 10 }}>
                       <Text style={{ fontWeight: 'bold' }}>{item.userId.fullName || item.userId.username}</Text>
                       <Text>{item.content}</Text>
@@ -181,7 +185,7 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
 const styles = StyleSheet.create({
   modal: { justifyContent: 'flex-end', margin: 0 },
   container: {
-    height: '70%',
+    height: '75%',
     backgroundColor: 'white',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,

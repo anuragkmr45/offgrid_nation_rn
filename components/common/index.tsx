@@ -69,11 +69,12 @@ export interface ModalProps {
   title?: string
   children: React.ReactNode
   onClose: () => void
+  style: any
 }
-export const Modal: React.FC<ModalProps> = ({ visible, title, children, onClose }) => (
+export const CustomModal: React.FC<ModalProps> = ({ visible, title, children, onClose, style }) => (
   <RNModal transparent visible={visible} animationType="fade">
     <BlurView intensity={50} style={styles.modalOverlay}>
-      <View style={[styles.modalContent, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.modalContent,style, { backgroundColor: theme.colors.background }]}>
         {title && <Text style={styles.modalTitle}>{title}</Text>}
         <View>{children}</View>
         <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -193,10 +194,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalContent: {
-    width: '80%',
-    borderRadius: 12,
-    padding: 16,
-  },
+  width: '94%', // ⬅️ Make it almost full width
+  maxHeight: '80%', // ⬅️ Allow more vertical height
+  borderRadius: 16,
+  padding: 16,
+  backgroundColor: theme.colors.background,
+},
+
   modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12, color: theme.colors.textPrimary },
   modalClose: { marginTop: 16, alignSelf: 'flex-end' },
   searchContainer: {
@@ -224,4 +228,5 @@ const styles = StyleSheet.create({
   carouselItem: { width, justifyContent: 'center', alignItems: 'center' },
   image: { width: width - 32, height: 280, borderRadius: 8 },
   video: { width: width - 32, height: 280, borderRadius: 8 },
+  
 })
