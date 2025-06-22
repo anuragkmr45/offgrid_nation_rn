@@ -24,6 +24,7 @@ export default function UserProfileRoute() {
       </View>
     )
   }
+console.log({user});
 
   if (!user) {
     return (

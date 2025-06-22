@@ -14,7 +14,7 @@ import {
 export interface AccountCardProps {
     avatarUrl: string
     fullName: string
-    handle: string   // e.g. "@johndoe"
+    handle: string
     isFollowing?: boolean
     onToggleFollow?: (newState: boolean) => void
 }
@@ -33,7 +33,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
         <View style={styles.card}>
             <View style={styles.leftSection}>
                 <TouchableOpacity
-                    onPress={() => router.push(`/root/profile/${handle}`)}
+                    onPress={() => router.push(`/root/profile/${username}`)}
                     style={styles.profileInfo}
                 >
                     <Image source={{ uri: avatarUrl }} style={styles.avatar} />

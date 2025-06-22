@@ -46,6 +46,7 @@ export default function MarketplaceScreen() {
 
   // Store coords so RTK Query can fire
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
+console.log({coords});
 
   // RTK Query for products; skips until coords != null
   const {
@@ -113,7 +114,7 @@ export default function MarketplaceScreen() {
 
   return (
     <SafeAreaView>
-      <StatusBar backgroundColor={theme.colors.background} animated />
+      <StatusBar backgroundColor={theme.colors.background} animated barStyle={'dark-content'} />
       <MarketplaceHeader
         onBack={() => router.back()}
         onProfilePress={() => router.push('/root/profile/ProfileScreen')}

@@ -26,16 +26,22 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
 
 const CONDITION_OPTIONS = [
-  { label: 'New', value: 'new' },
-  { label: 'Used-Like New', value: 'like_new' },
-  { label: 'Used-Good', value: 'good' },
-  { label: 'Others', value: 'others' },
+  { label: 'New', value: 'New' },
+  { label: 'Used-Like New', value: 'Used - Like New' },
+  { label: 'Used-Good', value: 'Used - Good' },
+  { label: 'Others', value: 'Other' },
 ]
+
+const getMimeType = (uri: string) => {
+  if (uri.endsWith('.png')) return 'image/png'
+  if (uri.endsWith('.jpg') || uri.endsWith('.jpeg')) return 'image/jpeg'
+  if (uri.endsWith('.heic')) return 'image/heic'
+  return 'image/jpeg'
+}
 
 export default function AddProductScreen() {
   const router = useRouter()
 
-  // form state
   const [photos, setPhotos] = useState<string[]>([])
   const [title, setTitle] = useState('')
   const [price, setPrice] = useState('')
@@ -43,7 +49,6 @@ export default function AddProductScreen() {
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
 
-  // category modal state
   const [isCatSheetVisible, setCatSheetVisible] = useState(false)
   const [catQuery, setCatQuery] = useState('')
 
@@ -85,34 +90,32 @@ export default function AddProductScreen() {
       formData.append('pictures', {
         uri,
         name: `photo_${idx}.jpg`,
-        type: 'image/jpeg',
-      } as any)
+        type: getMimeType(uri),
+      } as unknown as Blob)
     })
     formData.append('title', title)
-    formData.append('price', price)
+    formData.append('price', price.replace(/[^0-9.]/g, '')) // strip $₹ etc
     formData.append('condition', condition)
     formData.append('description', description)
-    formData.append('category', category)
+    formData.append('category', category) // send _id if required
     formData.append('lng', loc.coords.longitude.toString())
     formData.append('lat', loc.coords.latitude.toString())
 
     try {
-      await createProduct(formData).unwrap()
+      // await createProduct(formData).unwrap()
       console.log(formData);
       
-      Toast.show({type: "success", text1: "Prodcur added succeffully"})
+      Toast.show({ type: 'success', text1: 'Product added successfully' })
       // router.back()
     } catch (err: any) {
-      const error = err?.data?.error || "Erro whiel pusblishing product"
-      console.log({error});
-      
-      Toast.show({type: "error", text1: error})
+      const error = err?.data?.error || 'Error while publishing product'
+      console.log({ error })
+      Toast.show({ type: 'error', text1: error })
     }
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
@@ -123,14 +126,12 @@ export default function AddProductScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Body + Footer */}
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.select({ ios: 0, android: 80 })}
       >
         <ScrollView contentContainerStyle={styles.content}>
-          {/* Photos carousel */}
           {photos.length ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
               {photos.map((uri, idx) => (
@@ -150,11 +151,9 @@ export default function AddProductScreen() {
           )}
           <Text style={styles.photoCount}>Photos: {photos.length}/10</Text>
 
-          {/* Title, Price */}
           <InputField placeholder="Title" value={title} onChangeText={setTitle} />
           <InputField placeholder="Price" value={price} onChangeText={setPrice} keyboardType="numeric" />
 
-          {/* Category (opens modal) */}
           <TouchableOpacity
             onPress={() => setCatSheetVisible(true)}
             style={[styles.input, { justifyContent: 'center' }]}
@@ -168,7 +167,6 @@ export default function AddProductScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Condition */}
           <Text style={styles.sectionLabel}>Condition</Text>
           <View style={styles.conditionRow}>
             {CONDITION_OPTIONS.map(opt => (
@@ -193,7 +191,6 @@ export default function AddProductScreen() {
             ))}
           </View>
 
-          {/* Description */}
           <Text style={styles.sectionLabel}>Description</Text>
           <TextInput
             style={styles.textArea}
@@ -208,13 +205,11 @@ export default function AddProductScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* Publish Button */}
         <View style={styles.footer}>
           <Button text={submitting ? 'Publishing...' : 'Publish'} onPress={handlePublish} disabled={submitting} />
         </View>
       </KeyboardAvoidingView>
 
-      {/* Category Selection Modal */}
       <BottomSheet
         visible={isCatSheetVisible}
         onClose={() => {
@@ -224,7 +219,6 @@ export default function AddProductScreen() {
         height="60%"
       >
         <SearchBar value={catQuery} onChangeText={setCatQuery} placeholder="Search categories" />
-
         {isCatsLoading ? (
           <ActivityIndicator style={{ marginTop: 20 }} />
         ) : catsError ? (
@@ -237,7 +231,7 @@ export default function AddProductScreen() {
                 style={sheetStyles.catRow}
                 activeOpacity={0.7}
                 onPress={() => {
-                  setCategory(cat.title)
+                  setCategory(cat.title) // send _id for backend
                   setCatSheetVisible(false)
                   setCatQuery('')
                 }}
@@ -252,6 +246,7 @@ export default function AddProductScreen() {
     </SafeAreaView>
   )
 }
+
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
