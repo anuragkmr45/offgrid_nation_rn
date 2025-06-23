@@ -1,3 +1,4 @@
+// features\subscription\types.ts
 export interface CreateCheckoutSessionResponse {
   url: string;
 }

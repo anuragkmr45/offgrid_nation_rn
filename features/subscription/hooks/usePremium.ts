@@ -11,6 +11,7 @@ import type {
 export interface UsePremiumResult {
   premiumFeed?: PremiumFeedResponse
   premiumFeedLoading: boolean
+  premiumFeedFetching: boolean
   refetchPremiumFeed: () => void
   initiatePayment: () => Promise<string>
   checkoutData?: CreateCheckoutSessionResponse
@@ -22,8 +23,9 @@ export const usePremium = (): UsePremiumResult => {
   const {
     data: premiumFeed,
     isLoading: premiumFeedLoading,
+    isFetching: premiumFeedFetching,   
     refetch: refetchPremiumFeed,
-  } = useGetPremiumFeedQuery()
+  } = useGetPremiumFeedQuery(undefined, { refetchOnMountOrArgChange: true, refetchOnFocus: true, })
 
   const [
     createCheckoutSession,
@@ -39,6 +41,7 @@ export const usePremium = (): UsePremiumResult => {
     premiumFeed,
     premiumFeedLoading,
     refetchPremiumFeed,
+    premiumFeedFetching,
     initiatePayment,
     checkoutData,
     checkoutLoading,

@@ -7,8 +7,8 @@ import { PremiumPostWidget } from '@/components/premium/PremiumPostWidget'
 import { PremiumSubscribeOverlay } from '@/components/premium/PremiumSubscribeOverlay'
 import { theme } from '@/constants/theme'
 import { usePremium } from '@/features/subscription/hooks/usePremium'
-import { useRouter } from 'expo-router'
-import React, { useEffect } from 'react'
+import { useFocusEffect, useRouter } from 'expo-router'
+import React, { useCallback, useEffect } from 'react'
 import { FlatList, StatusBar, View } from 'react-native'
 import Toast from 'react-native-toast-message'
 
@@ -16,13 +16,19 @@ export default function PremiumScreen() {
   const router = useRouter()
   const {
     premiumFeed,
-    premiumFeedLoading,
+    premiumFeedLoading,      // initial mount
+    premiumFeedFetching,     // any in-flight refetch
     refetchPremiumFeed,
     initiatePayment,
     checkoutError,
     checkoutLoading,
-  } = usePremium()
-  console.log({premiumFeed, });
+  } = usePremium();
+
+  useFocusEffect(
+    useCallback(() => {
+      refetchPremiumFeed();
+    }, [])
+  );
 
   // Show checkout errors
   useEffect(() => {
@@ -40,7 +46,13 @@ export default function PremiumScreen() {
     return <WithLayout><PremiumFeedLoader /></WithLayout>
   }
 
-  
+  if (premiumFeedLoading || premiumFeedFetching) {
+    return (
+      <WithLayout>
+        <PremiumFeedLoader />
+      </WithLayout>
+    );
+  }
 
   // Not subscribed yet?
   if (premiumFeed?.isPremium === false) {
@@ -61,24 +73,23 @@ export default function PremiumScreen() {
   // Subscribed and have posts
   if (premiumFeed?.posts) {
     return (
-      <WithLayout headerBgColor={theme.colors.primary}>
-        <StatusBar backgroundColor={theme.colors.primary} animated barStyle={'light-content'} />
-        <View style={{ backgroundColor: theme.colors.primary , flex: 1 }}>
+      <WithLayout headerBgColor={"#Fbbc06"}>
+        <StatusBar backgroundColor={"#Fbbc06"} animated barStyle="dark-content" />
+        <View style={{ backgroundColor: "#Fbbc06", flex: 1, paddingBottom: 30 }}>
           <FlatList
-            data={premiumFeed?.posts}
+            data={premiumFeed.posts}
             keyExtractor={(post) => post._id}
             contentContainerStyle={{ padding: 12 }}
+            refreshing={premiumFeedLoading}
+            onRefresh={refetchPremiumFeed}
             renderItem={({ item }) => (
               <PremiumPostWidget
                 post={item}
-                onLikeTap={() => {/* TODO: call like mutation */ }}
-                onCommentTap={() => {/* TODO: open comments */ }}
-                onShareTap={() => {/* TODO: share post */ }}
-                onProfileTap={() => {/* TODO: navigate to profile */ }}
+                onProfileTap={() => {
+                  // TODO: navigate to user's profile
+                }}
               />
             )}
-            onRefresh={refetchPremiumFeed}
-            refreshing={premiumFeedLoading}
           />
         </View>
       </WithLayout>

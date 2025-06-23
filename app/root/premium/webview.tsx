@@ -1,11 +1,11 @@
 // app/premium/webview.tsx
 
-import { theme } from '@/constants/theme'
-import { useLocalSearchParams, useRouter } from 'expo-router'
-import React, { useRef } from 'react'
-import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { WebView } from 'react-native-webview'
+import { theme } from '@/constants/theme';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useRef } from 'react';
+import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { WebView, WebViewNavigation } from 'react-native-webview';
 
 export default function PremiumWebView() {
   const webviewRef = useRef<WebView>(null)
@@ -22,12 +22,29 @@ export default function PremiumWebView() {
     url = url[0]
   }
 
-  console.log('Loading checkout URL:', url)
+  const onShouldStartLoadWithRequest = (event: WebViewNavigation) => {
+    const { url: nextUrl } = event;
+
+    // Handle your custom scheme
+    if (nextUrl.startsWith('offgrid://stripe/success')) {
+      // navigate to your premium feed
+      router.replace('/root/premium');
+      return false;  // prevent the WebView from loading this URL
+    }
+    if (nextUrl.startsWith('offgrid://stripe/cancel')) {
+      // navigate back or to fallback
+      router.replace('/root/premium');
+      return false;
+    }
+
+    // Allow all other navigations (checkout page, assets, etc.)
+    return true;
+  };
 
   const handleNavStateChange = (navState: any) => {
     const nextUrl = navState.url as string
     if (nextUrl.includes('/root/premium/success')) {
-      router.replace('root/premium/success')
+      router.replace('/root/premium/success')
     } else if (nextUrl.includes('/root/premium/failure')) {
       router.replace('/root/premium/failure')
     }
@@ -41,6 +58,8 @@ export default function PremiumWebView() {
         source={{ uri: url }}
         style={styles.webview}
         onNavigationStateChange={handleNavStateChange}
+        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        originWhitelist={['*']}
         startInLoadingState
         renderLoading={() => (
           <View style={styles.loader}>
