@@ -2,6 +2,7 @@
 import { useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import {
+  authApi,
   useCompleteRegistrationMutation,
   useForgotPasswordMutation,
   useLazyCheckUsernameQuery,
@@ -121,6 +122,7 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     dispatch(logoutAction())
+    dispatch(authApi.util.resetApiState())
   }, [dispatch])
 
   return {

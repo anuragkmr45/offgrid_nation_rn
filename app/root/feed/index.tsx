@@ -67,6 +67,7 @@ export default function FeedScreen() {
         }
         ListFooterComponentStyle={{ paddingBottom: 16 }}
       />
+      <View style={{marginBottom: 30}} />
     </WithLayout>
   );
 }

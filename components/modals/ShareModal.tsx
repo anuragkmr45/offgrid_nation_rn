@@ -1,22 +1,25 @@
 // src/components/modals/ShareModal.tsx
 
+import { useSendMessageMutation } from '@/features/chat/api/chatApi';
 import * as Clipboard from 'expo-clipboard';
 import React, { useState } from 'react';
 import { Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Modal from 'react-native-modal';
 import Toast from 'react-native-toast-message';
-import { CustomModal, SearchBar } from '../common';
+import { ChatUser } from '../chat/UserCard';
+import { UserSearchModal } from '../common/UserSearchModal';
 
 interface ShareModalProps {
   visible: boolean;
   onClose: () => void;
   mediaUrl: string;
   content: string;
+  postId: string
 }
 
-export const ShareModal: React.FC<ShareModalProps> = ({ visible, onClose, mediaUrl, content }) => {
+export const ShareModal: React.FC<ShareModalProps> = ({ visible, onClose, mediaUrl, content, postId }) => {
   const [isChatModalVisible, setChatModalVisible] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [sendMessage, { isLoading: isSending }] = useSendMessageMutation()
 
   const handleNativeShare = async () => {
     try {
@@ -44,6 +47,25 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, onClose, mediaU
     setChatModalVisible(false);
   };
 
+  const handleSelectUser = async (user: ChatUser) => {
+    try {
+      await sendMessage({
+        recipient: user._id,
+        actionType: 'post',
+        postId,
+        conversationId: user.conversationId ?? undefined,
+      }).unwrap()
+
+      Toast.show({ type: 'success', text1: 'Shared to chat!' })
+    } catch (err) {
+      console.error('Error sharing to chat:', err)
+      Toast.show({ type: 'error', text1: 'Failed to share' })
+    } finally {
+      setChatModalVisible(false)
+      onClose()
+    }
+  }
+
 
   return (
     <>
@@ -67,14 +89,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({ visible, onClose, mediaU
           </TouchableOpacity>
         </View>
       </Modal>
-      <CustomModal visible={isChatModalVisible} title="Share to Chat" onClose={handleCloseChatModal} style={{ height: 260 }}>
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search friends..."
-        />
-        {/* TODO: Render filtered chat user list here */}
-      </CustomModal>
+      <UserSearchModal
+        visible={isChatModalVisible}
+        onClose={handleCloseChatModal}
+        onSelect={handleSelectUser}
+        placeholder="Search friends..."
+        height="50%"
+      />
     </>
   );
 };

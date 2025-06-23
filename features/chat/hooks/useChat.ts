@@ -66,5 +66,6 @@ export const useChatMessages = (conversationId: string) => {
     sendMessage,
     sending,
     loadMore,
+    setAllMessages,
   };
 };

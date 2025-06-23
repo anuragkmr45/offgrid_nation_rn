@@ -48,6 +48,7 @@ export default function AddProductScreen() {
   const [condition, setCondition] = useState<string>()
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
+  const [categoryId, setCategoryId] = useState('')
 
   const [isCatSheetVisible, setCatSheetVisible] = useState(false)
   const [catQuery, setCatQuery] = useState('')
@@ -97,16 +98,18 @@ export default function AddProductScreen() {
     formData.append('price', price.replace(/[^0-9.]/g, '')) // strip $₹ etc
     formData.append('condition', condition)
     formData.append('description', description)
-    formData.append('category', category) // send _id if required
+    formData.append('category', categoryId) // send _id if required
     formData.append('lng', loc.coords.longitude.toString())
     formData.append('lat', loc.coords.latitude.toString())
 
     try {
-      // await createProduct(formData).unwrap()
+      await createProduct(formData).unwrap()
       console.log(formData);
       
       Toast.show({ type: 'success', text1: 'Product added successfully' })
-      // router.back()
+      setTimeout(() => {
+        router.back()
+      }, 1600);
     } catch (err: any) {
       const error = err?.data?.error || 'Error while publishing product'
       console.log({ error })
@@ -231,7 +234,8 @@ export default function AddProductScreen() {
                 style={sheetStyles.catRow}
                 activeOpacity={0.7}
                 onPress={() => {
-                  setCategory(cat.title) // send _id for backend
+                  setCategory(cat.title)
+                  setCategoryId(cat._id)
                   setCatSheetVisible(false)
                   setCatQuery('')
                 }}

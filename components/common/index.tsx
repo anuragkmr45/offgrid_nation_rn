@@ -90,19 +90,23 @@ export interface SearchBarProps {
   value: string
   onChangeText: (text: string) => void
   onSubmitEditing?: () => void
+  onFocus?: () => void;
   placeholder?: string
   style?: any
+  editable?: boolean
 }
-export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSubmitEditing, placeholder, style }) => (
+export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSubmitEditing,onFocus, placeholder, style, editable = true }) => (
   <BlurView intensity={20} style={styles.searchContainer}>
     <TextInput
       value={value}
       onChangeText={onChangeText}
       onSubmitEditing={onSubmitEditing}
+      onFocus={onFocus} 
       placeholder={placeholder || 'Search...'}
       placeholderTextColor={theme.colors.textSecondary}
       style={[styles.searchInput,style, { color: theme.colors.textPrimary }]}
-      returnKeyType="search"
+      returnKeyType="default"
+      editable={editable}
     />
   </BlurView>
 )

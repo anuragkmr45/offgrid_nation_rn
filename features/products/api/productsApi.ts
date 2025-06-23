@@ -1,5 +1,3 @@
-// src/features/products/api/productsApi.ts
-
 import { baseQueryWithLogoutOn401 } from '@/core/api/baseQueryWithLogoutOn401';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import {
@@ -8,8 +6,17 @@ import {
   Product,
   RatingResponse,
   RatingsMap,
-  SearchParams
+  SearchParams,
 } from '../types';
+
+type ProductListQueryParams = {
+  latitude?: number;
+  longitude?: number;
+  limit?: number;
+  cursor?: string;
+  sort?: string;
+  category?: string;
+};
 
 export const productsApi = createApi({
   reducerPath: 'productsApi',
@@ -30,18 +37,26 @@ export const productsApi = createApi({
       providesTags: (result, error, id) => [{ type: 'Product', id }],
     }),
 
-    listProducts: build.query<{ items: Product[]; nextCursor?: string }, {
-      latitude: number;
-      longitude: number;
-      limit?: number;
-      cursor?: string;
-      sort?: string;
-      category?: string;
-    }>({
-      query: ({ latitude, longitude, limit = 20, cursor, sort = 'relevance', category }) => ({
-        url: '/products',
-        params: { latitude, longitude, limit, cursor, sort, category },
-      }),
+    listProducts: build.query<{ items: Product[]; nextCursor?: string }, ProductListQueryParams>({
+      query: ({ latitude, longitude, limit = 20, cursor, sort = 'relevance', category }) => {
+        const params: Record<string, any> = {
+          limit,
+          sort,
+          cursor,
+          category,
+        };
+
+        if (latitude !== undefined) params.latitude = latitude;
+        if (longitude !== undefined) params.longitude = longitude;
+
+        return {
+          url: '/products',
+          params,
+        };
+      },
+      onQueryStarted: async (arg) => {
+        console.log('[API Triggered] listProducts with params:', arg);
+      },
       providesTags: ['Products'],
     }),
 
@@ -99,7 +114,13 @@ export const productsApi = createApi({
       ],
     }),
 
-    listByUsername: build.query<Product[], { username: string; status?: string; category?: string; page?: number; limit?: number }>({
+    listByUsername: build.query<Product[], {
+      username: string;
+      status?: string;
+      category?: string;
+      page?: number;
+      limit?: number;
+    }>({
       query: ({ username, ...params }) => ({
         url: `/products/user/${username}`,
         params,
@@ -126,24 +147,20 @@ export const productsApi = createApi({
       query: (productId) => `/ratings/${productId}`,
       providesTags: (r, e, id) => [{ type: 'Ratings', id }],
     }),
+
     listCategories: build.query<Category[], void>({
       async queryFn(_arg, _queryApi, _extraOptions, baseQuery) {
         const result = await baseQuery('/categories');
-        // if no categories exist, treat 404 as “empty list”
-        if (result.error?.status === 404) {
-          return { data: [] };
-        }
-        if (result.data) {
-          return { data: result.data as Category[] };
-        }
+        if (result.error?.status === 404) return { data: [] };
+        if (result.data) return { data: result.data as Category[] };
         return { error: result.error! };
       },
       providesTags: (result) =>
         result
           ? [
-            ...result.map((cat) => ({ type: 'Categories' as const, id: cat._id })),
-            { type: 'Categories', id: 'LIST' },
-          ]
+              ...result.map((cat) => ({ type: 'Categories' as const, id: cat._id })),
+              { type: 'Categories', id: 'LIST' },
+            ]
           : [{ type: 'Categories', id: 'LIST' }],
     }),
 

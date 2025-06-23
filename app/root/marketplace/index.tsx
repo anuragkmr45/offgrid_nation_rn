@@ -46,7 +46,6 @@ export default function MarketplaceScreen() {
 
   // Store coords so RTK Query can fire
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
-console.log({coords});
 
   // RTK Query for products; skips until coords != null
   const {
@@ -57,7 +56,9 @@ console.log({coords});
   } = useListProductsQuery(coords ?? skipToken)
 
   // extract items array
-  const products: Product[] = productsResponse?.items ?? []
+  const products: Product[] = productsResponse as any ?? []
+  console.log({ products });
+  console.log({ productsResponse });
 
   // Categories hook (unchanged)
   const {
@@ -77,6 +78,8 @@ console.log({coords});
     if (!granted) return
 
     const formatted = await getFormattedLocation()
+    console.log({ formatted });
+
     if (!formatted?.length) {
       console.warn('Invalid coordinates:', formatted)
       return
@@ -133,7 +136,12 @@ console.log({coords});
           <SectionHeader title="Today’s picks" location={readableLocation} />
 
           <ProductGrid
-            products={productsResponse}
+            products={(products ?? []).map((item) => ({
+              id: item._id,
+              title: item.title,
+              price: `$${item.price}`,
+              imageUrl: item.images?.[0] ?? 'https://via.placeholder.com/300x300?text=No+Image',
+            }))}
             onPress={(productId: string) =>
               router.push({
                 pathname: '/root/marketplace/ProductDetails',
@@ -141,6 +149,7 @@ console.log({coords});
               })
             }
           />
+
 
           {/* Sort Sheet */}
           <BottomSheet

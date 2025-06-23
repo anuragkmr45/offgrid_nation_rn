@@ -7,6 +7,7 @@ export interface ChatListItemProps {
   id: string
   avatarUrl: string
   name: string
+  username: string
   lastMessage: string
   timestamp: string
   unreadCount?: number
@@ -17,6 +18,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
   id,
   avatarUrl,
   name,
+  username,
   lastMessage,
   timestamp,
   unreadCount = 0,
@@ -26,7 +28,7 @@ export const ChatListItem: React.FC<ChatListItemProps> = ({
     <Image source={{ uri: avatarUrl }} style={styles.avatar} />
     <View style={styles.content}>
       <View style={styles.row}>
-        <Text style={styles.name}>{name}</Text>
+        <Text style={styles.name}>{name || username}</Text>
         <Text style={styles.time}>{timestamp}</Text>
       </View>
       <View style={styles.row}>

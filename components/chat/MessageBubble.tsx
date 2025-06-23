@@ -38,11 +38,21 @@ const styles = StyleSheet.create({
   },
   bubbleIncoming: {
     alignSelf: 'flex-start',
-    backgroundColor: theme.colors.primary,
+    backgroundColor: theme.colors.background,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   bubbleOutgoing: {
     alignSelf: 'flex-end',
     backgroundColor: theme.colors.primary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   textIncoming: {
     color: theme.colors.textPrimary,
@@ -52,7 +62,7 @@ const styles = StyleSheet.create({
   },
   time: {
     fontSize: 10,
-    color: theme.colors.textSecondary,
+    color: theme.colors.textPrimary,
     marginTop: 4,
     alignSelf: 'flex-end',
   },

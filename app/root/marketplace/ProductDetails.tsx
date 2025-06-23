@@ -73,7 +73,7 @@ export default function ProductDetailsScreen() {
   const handleChat = () => {
     if (!product) return
     router.push({
-      pathname: '/conversation',
+      pathname: '/root/chat/Conversation',
       params: {
         recipientId: product.owner.userId,
         recipientName: product.owner.username,
@@ -81,7 +81,7 @@ export default function ProductDetailsScreen() {
       },
     })
   }
-console.log({product});
+console.log({product, loading});
 
   if (loading) {
     return (

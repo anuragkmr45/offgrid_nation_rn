@@ -78,19 +78,18 @@ const MediaItemCard: React.FC<{ item: MediaItem }> = ({ item }) => {
 
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const router = useRouter()
-  const { likePost } = usePost();
+  const { likePost } = usePost()
 
   // -- Like/Dislike state & animation
   const [isLike, setIsLike] = useState(post.isLiked)
   const scaleAnim = useRef(new Animated.Value(1)).current
-  const [isCommentVisible, setCommentVisible] = useState(false);
-  const [isShareVisible, setShareVisible] = useState(false);
-  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false);
-  const CAPTION_LIMIT = 42;
-  const isCaptionLong = post.caption.length > CAPTION_LIMIT;
-  const displayedCaption = isCaptionExpanded ? post.caption : post.caption.slice(0, CAPTION_LIMIT);
-  const [likeCount, setLikeCount] = useState(post.likesCount);
-
+  const [isCommentVisible, setCommentVisible] = useState(false)
+  const [isShareVisible, setShareVisible] = useState(false)
+  const [isCaptionExpanded, setIsCaptionExpanded] = useState(false)
+  const CAPTION_LIMIT = 42
+  const isCaptionLong = post.caption.length > CAPTION_LIMIT
+  const displayedCaption = isCaptionExpanded ? post.caption : post.caption.slice(0, CAPTION_LIMIT)
+  const [likeCount, setLikeCount] = useState(post.likesCount)
 
   const toggleLike = async () => {
     Animated.sequence([
@@ -104,80 +103,87 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         duration: 100,
         useNativeDriver: true,
       }),
-    ]).start();
+    ]).start()
 
     try {
-      const response = await likePost({ postId: post.postId }).unwrap();
-      setIsLike(response.isLiked);
-      setLikeCount(response.likesCount);
+      const response = await likePost({ postId: post.postId }).unwrap()
+      setIsLike(response.isLiked)
+      setLikeCount(response.likesCount)
     } catch (error) {
-      console.error('Failed to toggle like:', error);
+      console.error('Failed to toggle like:', error)
     }
-  };
+  }
 
+  // dynamic container: fixed height only if media present
+  const containerStyle =
+    post.media.length > 0
+      ? [styles.card, { height: CARD_HEIGHT }]
+      : styles.card
 
   return (
-    <View style={[styles.card, { height: CARD_HEIGHT }]}>
+    <View style={containerStyle}>
       {/* ——— Header ——— */}
-      <TouchableOpacity style={styles.header} onPress={() => { router.push(`/root/profile/${post.user.username}`) }}>
+      <TouchableOpacity style={styles.header} onPress={() => router.push(`/root/profile/${post.user.username}`)}>
         <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
         <View style={styles.headerText}>
-          <Text style={styles.username}>{post.user.username || "offgrid user"}</Text>
-          <Text style={styles.timestamp}>{post.timestamp || ""}</Text>
+          <Text style={styles.username}>{post.user.username || 'offgrid user'}</Text>
+          <Text style={styles.timestamp}>{post.timestamp || ''}</Text>
         </View>
       </TouchableOpacity>
 
-      {/* ——— Media Carousel ——— */}
-      <FlatList
-        data={post.media}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={true}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MediaItemCard item={item} />}
-        style={styles.carousel}
-        contentContainerStyle={{ paddingBottom: 10 }}
-      />
+      {/* ——— Media Carousel or Text-only ——— */}
+      {post.media.length > 0 ? (
+        <FlatList
+          data={post.media}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <MediaItemCard item={item} />}
+          style={styles.carousel}
+          contentContainerStyle={{ paddingBottom: 10 }}
+        />
+      ) : (
+        <View style={styles.textOnlyContainer}>
+          <Text style={styles.textOnly}>{post.caption}</Text>
+        </View>
+      )}
 
       {/* ——— Actions Footer ——— */}
       <View style={styles.footer}>
-        {/* Like/Dislike toggle button */}
         <TouchableOpacity onPress={toggleLike} style={styles.actionButton}>
           <Animated.Image
             source={isLike ? likeIcon : dislikeIcon}
-            style={[styles.actionIcon, { transform: [{ scale: scaleAnim }] }]}
-          />
+            style={[styles.actionIcon, { transform: [{ scale: scaleAnim }] }]} />
           <Text>{likeCount}</Text>
         </TouchableOpacity>
 
-
-        {/* Comment button */}
         <TouchableOpacity style={styles.actionButton} onPress={() => setCommentVisible(true)}>
           <Image source={commentIcon} style={styles.actionIcon} />
           <Text>{post.commentsCount}</Text>
         </TouchableOpacity>
 
-        {/* Share button */}
         <TouchableOpacity style={styles.actionButton} onPress={() => setShareVisible(true)}>
           <Image source={shareIcon} style={styles.actionIcon} />
         </TouchableOpacity>
       </View>
 
       {/* ——— Caption ——— */}
-      <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
-        <Text style={styles.caption}>
-          {displayedCaption}
-          {(!isCaptionExpanded && isCaptionLong) ? '...' : ''}
-        </Text>
-
-        {isCaptionLong && (
-          <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
-            <Text style={styles.toggleText}>
-              {isCaptionExpanded ? 'Read less' : 'Read more'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {post.media.length > 0 && (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+          <Text style={styles.caption}>
+            {displayedCaption}
+            {(!isCaptionExpanded && isCaptionLong) ? '...' : ''}
+          </Text>
+          {isCaptionLong && (
+            <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
+              <Text style={styles.toggleText}>
+                {isCaptionExpanded ? 'Read less' : 'Read more'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       <CommentModal postId={post.postId} visible={isCommentVisible} onClose={() => setCommentVisible(false)} />
       <ShareModal
@@ -185,6 +191,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         onClose={() => setShareVisible(false)}
         mediaUrl={post.media[0]?.url || ''}
         content={post.caption}
+        postId={post.postId}
       />
     </View>
   )
@@ -216,7 +223,7 @@ const styles = StyleSheet.create({
   headerText: { marginLeft: 12 },
   username: {
     fontSize: theme.fontSizes.titleMedium,
-    fontWeight: "500",
+    fontWeight: '500',
     color: theme.colors.textPrimary,
   },
   timestamp: {
@@ -228,6 +235,19 @@ const styles = StyleSheet.create({
   carousel: { marginBottom: 12 },
   mediaContainer: { justifyContent: 'center', alignItems: 'center' },
   media: { width: '100%', height: '100%', borderRadius: theme.borderRadius },
+
+  textOnlyContainer: {
+    width: '100%',
+    padding: 16,
+    backgroundColor: '#f0f0f0',
+    borderRadius: theme.borderRadius,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  textOnly: {
+    fontSize: theme.fontSizes.bodyLarge,
+    color: theme.colors.textPrimary,
+  },
 
   footer: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 12 },
   actionButton: { marginRight: 20, flexDirection: 'row' },
@@ -246,5 +266,4 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     marginTop: 4,
   },
-
 })

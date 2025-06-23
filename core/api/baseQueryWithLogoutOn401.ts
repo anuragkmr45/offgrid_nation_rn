@@ -38,6 +38,7 @@
 //   return result
 // }
 
+
 // src/core/api/baseQueryWithLogoutOn401.ts
 import { logout } from '@/features/auth/slice/authSlice'
 import type { RootState } from '@/store/store'
@@ -46,6 +47,7 @@ import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 export const baseQuery = fetchBaseQuery({
   baseUrl: 'https://api.theoffgridnation.com',
+  // baseUrl: 'https://fc52-119-235-52-196.ngrok-free.app',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.accessToken
     if (token) {

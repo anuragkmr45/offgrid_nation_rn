@@ -14,9 +14,18 @@ import {
 } from '../api/productsApi';
 
 export const useProducts = (params: Parameters<typeof useListProductsQuery>[0]) => {
-  const { data, isLoading, refetch, error } = useListProductsQuery(params);
-  return { products: data?.items ?? [], nextCursor: data?.nextCursor, isLoading, error, refetch };
+  const { data, isLoading, isFetching, isSuccess, error, refetch } = useListProductsQuery(params);
+  return {
+    products: data?.items ?? [],
+    nextCursor: data?.nextCursor,
+    isLoading,
+    isFetching,
+    isSuccess,
+    error,
+    refetch,
+  };
 };
+
 
 export const useProductDetails = (id: string) =>
   useGetProductQuery(id);

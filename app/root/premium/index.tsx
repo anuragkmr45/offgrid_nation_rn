@@ -22,6 +22,7 @@ export default function PremiumScreen() {
     checkoutError,
     checkoutLoading,
   } = usePremium()
+  console.log({premiumFeed, });
 
   // Show checkout errors
   useEffect(() => {
@@ -39,8 +40,10 @@ export default function PremiumScreen() {
     return <WithLayout><PremiumFeedLoader /></WithLayout>
   }
 
+  
+
   // Not subscribed yet?
-  if (!premiumFeed?.isPremium) {
+  if (premiumFeed?.isPremium === false) {
     return (
       <WithLayout>
         <PremiumSubscribeOverlay

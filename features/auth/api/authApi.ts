@@ -50,12 +50,9 @@ export const authApi = createApi({
         body
       }),
       async onQueryStarted(arg, { queryFulfilled }) {
-        // arg is { loginId, password }
-        console.log('--------------------------------------------[authApi.login] called with:', arg);
 
         try {
           const { data } = await queryFulfilled;
-          console.log('--------------------------------------------[authApi.login] response data:', data);
         } catch (err) {
           console.error('[authApi.login] error:', err);
         }
