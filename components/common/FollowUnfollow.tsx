@@ -48,7 +48,7 @@ export const FollowUnfollow: React.FC<FollowUnfollowProps> = ({
                 styles.followText,
                 isFollowing && styles.followingText
             ]}>
-                {isFollowing ? 'Following' : 'Follow'}
+                {isFollowing ? 'Unfollow' : 'Following'}
             </Text>
         </TouchableOpacity>
     )

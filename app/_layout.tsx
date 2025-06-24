@@ -1,31 +1,3 @@
-// import { Slot } from 'expo-router'
-// import React from 'react'
-// import { ActivityIndicator, View } from 'react-native'
-// import { SafeAreaProvider } from 'react-native-safe-area-context'
-// import Toast from 'react-native-toast-message'
-// import { Provider } from 'react-redux'
-// import { PersistGate } from 'redux-persist/integration/react'
-// import { persistor, store } from '../store/store'
-
-// export default function RootLayout() {
-//   return (
-//     <Provider store={store}>
-//       <PersistGate
-//         loading={
-//           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//             <ActivityIndicator size="large" />
-//           </View>
-//         }
-//         persistor={persistor}
-//       >
-//         <SafeAreaProvider>
-//           <Slot />
-//           <Toast />
-//         </SafeAreaProvider>
-//       </PersistGate>
-//     </Provider>
-//   )
-// }
 // app/_layout.tsx
 import * as Notifications from 'expo-notifications';
 import { Slot, useRouter } from 'expo-router';
@@ -84,13 +56,15 @@ function NotificationListener() {
       pusherSvc.init();
       const channel = pusherSvc.subscribeChannel(`notifications.${userId}`);
       channel.bind('push-noti', (data: any) => {
+        console.log({data});
+        
         Notifications.scheduleNotificationAsync({
           content: {
             title: `${data.sender.username} sent you a message`,
             body:
-              data.actionType === 'text'
+              data?.actionType === 'text'
                 ? data.text
-                : data.actionType === 'media'
+                : data?.actionType === 'media'
                 ? `${data.sender.username} sent a media file`
                 : `${data.sender.username} shared a post`,
             data: { conversationId: data.conversationId },
@@ -104,7 +78,7 @@ function NotificationListener() {
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const convId = response.notification.request.content.data.conversationId;
       if (convId) {
-        router.push(`/root/chat/${convId}`);
+        router.push('/root/chat/Conversation');
       }
     });
 

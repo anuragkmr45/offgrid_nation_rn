@@ -9,9 +9,7 @@ import type {
   ConversationUpdatedEvent,
   MediaUploadResponse,
   Message,
-  MessageReadEvent,
-  NewMessageEvent,
-  User,
+  User
 } from '../types';
 
 export interface SendMessageDto {
@@ -75,52 +73,66 @@ export const chatApi = createApi({
     }),
 
     // 2) Get messages + real-time new-message & read events
-    getMessages: build.query<Message[], { conversationId: string; cursor?: string }>({
-      query: ({ conversationId, cursor }) => ({
-        url: `/conversations/${conversationId}/messages${cursor ? `?cursor=${cursor}` : ''}`,
+    // getMessages: build.query<Message[], { conversationId: string; cursor?: string }>({
+    //   query: ({ conversationId, cursor }) => ({
+    //     url: `/conversations/${conversationId}/messages${cursor ? `?cursor=${cursor}` : ''}`,
+    //     method: 'GET',
+    //   }),
+    //   providesTags: (result, error, { conversationId }) =>
+    //     result
+    //       ? [
+    //         ...result.map(m => ({ type: 'Messages' as const, id: m._id })),
+    //         { type: 'Messages' as const, id: conversationId },
+    //       ]
+    //       : [],
+    //   onCacheEntryAdded: async ({ conversationId }, { updateCachedData, cacheDataLoaded, cacheEntryRemoved, getState }) => {
+    //     await cacheDataLoaded;
+
+    //     const state = getState() as RootState;
+    //     const myUserId = state.auth.user?._id;
+    //     if (!myUserId) return;
+
+    //     const pusherSvc = PusherService.getInstance();
+    //     pusherSvc.init();
+    //     const channel = pusherSvc.subscribeChannel(`direct.${conversationId}`);
+
+    //     channel.bind('new-message', (data: NewMessageEvent) => {
+    //       updateCachedData(draft => {
+    //         draft.unshift({
+    //           ...data,
+    //           sender: { _id: data.sender } as User,
+    //           recipient: { _id: data.recipient } as User,
+    //         });
+    //       });
+    //     });
+
+    //     channel.bind('message-read', (data: MessageReadEvent) => {
+    //       updateCachedData(draft => {
+    //         // find the most recent message sent by me and mark it read
+    //         const lastMine = [...draft].reverse().find(m => m.sender._id === myUserId);
+    //         if (lastMine) lastMine.readAt = new Date().toISOString();
+    //       });
+    //     });
+
+    //     await cacheEntryRemoved;
+    //     channel.unbind_all();
+    //     pusherSvc.unsubscribeChannel(channel.name);
+    //   },
+    // }),
+    getMessages: build.query<Message[], { recipientId: string; limit?: number }>({
+      query: ({ recipientId, limit = 20 }) => ({
+        url: `/conversations/messages?recipient=${recipientId}&limit=${limit}`,
         method: 'GET',
       }),
-      providesTags: (result, error, { conversationId }) =>
+      providesTags: (result, error, { recipientId }) =>
         result
           ? [
-            ...result.map(m => ({ type: 'Messages' as const, id: m._id })),
-            { type: 'Messages' as const, id: conversationId },
+            ...result.map((m) => ({ type: 'Messages' as const, id: m._id })),
+            { type: 'Messages' as const, id: recipientId },
           ]
           : [],
-      onCacheEntryAdded: async ({ conversationId }, { updateCachedData, cacheDataLoaded, cacheEntryRemoved, getState }) => {
-        await cacheDataLoaded;
-
-        const state = getState() as RootState;
-        const myUserId = state.auth.user?._id;
-        if (!myUserId) return;
-
-        const pusherSvc = PusherService.getInstance();
-        pusherSvc.init();
-        const channel = pusherSvc.subscribeChannel(`direct.${conversationId}`);
-
-        channel.bind('new-message', (data: NewMessageEvent) => {
-          updateCachedData(draft => {
-            draft.unshift({
-              ...data,
-              sender: { _id: data.sender } as User,
-              recipient: { _id: data.recipient } as User,
-            });
-          });
-        });
-
-        channel.bind('message-read', (data: MessageReadEvent) => {
-          updateCachedData(draft => {
-            // find the most recent message sent by me and mark it read
-            const lastMine = [...draft].reverse().find(m => m.sender._id === myUserId);
-            if (lastMine) lastMine.readAt = new Date().toISOString();
-          });
-        });
-
-        await cacheEntryRemoved;
-        channel.unbind_all();
-        pusherSvc.unsubscribeChannel(channel.name);
-      },
     }),
+
 
     // 3) Search users
     searchUsers: build.query<User[], string>({

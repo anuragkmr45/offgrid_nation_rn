@@ -8,13 +8,14 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
-  Platform,
   SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
-  View,
+  View
 } from 'react-native';
 
+import Toast from 'react-native-toast-message';
 import { theme } from '../../constants/theme';
 import { Loader } from '../common';
 import { ChatInputBar } from './ChatInputBar';
@@ -36,15 +37,14 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({
   const router = useRouter();
   const userId = useAppSelector((state) => state.auth.user?._id);
 
-  // fetch + subscribe
   const {
     messages,
     isLoading,
     sendMessage,
     sending,
     loadMore,
-    setAllMessages, // exposed from useChatMessages for optimistic updates
   } = useChatMessages(chatId);
+  console.log({ messages });
 
   const [markRead] = useMarkReadMutation();
 
@@ -57,37 +57,27 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({
     }
   }, [chatId]);
 
-  const handleSend = useCallback(
-    (text: string) => {
-      if (!text.trim()) return;
+  const handleSend = useCallback(async (txt: string) => {
+    const payload = {
+      recipient: chatId,
+      actionType: 'text',
+      text: txt,
+      // conversationId: chatId,
+    };
+    console.log({ payload });
 
-      // 1. Optimistically add message
-      const optimisticMessage = {
-        _id: `local-${Date.now()}`,
-        text: text.trim(),
-        sentAt: new Date().toISOString(),
-        sender: { _id: userId },
-        recipient: { _id: chatId },
-        actionType: 'text',
-        attachments: [],
-        conversationId: chatId,
-      };
-
-      setAllMessages((prev: any) => [optimisticMessage, ...prev]);
-
-      // 2. Send to backend
-      sendMessage({
-        recipient: chatId,
-        actionType: 'text',
-        text: text.trim(),
-        conversationId: chatId,
-      });
-    },
-    [chatId, sendMessage, userId, setAllMessages]
-  );
+    try {
+      const result = await sendMessage(payload as any).unwrap();
+      console.log('⟵ sendMessage result:', result);
+    } catch (err: any) {
+      Toast.show({ type: "error", text1: err?.data?.message || "Unable to send msg" })
+      console.error('✖ sendMessage failed:', err);
+    }
+  }, [chatId, sendMessage]);
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar animated backgroundColor={theme.colors.background} barStyle={'dark-content'} />
       <ConversationHeader
         avatarUrl={
           avatarUrl ??
@@ -99,12 +89,12 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({
 
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
+      // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
       >
         {isLoading && <Loader />}
 
-        {!isLoading && messages.length === 0 && (
+        {messages.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>Start a conversation…</Text>
           </View>

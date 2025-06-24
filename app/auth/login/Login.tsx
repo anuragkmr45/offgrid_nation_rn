@@ -1,11 +1,10 @@
-import { Button, InputField } from '@/components/common'
-import { theme } from '@/constants/theme'
-import { useAuth } from '@/features/auth/hooks/useAuth'
-// import { signInWithGoogleAsync } from '@/utils/googleLogin'
-// import { JwtUtil } from '@/utils/jwtUtil'
-import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation'
-import { useRouter } from 'expo-router'
-import React, { useState } from 'react'
+import { Button, InputField } from '@/components/common';
+import { theme } from '@/constants/theme';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -15,14 +14,15 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native'
-import Toast from 'react-native-toast-message'
+} from 'react-native';
+import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
   const router = useRouter()
   const { login, isLoginLoading } = useAuth()
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const [isShowPass, setIsShowPass] = useState(false);
 
   const identifierError = validateLoginUsername(identifier)
   const passwordError = validateLoginPassword(password)
@@ -40,47 +40,10 @@ export default function LoginScreen() {
       const errorMessage = err?.data?.error || 'Login failed, please try again.';
       Toast.show({
         type: 'error',
-        text1: 'Login Error',
-        text2: errorMessage,
+        text1: errorMessage,
       });
-      console.error('Login failed', err);
     }
   };
-
-  // const handleGoogleLogin = async () => {
-  //   try {
-  //     const googleData = await signInWithGoogleAsync();
-  //     if (!googleData) {
-  //       Toast.show({ type: 'error', text1: 'Google login cancelled' });
-  //       return;
-  //     }
-
-  //     const { idToken, email, name } = googleData;
-
-  //     // Generate JWT locally (⚠️ if needed, but ideally do this on backend)
-  //     const jwt = JwtUtil.generateUserJwt({
-  //       uid: email,  // if no UID, use email as fallback
-  //       email,
-  //       displayName: name,
-  //     });
-
-  //     // Send to backend to get auth key (simulate your Flutter `repository.googleLogin`)
-  //     const authKey = await loginWithGoogle(jwt); // Implement this in your `useAuth()` or service
-
-  //     await saveSession(authKey); // Save session locally
-
-  //     Toast.show({ type: 'success', text1: 'Google Login Successful 🎉' });
-  //     router.replace('/root/feed');
-
-  //   } catch (err) {
-  //     console.error('Google login error:', err);
-  //     Toast.show({
-  //       type: 'error',
-  //       text1: 'Google Login Error',
-  //       text2: 'Something went wrong. Please try again.',
-  //     });
-  //   }
-  // };
 
   return (
     <KeyboardAvoidingView
@@ -102,12 +65,25 @@ export default function LoginScreen() {
             placeholder="Username, Phone number or email"
             keyboardType="default"
           />
-          <InputField
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            secureTextEntry
-          />
+          <View style={styles.passwordWrapper}>
+            <InputField
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              secureTextEntry={!isShowPass}
+              style={{ paddingRight: 40 }}           // make room for the icon
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setIsShowPass(prev => !prev)}
+            >
+              <Ionicons
+                name={isShowPass ? 'eye-off' : 'eye'}
+                size={24}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             onPress={() => router.push('/auth/forgot-password/SendOtp')}
             style={styles.forgotLink}
@@ -160,6 +136,17 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  passwordWrapper: {
+    position: 'relative',
+    marginTop: 12,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    top: '40%',
+    transform: [{ translateY: -12 }],
+    padding: 4,
   },
   logoContainer: {
     marginTop: 70,

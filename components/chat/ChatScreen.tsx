@@ -1,84 +1,3 @@
-// // components/chat/ChatScreen.tsx
-// import { useGetConversationsQuery } from '@/features/chat/api/chatApi'
-// import { useRouter } from 'expo-router'
-// import React, { useCallback, useMemo, useRef, useState } from 'react'
-// import { StyleSheet, Text, View } from 'react-native'
-// import { theme } from '../../constants/theme'
-// import { Loader, SearchBar } from '../common'
-// import { WithLayout } from '../layouts/WithLayout'
-// import { ChatList, ChatListData } from './ChatList'
-
-// export const ChatScreen: React.FC = () => {
-//   const [search, setSearch] = useState('')
-//   const router = useRouter()
-
-//   const { data: convos = [], isLoading, error } = useGetConversationsQuery()
-
-//   // build data with the ChatListData shape
-//   const filtered: ChatListData[] = convos
-//     .map(c => ({
-//       id: c.conversationId,
-//       avatarUrl: c.user.profilePicture,
-//       name: c.user.fullName,
-//       username: c.user.username,
-//       lastMessage:
-//         c.lastMessage.actionType === 'text'
-//           ? c.lastMessage.text || ''
-//           : c.lastMessage.actionType === 'media'
-//             ? '📷 Media'
-//             : '🔗 Shared post',
-//       timestamp: new Date(c.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-//       unreadCount: c.unreadCount,
-//       muted: c.muted,
-//     }))
-//     .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
-
-//   // now onItemPress gets the data object
-//   const onPress = useCallback((item: ChatListData) => {
-//     router.push({
-//       pathname: '/root/chat/Conversation',
-//       params: {
-//         recipientId: item.id,
-//         recipientName: item.name || item.username,
-//         profilePicture: item.avatarUrl,
-//       },
-//     });
-//   }, [router]);
-
-//     // bottom sheet setup
-//   const sheetRef = useRef<BottomSheet>(null);
-//   const snapPoints = useMemo(() => ['83%'], []); // ~5/6th of screen
-
-//   const openSheet = useCallback(() => {
-//     sheetRef.current?.snapToIndex(0);
-//   }, []);
-
-//   return (
-//     <WithLayout>
-//       <View style={styles.container}>
-//         <SearchBar
-//           value={search}
-//           onChangeText={setSearch}
-//           placeholder="Search chats…"
-//            onFocus={openSheet}
-//         />
-//         {isLoading && <Loader />}
-//         {error && <Text style={{ color: theme.colors.accent }}>Failed to load chats</Text>}
-
-//         <ChatList data={filtered} onItemPress={onPress} />
-//       </View>
-//     </WithLayout>
-//   )
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     backgroundColor: theme.colors.primary,
-//     paddingHorizontal: 12
-//   },
-// })
-
 // components/chat/ChatScreen.tsx
 import { useGetConversationsQuery } from '@/features/chat/api/chatApi'
 import { useRouter } from 'expo-router'
@@ -95,7 +14,7 @@ export const ChatScreen: React.FC = () => {
   const [sheetVisible, setSheetVisible] = useState(false)
   const router = useRouter()
 
-  const { data: convos = [], isLoading, error } = useGetConversationsQuery()
+  const { data: convos = [], isLoading, error, refetch } = useGetConversationsQuery()
 
   // prepare full list of chats
   const items: ChatListData[] = useMemo(
@@ -105,6 +24,7 @@ export const ChatScreen: React.FC = () => {
         avatarUrl: c.user.profilePicture,
         name: c.user.fullName,
         username: c.user.username,
+        recipientId: c.user._id,
         lastMessage:
           c.lastMessage.actionType === 'text'
             ? c.lastMessage.text || ''
@@ -130,19 +50,16 @@ export const ChatScreen: React.FC = () => {
   )
 
   // navigate into conversation
-  const onPress = useCallback(
-    (item: ChatListData) => {
+  const onPress = useCallback((item: ChatListData) => {
       router.push({
         pathname: '/root/chat/Conversation',
         params: {
-          recipientId: item.id,
+          recipientId: item.recipientId,
           recipientName: item.name || item.username,
           profilePicture: item.avatarUrl,
         },
       })
-    },
-    [router]
-  )
+    }, [router])
 
   return (
     <WithLayout>
@@ -164,7 +81,7 @@ export const ChatScreen: React.FC = () => {
         )}
 
         {/* Main chat list */}
-        <ChatList data={items} onItemPress={onPress} />
+        <ChatList data={items} onItemPress={onPress}  />
 
         {/* User search modal for finding/starting chats */}
         <UserSearchModal

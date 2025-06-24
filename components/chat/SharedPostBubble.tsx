@@ -1,4 +1,4 @@
-// components/chat/SharedPostBubble.tsx
+import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { theme } from '../../constants/theme';
@@ -15,6 +15,9 @@ export interface SharedPostBubbleProps {
 
 export const SharedPostBubble: React.FC<SharedPostBubbleProps> = ({ post, timestamp, outgoing = false }) => {
   const containerStyle = outgoing ? styles.bubbleOutgoing : styles.bubbleIncoming;
+  const hasMedia = post.media.length > 0;
+  const mediaUrl = hasMedia ? post.media[0] : null;
+  const isVideo = mediaUrl?.includes('/posts/video/');
 
   return (
     <View style={[styles.container, containerStyle]}>
@@ -23,8 +26,21 @@ export const SharedPostBubble: React.FC<SharedPostBubbleProps> = ({ post, timest
         <Text style={styles.name}>{post.userId.fullName}</Text>
       </View>
 
-      {post.media.length > 0 && (
-        <Image source={{ uri: post.media[0] }} style={styles.media} resizeMode="cover" />
+      {hasMedia && (
+        <View style={styles.mediaContainer}>
+          {isVideo ? (
+            <Video
+              source={{ uri: mediaUrl! }}
+              style={styles.media}
+              resizeMode={ResizeMode.COVER}
+              useNativeControls
+              shouldPlay={false}
+              isLooping
+            />
+          ) : (
+            <Image source={{ uri: mediaUrl! }} style={styles.media} resizeMode="cover" />
+          )}
+        </View>
       )}
 
       <Text style={styles.content}>{post.content}</Text>
@@ -68,11 +84,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.textPrimary,
   },
+  mediaContainer: {
+    // marginTop: 6,
+    width: '100%',
+    height: 160,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#eee',
+  },
   media: {
     width: '100%',
-    height: 150,
-    borderRadius: 8,
-    marginTop: 6,
+    height: '100%',
   },
   content: {
     marginTop: 8,

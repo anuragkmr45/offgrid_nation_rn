@@ -1,4 +1,5 @@
 import { theme } from '@/constants/theme';
+import { useAppSelector } from '@/store/hooks';
 import { useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import {
@@ -9,7 +10,6 @@ import {
   Text,
   View
 } from 'react-native';
-import { useAppSelector } from '../store/hooks';
 
 export default function SplashScreen() {
   const router = useRouter();

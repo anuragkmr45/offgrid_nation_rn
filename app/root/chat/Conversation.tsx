@@ -1,8 +1,8 @@
 // app/root/chat/[chatId].tsx
 
+import { ConversationScreen } from '@/components/chat/ConversationScreen';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { ConversationScreen } from '../../../components/chat/ConversationScreen';
 
 export default function ChatPage() {
   const { recipientId, recipientName, profilePicture } = useLocalSearchParams<{

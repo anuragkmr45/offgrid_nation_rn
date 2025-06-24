@@ -16,7 +16,8 @@ export const useChatMessages = (conversationId: string) => {
     data: page = [],
     isLoading,
     error,
-  } = useGetMessagesQuery({ conversationId, cursor });
+  } = useGetMessagesQuery({ recipientId: conversationId,  limit: 20 });
+  // } = useGetMessagesQuery({ conversationId, cursor });
 
   // accumulate pages in a single list
   const [allMessages, setAllMessages] = useState<Message[]>([]);

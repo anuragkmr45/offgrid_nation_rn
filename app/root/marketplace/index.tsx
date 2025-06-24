@@ -57,8 +57,6 @@ export default function MarketplaceScreen() {
 
   // extract items array
   const products: Product[] = productsResponse as any ?? []
-  console.log({ products });
-  console.log({ productsResponse });
 
   // Categories hook (unchanged)
   const {
@@ -78,7 +76,6 @@ export default function MarketplaceScreen() {
     if (!granted) return
 
     const formatted = await getFormattedLocation()
-    console.log({ formatted });
 
     if (!formatted?.length) {
       console.warn('Invalid coordinates:', formatted)
@@ -155,7 +152,7 @@ export default function MarketplaceScreen() {
           <BottomSheet
             visible={isSortSheetVisible}
             onClose={() => setSortSheetVisible(false)}
-            height="60%"
+            height="48%"
           >
             <Text style={sheetStyles.sheetTitle}>Sort By:</Text>
             {[
@@ -197,7 +194,7 @@ export default function MarketplaceScreen() {
               setCatSheetVisible(false)
               setCatQuery('')
             }}
-            height="70%"
+            height="60%"
           >
             <SearchBar
               value={catQuery}
@@ -219,11 +216,8 @@ export default function MarketplaceScreen() {
                     style={sheetStyles.catRow}
                     activeOpacity={0.7}
                     onPress={() => {
-                      console.log('Chosen category ID:', cat._id)
                       setCatSheetVisible(false)
-                      setCatQuery('')
-                      // if you want to filter by category, you can call:
-                      // refetchProducts()
+                      setCatQuery(cat._id)
                     }}
                   >
                     <Image
@@ -242,7 +236,7 @@ export default function MarketplaceScreen() {
           <BottomSheet
             visible={isSellSheetVisible}
             onClose={() => setSellSheetVisible(false)}
-            height={300}
+            height={200}
           >
             <Text
               style={{
@@ -336,48 +330,3 @@ const sheetStyles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
 })
-
-
-// app/marketplace/TestProductsScreen.tsx
-
-// import { useListProductsQuery } from '@/features/products/api/productsApi'
-// import { skipToken } from '@reduxjs/toolkit/query/react'
-// import * as Location from 'expo-location'
-// import React, { useEffect, useState } from 'react'
-// import { Text, View } from 'react-native'
-
-// export default function TestProductsScreen() {
-//   // hold coords until we get them
-//   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
-
-//   // RTK Query will skip until coords !== null
-//   const { data: productsData, isLoading, error } = useListProductsQuery(
-//     coords ?? skipToken
-//   )
-
-//   // fetch location once on mount
-//   useEffect(() => {
-//     ;(async () => {
-//       const { status } = await Location.requestForegroundPermissionsAsync()
-//       if (status === 'granted') {
-//         const { coords: { latitude, longitude } } = await Location.getCurrentPositionAsync()
-//         setCoords({ latitude, longitude })
-//       } else {
-//         console.warn('Location permission not granted')
-//       }
-//     })()
-//   }, [])
-
-//   // log the products data whenever it changes
-//   useEffect(() => {
-//     console.log('useListProductsQuery data:', productsData)
-//   }, [productsData])
-
-//   return (
-//     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-//       {isLoading && <Text>Loading products…</Text>}
-//       {error && <Text>Error loading products</Text>}
-//       {!isLoading && !error && <Text>Check console for productsData</Text>}
-//     </View>
-//   )
-// }

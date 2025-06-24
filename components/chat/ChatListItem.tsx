@@ -5,6 +5,7 @@ import { theme } from '../../constants/theme'
 
 export interface ChatListItemProps {
   id: string
+  recipientId: string
   avatarUrl: string
   name: string
   username: string

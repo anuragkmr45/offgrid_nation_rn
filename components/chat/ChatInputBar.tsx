@@ -1,8 +1,8 @@
 // components/chat/ChatInputBar.tsx
+import { theme } from '@/constants/theme'
 import Ionicons from '@expo/vector-icons/Ionicons'
 import React, { useState } from 'react'
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native'
-import { theme } from '../../constants/theme'
 
 export interface ChatInputBarProps {
   onSend: (text: string) => void
