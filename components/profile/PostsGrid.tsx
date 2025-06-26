@@ -1,16 +1,14 @@
-// components/profile/PostsGrid.tsx
-
 import { theme } from '@/constants/theme'
 import React, { useState } from 'react'
 import {
   Dimensions,
   FlatList,
-  Image,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native'
+import { PostMedia } from '../common/feeds/PostMedia'
 import { PostPreviewModal } from '../modals/PostPreviewModal'
 
 interface Post {
@@ -25,12 +23,15 @@ interface Props {
 }
 
 export const PostsGrid: React.FC<Props> = ({ data, onPostPress }) => {
-
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
   const [modalVisible, setModalVisible] = useState(false)
 
   if (!data.length) {
-    return <View style={{ flex: 1, backgroundColor: theme.colors.primary }}><Text style={styles.empty}>No posts yet.</Text></View>
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.colors.primary }}>
+        <Text style={styles.empty}>No posts yet.</Text>
+      </View>
+    )
   }
 
   const numCols = 2
@@ -45,36 +46,52 @@ export const PostsGrid: React.FC<Props> = ({ data, onPostPress }) => {
     setModalVisible(false)
     setSelectedPost(null)
   }
+  console.log(data);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.primary }}>
       <FlatList
         data={data}
-        keyExtractor={p => p.id}
+        keyExtractor={(item, index) => item.id?.toString() || `fallback-key-${index}`}
         numColumns={numCols}
         contentContainerStyle={styles.grid}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.card}
-            onPress={() => openModal(item)}
-            activeOpacity={0.8}
-          >
-            <Image
-              source={{ uri: item.media[0] }}
-              style={[styles.image, { width: size, height: size }]}
-            />
-            <Text numberOfLines={2} ellipsizeMode="tail" style={[styles.caption, { width: size }]}>
-              {item?.content || ""}
-            </Text>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => {
+          const hasMedia = item.media?.length > 0 && typeof item.media[0] === 'string'
+
+          return (
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() => openModal(item)}
+              activeOpacity={0.8}
+            >
+              {hasMedia ? (
+                <PostMedia
+                  mediaUrl={item.media[0]}
+                  isActive={false}
+                  style={[styles.image, { width: size, height: size }]}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.textOnlyPlaceholder,
+                    { width: size, height: size },
+                  ]}
+                >
+                  <Text style={styles.caption}>
+                    {item.content || 'No content'}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )
+        }}
+
       />
       <PostPreviewModal
         visible={modalVisible}
         onClose={closeModal}
         post={selectedPost}
       />
-
     </View>
   )
 }
@@ -103,5 +120,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     flexWrap: 'wrap',
     fontWeight: '500',
+  },
+  textOnlyPlaceholder: {
+    borderRadius: theme.borderRadius,
+    backgroundColor: theme.colors.textSecondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 8,
   },
 })

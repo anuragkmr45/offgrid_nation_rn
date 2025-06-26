@@ -3,16 +3,32 @@ import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
 import { useFollowers, useFollowing } from '@/features/list/hooks/useList'
 import { useProfile } from '@/features/profile/hooks/useProfile'
+import { useFocusEffect } from '@react-navigation/native'
 import { useRouter } from 'expo-router'
-import React from 'react'
-import { ActivityIndicator, StatusBar, Text, View } from 'react-native'
+import React, { useCallback } from 'react'
+import {
+  ActivityIndicator,
+  StatusBar,
+  Text,
+  View,
+} from 'react-native'
 
 export default function MyProfileRoute() {
   const router = useRouter()
-  const { myProfile, isLoadingProfile, refetch } = useProfile()
-  const { followers } = useFollowers(myProfile?.username || "");
-  const { following } = useFollowing(myProfile?.username || "");
-  const {list} = usePost(myProfile?.username || "");
+  const { myProfile, isLoadingProfile, refetch: refetchProfile } = useProfile()
+  const { followers /*, refetch: refetchFollowers */ } = useFollowers(myProfile?.username || '')
+  const { following /*, refetch: refetchFollowing */ } = useFollowing(myProfile?.username || '')
+  const { list /*, refetch: refetchPosts */ } = usePost(myProfile?.username || '')
+
+  // ✅ Refetch profile when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refetchProfile()
+      refetchFollowers?.()
+      refetchFollowing?.()
+      refetchPosts?.()
+    }, [refetchProfile])
+  )
 
   // Show loading
   if (isLoadingProfile) {
@@ -24,7 +40,7 @@ export default function MyProfileRoute() {
     )
   }
 
-  // Show error fallback if profile failed to load
+  // Show fallback UI if profile failed to load
   if (!myProfile) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -35,19 +51,31 @@ export default function MyProfileRoute() {
 
   return (
     <>
-    <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
-    <ProfileScreen
-      loading={false}
-      user={myProfile || []}
-      followers={followers || []}
-      following={following || []}
-      posts={list || []}
-      isSelf={true}
-      onAvatarEdit={() => router.push('/root/profile/edit')}
-      onFieldEdit={(field) => router.push(`/root/profile/edit?field=${field}`)}
-      onUserPress={(u) => router.push(`/root/profile/${u}`)}
-      onPostPress={(id) => {}}
-    />
+      <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
+      <ProfileScreen
+        loading={false}
+        user={myProfile || []}
+        followers={followers || []}
+        following={following || []}
+        posts={list || []}
+        isSelf={true}
+        onAvatarEdit={() => router.push('/root/profile/edit')}
+        onFieldEdit={(field) => router.push(`/root/profile/edit?field=${field}`)}
+        onUserPress={(u) => router.push(`/root/profile/${u}`)}
+        onPostPress={(id) => { }}
+      />
     </>
   )
 }
+function refetchFollowers() {
+  throw new Error('Function not implemented.')
+}
+
+function refetchFollowing() {
+  throw new Error('Function not implemented.')
+}
+
+function refetchPosts() {
+  throw new Error('Function not implemented.')
+}
+

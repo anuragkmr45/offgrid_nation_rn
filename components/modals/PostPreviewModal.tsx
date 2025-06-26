@@ -1,16 +1,15 @@
-// components/profile/PostPreviewModal.tsx
 import { theme } from '@/constants/theme'
 import { Ionicons } from '@expo/vector-icons'
 import React from 'react'
 import {
-    Dimensions,
-    Image,
-    Modal,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Dimensions,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native'
+import { PostMedia } from '../common/feeds/PostMedia'
 
 interface Props {
   visible: boolean
@@ -25,6 +24,8 @@ interface Props {
 export const PostPreviewModal: React.FC<Props> = ({ visible, onClose, post }) => {
   if (!post) return null
 
+  const hasMedia = post.media && post.media.length > 0 && typeof post.media[0] === 'string'
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={styles.backdrop}>
@@ -33,7 +34,14 @@ export const PostPreviewModal: React.FC<Props> = ({ visible, onClose, post }) =>
             <Ionicons name="close" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
 
-          <Image source={{ uri: post.media[0] }} style={styles.image} />
+          {hasMedia && (
+            <PostMedia
+              mediaUrl={post.media[0]}
+              isActive={true}
+              style={styles.image}
+            />
+          )}
+
           <Text style={styles.content}>{post.content}</Text>
         </View>
       </View>

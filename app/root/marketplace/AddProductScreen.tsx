@@ -16,6 +16,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -105,7 +106,7 @@ export default function AddProductScreen() {
     try {
       await createProduct(formData).unwrap()
       console.log(formData);
-      
+
       Toast.show({ type: 'success', text1: 'Product added successfully' })
       setTimeout(() => {
         router.back()
@@ -119,6 +120,7 @@ export default function AddProductScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar animated backgroundColor={theme.colors.background} barStyle={'dark-content'} />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
@@ -154,8 +156,18 @@ export default function AddProductScreen() {
           )}
           <Text style={styles.photoCount}>Photos: {photos.length}/10</Text>
 
-          <InputField placeholder="Title" value={title} onChangeText={setTitle} />
-          <InputField placeholder="Price" value={price} onChangeText={setPrice} keyboardType="numeric" />
+          <InputField placeholder="Title" style={{ borderWidth: 1, borderColor: theme.colors.textSecondary }} value={title} onChangeText={setTitle} />
+          <View style={styles.priceInputContainer}>
+            <Text style={styles.pricePrefix}>$</Text>
+            <InputField
+              placeholder="0.00"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="numeric"
+              style={styles.priceInput}
+            />
+          </View>
+
 
           <TouchableOpacity
             onPress={() => setCatSheetVisible(true)}
@@ -205,7 +217,7 @@ export default function AddProductScreen() {
             onChangeText={setDescription}
           />
 
-          <View style={{ height: 100 }} />
+          <View style={{ height: 180 }} />
         </ScrollView>
 
         <View style={styles.footer}>
@@ -311,6 +323,25 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: theme.colors.textPrimary,
     marginBottom: 8,
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.textSecondary,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    marginBottom: 12,
+  },
+  pricePrefix: {
+    fontSize: 16,
+    color: theme.colors.textSecondary,
+    marginRight: 6,
+  },
+  priceInput: {
+    flex: 1,
+    padding: 0, // remove default padding from InputField if it has
   },
   conditionRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16 },
   conditionButton: {

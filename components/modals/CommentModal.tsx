@@ -1,8 +1,8 @@
-import { theme } from '@/constants/theme';
-import { useComment } from '@/features/content/comment/hooks/useComment';
-import { timeAgo } from '@/utils/timeAgo';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { theme } from '@/constants/theme'
+import { useComment } from '@/features/content/comment/hooks/useComment'
+import { timeAgo } from '@/utils/timeAgo'
+import { useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   FlatList,
@@ -13,21 +13,22 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
-} from 'react-native';
-import Modal from 'react-native-modal';
+  View,
+} from 'react-native'
+import Modal from 'react-native-modal'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 interface CommentModalProps {
   postId: string
-  visible: boolean;
-  onClose: () => void;
+  visible: boolean
+  onClose: () => void
 }
 
 export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onClose }) => {
-  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
-  const [commentText, setCommentText] = useState('');
-  const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null);
-  const router = useRouter();
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({})
+  const [commentText, setCommentText] = useState('')
+  const [replyToCommentId, setReplyToCommentId] = useState<string | null>(null)
+  const router = useRouter()
 
   const {
     addComment,
@@ -35,45 +36,35 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
     comments,
     isLoadingComments,
     commentRefetch,
-  } = useComment(postId);
+  } = useComment(postId)
 
   useEffect(() => {
     if (visible) {
-      commentRefetch();
+      commentRefetch()
       setReplyToCommentId(null)
     }
-  }, [visible]);
+  }, [visible])
 
   const handleSend = async () => {
-    if (!commentText.trim()) return;
-
+    if (!commentText.trim()) return
     try {
       if (replyToCommentId) {
-        await addReply({
-          commentId: replyToCommentId,
-          data: { content: commentText.trim() },
-        }).unwrap();
+        await addReply({ commentId: replyToCommentId, data: { content: commentText.trim() } }).unwrap()
       } else {
-        await addComment({
-          postId,
-          data: { content: commentText.trim() },
-        }).unwrap();
+        await addComment({ postId, data: { content: commentText.trim() } }).unwrap()
       }
 
-      setCommentText('');
-      setReplyToCommentId(null);
-      commentRefetch();
+      setCommentText('')
+      setReplyToCommentId(null)
+      commentRefetch()
     } catch (error) {
-      console.error('Failed to send:', error);
+      console.error('Failed to send:', error)
     }
-  };
+  }
 
   const toggleReplies = (commentId: string) => {
-    setExpandedComments(prev => ({
-      ...prev,
-      [commentId]: !prev[commentId],
-    }));
-  };
+    setExpandedComments(prev => ({ ...prev, [commentId]: !prev[commentId] }))
+  }
 
   return (
     <Modal
@@ -84,83 +75,90 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
       propagateSwipe
       style={styles.modal}
     >
-      <View style={styles.container}>
-        <View style={styles.handle} />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={80}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={styles.container} edges={['top']}>
+          <View style={styles.handle} />
 
-        {isLoadingComments ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <FlatList
-            data={comments}
-            keyExtractor={(item) => item._id}
-            onRefresh={commentRefetch}
-            refreshing={isLoadingComments}
-            renderItem={({ item }) => {
-              const showAllReplies = expandedComments[item._id] ?? false;
-              const repliesToShow = showAllReplies ? item.latestReplies : item.latestReplies?.slice(0, 2);
+          {isLoadingComments ? (
+            <ActivityIndicator size="large" />
+          ) : (
+            <FlatList
+              data={comments}
+              keyExtractor={(item) => item._id}
+              onRefresh={commentRefetch}
+              refreshing={isLoadingComments}
+              contentContainerStyle={{ paddingBottom: 16 }}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const showAllReplies = expandedComments[item._id] ?? false
+                const repliesToShow = showAllReplies ? item.latestReplies : item.latestReplies?.slice(0, 2)
 
-              return (
-                <View style={{ padding: 12 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <TouchableOpacity onPress={() => router.push(`/root/profile/${item.userId.username}`)}>
-                      <Image source={{ uri: item.userId.profilePicture }} style={styles.avatar} />
-                    </TouchableOpacity>
-                    <View style={{ marginLeft: 10 }}>
-                      <Text style={{ fontWeight: 'bold' }}>{item.userId.fullName || item.userId.username}</Text>
-                      <Text>{item.content}</Text>
-                      <View style={{ flexDirection: "row" }}>
-                        <Text style={[styles.timeText, { color: '#999' }]}>{timeAgo(item.createdAt)}</Text>
-                        <TouchableOpacity onPress={() => setReplyToCommentId(item._id)}>
-                          <Text style={[{ color: theme.colors.primary, marginLeft: 10 }, styles.timeText]}>
-                            Add Reply
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-
-                  {repliesToShow?.map((reply, i) => (
-                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 44, marginTop: 8 }}>
-                      <Image source={{ uri: reply.profilePicture }} style={styles.replyAvatar} />
-                      <View style={{ marginLeft: 10 }}>
-                        <Text style={{ fontWeight: '500' }}>{reply.fullName || reply.username}</Text>
-                        <Text>{reply.replyContent}</Text>
-                      </View>
-                    </View>
-                  ))}
-
-                  {/* ✅ Only show reply mode indicator under the selected comment */}
-                  {replyToCommentId === item._id && (
-                    <View style={{ paddingHorizontal: 12, paddingBottom: 4, marginLeft: 44 }}>
-                      <Text style={{ fontSize: 12, color: '#999' }}>
-                        Replying to this comment
-                        <Text
-                          style={{ color: theme.colors.primary }}
-                          onPress={() => setReplyToCommentId(null)}
-                        >
-                          {'  '}✕ Cancel
+                return (
+                  <View style={{ padding: 12 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                      <TouchableOpacity onPress={() => router.push(`/root/profile/${item.userId.username}`)}>
+                        <Image source={{ uri: item.userId.profilePicture }} style={styles.avatar} />
+                      </TouchableOpacity>
+                      <View style={{ marginLeft: 10, flex: 1 }}>
+                        <Text style={{ fontWeight: 'bold' }}>
+                          {item.userId.fullName || item.userId.username}
                         </Text>
-                      </Text>
+                        <Text style={styles.commentText}>{item.content}</Text>
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                          <Text style={[styles.timeText, { color: '#999' }]}>{timeAgo(item.createdAt)}</Text>
+                          <TouchableOpacity onPress={() => setReplyToCommentId(item._id)}>
+                            <Text style={[{ color: theme.colors.primary, marginLeft: 10 }, styles.timeText]}>
+                              Add Reply
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                     </View>
-                  )}
 
-                  {item.repliesCount > 2 && (
-                    <TouchableOpacity onPress={() => toggleReplies(item._id)}>
-                      <Text style={{ color: '#007bff', marginTop: 8, marginLeft: 44 }}>
-                        {showAllReplies ? 'Hide replies...' : 'Read more replies...'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              );
-            }}
-          />
-        )}
+                    {repliesToShow?.map((reply, i) => (
+                      <View
+                        key={i}
+                        style={{ flexDirection: 'row', alignItems: 'flex-start', marginLeft: 44, marginTop: 8 }}
+                      >
+                        <Image source={{ uri: reply.profilePicture }} style={styles.replyAvatar} />
+                        <View style={{ marginLeft: 10, flex: 1 }}>
+                          <Text style={{ fontWeight: '500' }}>{reply.fullName || reply.username}</Text>
+                          <Text style={styles.commentText}>{reply.replyContent}</Text>
+                        </View>
+                      </View>
+                    ))}
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={80}
-        >
+                    {replyToCommentId === item._id && (
+                      <View style={{ paddingHorizontal: 12, paddingBottom: 4, marginLeft: 44 }}>
+                        <Text style={{ fontSize: 12, color: '#999' }}>
+                          Replying to this comment
+                          <Text
+                            style={{ color: theme.colors.primary }}
+                            onPress={() => setReplyToCommentId(null)}
+                          >
+                            {'  '}✕ Cancel
+                          </Text>
+                        </Text>
+                      </View>
+                    )}
+
+                    {item.repliesCount > 2 && (
+                      <TouchableOpacity onPress={() => toggleReplies(item._id)}>
+                        <Text style={{ color: '#007bff', marginTop: 8, marginLeft: 44 }}>
+                          {showAllReplies ? 'Hide replies...' : 'Read more replies...'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )
+              }}
+            />
+          )}
+
           <View style={styles.inputBar}>
             <TextInput
               style={styles.input}
@@ -171,21 +169,22 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
               }
               value={commentText}
               onChangeText={setCommentText}
+              multiline
             />
             <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
               <Text>Send</Text>
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
-      </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </Modal>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   modal: { justifyContent: 'flex-end', margin: 0 },
   container: {
-    height: '75%',
+    flex: 1,
     backgroundColor: 'white',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -199,11 +198,6 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 3,
   },
-  comment: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
   inputBar: {
     flexDirection: 'row',
     padding: 8,
@@ -216,6 +210,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f3f3',
     padding: 10,
     borderRadius: 8,
+    maxHeight: 100,
   },
   sendButton: {
     justifyContent: 'center',
@@ -227,14 +222,19 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#eee',
   },
-  timeText: {
-    fontSize: 12,
-    marginTop: 2,
-  },
   replyAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
     backgroundColor: '#eee',
   },
-});
+  timeText: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  commentText: {
+    flexWrap: 'wrap',
+    marginTop: 2,
+    marginRight: 8,
+  },
+})

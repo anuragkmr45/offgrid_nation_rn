@@ -7,8 +7,9 @@ import { PremiumPostWidget } from '@/components/premium/PremiumPostWidget'
 import { PremiumSubscribeOverlay } from '@/components/premium/PremiumSubscribeOverlay'
 import { theme } from '@/constants/theme'
 import { usePremium } from '@/features/subscription/hooks/usePremium'
+import { TAB_EVENTS, TabEventEmitter } from '@/utils/TabEventEmitter'
 import { useFocusEffect, useRouter } from 'expo-router'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { FlatList, StatusBar, View } from 'react-native'
 import Toast from 'react-native-toast-message'
 
@@ -23,6 +24,22 @@ export default function PremiumScreen() {
     checkoutError,
     checkoutLoading,
   } = usePremium();
+
+  const flatListRef = useRef<FlatList>(null)
+
+  useEffect(() => {
+    const listener = () => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
+      setTimeout(() => {
+        refetchPremiumFeed()
+      }, 500)
+    }
+
+    TabEventEmitter.on(TAB_EVENTS.PREMIUM_DOUBLE_TAP, listener) // ✅ NEW
+    return () => {
+      TabEventEmitter.off(TAB_EVENTS.PREMIUM_DOUBLE_TAP, listener) // ✅ NEW
+    }
+  }, [refetchPremiumFeed])
 
   useFocusEffect(
     useCallback(() => {
@@ -78,6 +95,7 @@ export default function PremiumScreen() {
         <View style={{ backgroundColor: "#Fbbc06", flex: 1, paddingBottom: 30 }}>
           <FlatList
             data={premiumFeed.posts}
+            ref={flatListRef}
             keyExtractor={(post) => post._id}
             contentContainerStyle={{ padding: 12 }}
             refreshing={premiumFeedLoading}

@@ -8,6 +8,8 @@
  *  • a bottom “glass” nav bar with blur + translucency
  */
 
+import { theme } from '@/constants/theme'
+import { TAB_EVENTS, TabEventEmitter } from '@/utils/TabEventEmitter'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { BlurView } from 'expo-blur'
 import { Link, usePathname, useRouter } from 'expo-router'
@@ -22,7 +24,6 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { theme } from '../../constants/theme'
 
 // Icon‐name unions
 type IoniconName = React.ComponentProps<typeof Ionicons>['name']
@@ -45,8 +46,9 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
   headerBgColor = theme.colors.background,
 }) => {
   const pathname = usePathname()
-  const route = useRouter()
+  const router = useRouter()
   const { width } = Dimensions.get('window')
+  const lastTapMap: Record<string, number> = {}
 
   interface NavItem {
     Component: typeof Ionicons | typeof MaterialCommunityIcons
@@ -108,13 +110,13 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
         {/* ===== TOP HEADER ===== */}
         <View style={[styles.topBar, { backgroundColor: headerBgColor }]}>
           <Image
-            source={{uri: "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png"}}
+            source={{ uri: "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png" }}
             style={styles.logo}
             resizeMode="contain"
           />
 
           <View style={styles.topBarIcons}>
-            <TouchableOpacity style={styles.iconButton}  onPress={() => route.push('/root/marketplace')}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/root/marketplace')}>
               <MaterialCommunityIcons
                 name="storefront-outline"
                 size={24}
@@ -122,7 +124,7 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.iconButton} onPress={() => route.push('/root/settings')}>
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/root/settings')}>
               <Ionicons
                 name="menu"
                 size={24}
@@ -162,6 +164,23 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
                   <TouchableOpacity
                     accessibilityLabel={label}
                     style={styles.navButton}
+                    onPress={() => {
+                      const now = Date.now()
+                      const dt = now - (lastTapMap[route] || 0)
+                      lastTapMap[route] = now
+
+                      if (dt < 300) {
+                        if (route === '/root/feed') {
+                          TabEventEmitter.emit(TAB_EVENTS.HOME_DOUBLE_TAP)
+                        } else if (route === '/root/premium') {
+                          TabEventEmitter.emit(TAB_EVENTS.PREMIUM_DOUBLE_TAP)
+                        } else {
+                          router.push(route)
+                        }
+                      } else {
+                        router.push(route)
+                      }
+                    }}
                   >
                     <Component
                       name={iconName as any}
@@ -170,6 +189,7 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
                     />
                   </TouchableOpacity>
                 </Link>
+
               )
             })}
           </View>

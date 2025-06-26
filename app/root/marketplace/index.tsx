@@ -1,278 +1,190 @@
-// app/marketplace/index.tsx
+// app/marketplace/MarketplaceScreen.tsx
 
-import { SearchBar } from '@/components/common'
-import { BottomSheet } from '@/components/common/BottomSheet'
-import { FilterBar, FilterItem } from '@/components/marketplace/buttons/FilterBar'
+import { CategorySheet } from '@/components/marketplace/CategorySheet'
+import { MarketplaceFilters } from '@/components/marketplace/MarketplaceFilters'
 import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { SectionHeader } from '@/components/marketplace/SectionHeader'
+import { SellSheet } from '@/components/marketplace/SellSheet'
+import { SortOptionsSheet } from '@/components/marketplace/SortOptionsSheet'
 import { theme } from '@/constants/theme'
 import { useListProductsQuery } from '@/features/products/api/productsApi'
 import { useListCategories } from '@/features/products/hooks/useProducts'
 import { Product } from '@/features/products/types'
 import { getFormattedLocation, requestLocationPermission } from '@/utils/location'
-import { Ionicons } from '@expo/vector-icons'
 import { skipToken } from '@reduxjs/toolkit/query/react'
 import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
-import React, { useEffect, useState } from 'react'
-import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react'
+import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function MarketplaceScreen() {
   const router = useRouter()
 
-  // Bottom‐sheet visibility
   const [isSellSheetVisible, setSellSheetVisible] = useState(false)
   const [isCatSheetVisible, setCatSheetVisible] = useState(false)
   const [isSortSheetVisible, setSortSheetVisible] = useState(false)
-
-  // Filters & search
+  const [isScreenReady, setScreenReady] = useState(false)
   const [catQuery, setCatQuery] = useState('')
   const [sortOption, setSortOption] = useState<string>('relevance')
   const [searchQuery, setSearchQuery] = useState('')
-
-  // Readable location string
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('')
   const [readableLocation, setReadableLocation] = useState<string>('')
 
-  // Store coords so RTK Query can fire
   const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null)
 
-  // RTK Query for products; skips until coords != null
+  const queryParams = useMemo(() => {
+    if (!coords) return skipToken
+    return {
+      latitude: coords?.latitude ?? 38.90,
+      longitude: coords?.longitude ?? 77.03,
+      sort: sortOption || "",
+      category: selectedCategoryId || "",
+    }
+  }, [coords, sortOption, selectedCategoryId])
+
   const {
     data: productsResponse,
-    isLoading: isLoading,
+    isLoading,
     error: productsError,
     refetch: refetchProducts,
-  } = useListProductsQuery(coords ?? skipToken)
+  } = useListProductsQuery(queryParams)
 
-  // extract items array
-  const products: Product[] = productsResponse as any ?? []
+  const products: Product[] = (productsResponse as any) ?? []
 
-  // Categories hook (unchanged)
   const {
     categories = [],
     isLoading: isCatsLoading,
     error: catsError,
-    refetch: refetchCats,
   } = useListCategories()
 
   const filteredCategories = categories.filter((c) =>
     c.title.toLowerCase().includes(catQuery.toLowerCase())
   )
 
-  // Master fetch function: gets coords, sets state; RTK Query runs automatically
-  const fetchData = async (query?: string) => {
-    const granted = await requestLocationPermission()
-    if (!granted) return
+  const fetchData = async (query?: string, categoryId?: string) => {
+    try {
+      const granted = await requestLocationPermission()
+      if (!granted) return
 
-    const formatted = await getFormattedLocation()
+      const formatted = await getFormattedLocation()
+      if (!formatted?.length) {
+        console.warn('Invalid coordinates:', formatted)
+        return
+      }
 
-    if (!formatted?.length) {
-      console.warn('Invalid coordinates:', formatted)
-      return
-    }
+      const [latStr, lngStr] = formatted.split(',')
+      const lat = parseFloat(latStr)
+      const lng = parseFloat(lngStr)
+      setCoords({ latitude: lat, longitude: lng })
 
-    const [latStr, lngStr] = formatted.split(',')
-    const lat = parseFloat(latStr)
-    const lng = parseFloat(lngStr)
-    setCoords({ latitude: lat, longitude: lng })
+      const rev = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng })
+      if (rev.length) {
+        const place = rev[0]
+        setReadableLocation(`${place.city ?? place.region}, ${place.country}`)
+      }
 
-    const rev = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng })
-    if (rev.length) {
-      const place = rev[0]
-      setReadableLocation(`${place.city ?? place.region}, ${place.country}`)
-    }
+      if (query) setSearchQuery(query)
+      if (categoryId) setSelectedCategoryId(categoryId)
 
-    if (query) {
-      setSearchQuery(query)
-      // you can hook into useSearchProductsQuery here if desired
+      setScreenReady(true) // ✅ signal UI to render
+    } catch (err) {
+      console.error('[fetchData] error:', err)
     }
   }
 
-  // initial load
   useEffect(() => {
     fetchData()
   }, [])
 
-  // Filter buttons (unchanged)
-  const filters: FilterItem[] = [
-    { label: 'Search', icon: 'search-outline', onPress: () => console.log('Search') },
-    { label: 'Sell', icon: 'pricetag-outline', onPress: () => setSellSheetVisible(true) },
-    { label: 'Sort By', icon: 'chevron-down-outline', onPress: () => setSortSheetVisible(true) },
-    { label: 'Category', icon: 'list-outline', onPress: () => setCatSheetVisible(true) },
-  ]
+  if (!isScreenReady || isLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+        <StatusBar backgroundColor={theme.colors.background} animated barStyle="dark-content" />
+        <View style={styles.fullScreenLoader}>
+          <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
-    <SafeAreaView>
-      <StatusBar backgroundColor={theme.colors.background} animated barStyle={'dark-content'} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <StatusBar backgroundColor={theme.colors.background} animated barStyle="dark-content" />
       <MarketplaceHeader
         onBack={() => router.back()}
         onProfilePress={() => router.push('/root/profile/ProfileScreen')}
       />
-
       {isLoading ? (
-        <View style={styles.loaderContainer}>
+        <View style={styles.fullScreenLoader}>
           <ActivityIndicator size="large" color={theme.colors.textPrimary} />
         </View>
       ) : productsError ? (
         <Text style={styles.errorText}>Error loading products.</Text>
       ) : (
         <>
-          <FilterBar items={filters} onSearchChange={(q) => fetchData(q)} />
+          <MarketplaceFilters
+            onSearchChange={(q) => fetchData(q)}
+            onSellPress={() => setSellSheetVisible(true)}
+            onSortPress={() => setSortSheetVisible(true)}
+            onCategoryPress={() => setCatSheetVisible(true)}
+          />
 
           <SectionHeader title="Today’s picks" location={readableLocation} />
 
-          <ProductGrid
-            products={(products ?? []).map((item) => ({
-              id: item._id,
-              title: item.title,
-              price: `$${item.price}`,
-              imageUrl: item.images?.[0] ?? 'https://via.placeholder.com/300x300?text=No+Image',
-            }))}
-            onPress={(productId: string) =>
-              router.push({
-                pathname: '/root/marketplace/ProductDetails',
-                params: { productId },
-              })
-            }
-          />
+          {products.length === 0 ? (
+            <Text style={styles.emptyText}>No products found.</Text>
+          ) : (
+            <ProductGrid
+              products={products?.map((item) => ({
+                id: item._id,
+                title: item.title,
+                price: `$${item.price}`,
+                imageUrl: item.images?.[0] ?? 'https://via.placeholder.com/300x300?text=No+Image',
+              }))}
+              onPress={(productId: string) =>
+                router.push({
+                  pathname: '/root/marketplace/ProductDetails',
+                  params: { productId },
+                })
+              }
+            />
+          )}
 
-
-          {/* Sort Sheet */}
-          <BottomSheet
+          <SortOptionsSheet
             visible={isSortSheetVisible}
             onClose={() => setSortSheetVisible(false)}
-            height="48%"
-          >
-            <Text style={sheetStyles.sheetTitle}>Sort By:</Text>
-            {[
-              { key: 'relevance', label: 'Relevance' },
-              { key: 'popularity', label: 'Popularity' },
-              { key: 'price_low_high', label: 'Price – low to high' },
-              { key: 'price_high_low', label: 'Price – high to low' },
-              { key: 'ratings', label: 'Ratings – high to low' },
-              { key: 'recent', label: 'Recently Uploaded' },
-            ].map((opt) => {
-              const selected = sortOption === opt.key
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  style={sheetStyles.row}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setSortOption(opt.key)
-                    setSortSheetVisible(false)
-                    // if needed, trigger refetch with new sort:
-                    refetchProducts()
-                  }}
-                >
-                  <Text style={sheetStyles.rowText}>{opt.label}</Text>
-                  <Ionicons
-                    name={selected ? 'radio-button-on' : 'radio-button-off'}
-                    size={20}
-                    color={selected ? theme.colors.primary : theme.colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              )
-            })}
-          </BottomSheet>
+            selectedOption={sortOption}
+            onSelect={(opt) => {
+              setSortOption(opt)
+              refetchProducts()
+            }}
+          />
 
-          {/* Category Sheet */}
-          <BottomSheet
+          <CategorySheet
             visible={isCatSheetVisible}
             onClose={() => {
               setCatSheetVisible(false)
               setCatQuery('')
             }}
-            height="60%"
-          >
-            <SearchBar
-              value={catQuery}
-              onChangeText={setCatQuery}
-              placeholder="Search categories"
-            />
+            searchQuery={catQuery}
+            onSearchChange={setCatQuery}
+            categories={filteredCategories}
+            isLoading={isCatsLoading}
+            error={catsError}
+            onSelectCategory={(id, title) => {
+              setCatQuery(title)
+              setCatSheetVisible(false)
+              fetchData(undefined, id)
+            }}
+          />
 
-            {isCatsLoading ? (
-              <ActivityIndicator style={{ marginTop: 20 }} />
-            ) : catsError ? (
-              <Text style={{ marginTop: 20, textAlign: 'center' }}>
-                Failed to load categories.
-              </Text>
-            ) : (
-              <ScrollView style={{ marginTop: 8 }}>
-                {filteredCategories.map((cat) => (
-                  <TouchableOpacity
-                    key={cat._id}
-                    style={sheetStyles.catRow}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      setCatSheetVisible(false)
-                      setCatQuery(cat._id)
-                    }}
-                  >
-                    <Image
-                      source={{ uri: cat.imageUrl }}
-                      style={sheetStyles.catImage}
-                      resizeMode="cover"
-                    />
-                    <Text style={sheetStyles.catText}>{cat.title}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </BottomSheet>
-
-          {/* Sell Sheet */}
-          <BottomSheet
+          <SellSheet
             visible={isSellSheetVisible}
             onClose={() => setSellSheetVisible(false)}
-            height={200}
-          >
-            <Text
-              style={{
-                fontSize: theme.fontSizes.headlineSmall,
-                fontWeight: '700',
-                marginBottom: 16,
-              }}
-            >
-              Create your listing
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push('/root/marketplace/AddProductScreen')}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                paddingVertical: 12,
-              }}
-            >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  backgroundColor: theme.colors.textSecondary,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 8,
-                }}
-              >
-                <Ionicons name="add" size={20} color={theme.colors.background} />
-              </View>
-              <Text style={{ fontSize: theme.fontSizes.bodyMedium, fontWeight: '600' }}>
-                Add items
-              </Text>
-            </TouchableOpacity>
-          </BottomSheet>
+            onAddProduct={() => router.push('/root/marketplace/AddProductScreen')}
+          />
         </>
       )}
     </SafeAreaView>
@@ -280,53 +192,20 @@ export default function MarketplaceScreen() {
 }
 
 const styles = StyleSheet.create({
-  loaderContainer: {
+  fullScreenLoader: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
   },
   errorText: {
     textAlign: 'center',
     marginTop: 20,
     color: theme.colors.accent,
   },
-})
-
-const sheetStyles = StyleSheet.create({
-  sheetTitle: {
-    fontSize: theme.fontSizes.headlineSmall,
-    fontWeight: '700',
-    marginBottom: 12,
-    color: theme.colors.textPrimary,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: theme.colors.textSecondary,
-  },
-  rowText: {
+  emptyText: {
+    textAlign: 'center',
+    marginTop: 24,
+    color: theme.colors.textSecondary,
     fontSize: theme.fontSizes.bodyMedium,
-    color: theme.colors.textPrimary,
-  },
-  catRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.textSecondary,
-  },
-  catImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 12,
-  },
-  catText: {
-    fontSize: theme.fontSizes.bodyMedium,
-    color: theme.colors.textPrimary,
   },
 })
