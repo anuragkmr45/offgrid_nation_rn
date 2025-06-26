@@ -176,6 +176,8 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaUrls }) => {
   )
 }
 
+export { default as SelectDropdown } from './SelectDropdown'
+
 const styles = StyleSheet.create({
   button: {
     height: 45,

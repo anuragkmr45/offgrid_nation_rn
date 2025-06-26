@@ -1,19 +1,16 @@
 // app/search/index.tsx
 
-import { SearchBar } from '@/components/common'
+import { SearchBar, SelectDropdown } from '@/components/common'
+import { PostCard } from '@/components/common/feeds/PostCard'
 import { WithLayout } from '@/components/layouts/WithLayout'
 import {
   AccountCard
 } from '@/components/search/AccountCard'
 import { SearchTabs } from '@/components/search/SearchTabs'
-import {
-  TopicCard,
-  TopicCardProps,
-} from '@/components/search/TopicCard'
 import { theme } from '@/constants/theme'
+import { usePost } from '@/features/content/post/hooks/usePost'
 import { useSearchUsers } from '@/features/list/hooks/useList'
 import { debounce } from '@/utils/debounce'
-import { useRouter } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
@@ -28,27 +25,31 @@ import {
 const { height: SCREEN_HEIGHT } = Dimensions.get('window')
 
 // Static topics to show in the Topics tab
-const TOPICS: TopicCardProps[] = [
+const TOPICS = [
   {
     imageUrl:
       'https://images.unsplash.com/photo-1502082553048-f009c37129b9',
     title: 'Nature',
-    onPress: () => console.log('Topic: Nature'),
   },
   {
     imageUrl:
       'https://images.unsplash.com/photo-1518779578993-ec3579fee39f',
     title: 'Technology',
-    onPress: () => console.log('Topic: Technology'),
   },
-  // …add more as needed
+  {
+    imageUrl:
+      'https://images.unsplash.com/photo-1518779578993-ec3579fee39f',
+    title: 'Test',
+  },
 ]
 
 export default function SearchScreen() {
-  const router = useRouter()
+  const { search, isSearching, searchData } = usePost()
+  const [selectedTopic, setSelectedTopic] = useState<string[]>([])
 
   // immediate text from the input
   const [query, setQuery] = useState<string>('')
+  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
 
   // debounced version, used to drive the API call
   const [debouncedQuery, setDebouncedQuery] = useState<string>('')
@@ -58,6 +59,15 @@ export default function SearchScreen() {
     () => debounce((q: string) => setDebouncedQuery(q), 300),
     []
   )
+
+  const topicOptions = TOPICS.map((t) => ({
+    label: t.title,
+    value: t.title.toLowerCase(),
+  }))
+
+  const handleTopicSelect = (topicValue: string) => {
+    search(topicValue)
+  }
 
   // whenever `query` changes, schedule an update to debouncedQuery
   useEffect(() => {
@@ -75,6 +85,21 @@ export default function SearchScreen() {
   // 0 = Accounts, 1 = Topics
   const [selectedTab, setTab] = useState<number>(0)
 
+  const mappedPosts = searchData?.posts.map((p) => ({
+    postId: p._id,
+    user: {
+      avatar: p.userId.profilePicture || '',
+      username: p.userId.username,
+    },
+    timestamp: new Date(p.createdAt).toLocaleDateString(), // You can format with timeAgo if needed
+    media: p.media.map((url, idx) => ({ id: `${p._id}-${idx}`, url })),
+    caption: p.content,
+    isLiked: p.isLiked,
+    commentsCount: p.commentsCount,
+    likesCount: p.likesCount,
+  })) || []
+
+
   return (
     <WithLayout
       statusBarStyle="dark-content"
@@ -83,13 +108,25 @@ export default function SearchScreen() {
     >
       <StatusBar backgroundColor={theme.colors.background} animated />
 
-      {/* Search input */}
-      <SearchBar
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search users or topics…"
-        style={styles.search}
-      />
+      {selectedTab === 0 ? (
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search users…"
+          style={styles.search}
+        />
+      ) : (
+        <SelectDropdown
+          options={topicOptions}
+          selectedValues={selectedTopic}
+          onChange={setSelectedTopic}
+          onSelect={handleTopicSelect}
+          multiple={false}
+          searchable={false}
+          placeholder="Select a topic"
+        />
+      )}
+
 
       {/* Tabs */}
       <SearchTabs
@@ -144,20 +181,27 @@ export default function SearchScreen() {
             />
           )
         ) : (
-          // ---- TOPICS TAB ----
-          <FlatList
-            data={TOPICS.filter((t) =>
-              t.title.toLowerCase().includes(query.toLowerCase())
-            )}
-            keyExtractor={(t) => t.title}
-            renderItem={({ item }) => <TopicCard {...item} />}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 8 }}
-          />
+          isSearching ? (
+            <View style={{}}>
+              <ActivityIndicator size="large" color={theme.colors.background} />
+            </View>
+          ) : (
+            <FlatList
+              data={mappedPosts}
+              keyExtractor={(item) => item.postId}
+              renderItem={({ item }) => <PostCard post={item} cardHeight={500} />}
+              contentContainerStyle={{ paddingVertical: 12 }}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No posts found for this topic.</Text>
+                </View>
+              }
+            />
+          )
+
         )}
       </View>
-    </WithLayout>
+    </WithLayout >
   )
 }
 

@@ -40,9 +40,12 @@ export interface PostType {
   commentsCount: number
   likesCount: number
 }
+
 interface PostCardProps {
   post: PostType
-  isVisible?: boolean // ✅ Add this prop to control video playback
+  isVisible?: boolean
+  cardHeight?: number
+  cardWidth?: number
 }
 
 const { width, height: SCREEN_HEIGHT } = Dimensions.get('window')
@@ -50,9 +53,13 @@ const CARD_HEIGHT = SCREEN_HEIGHT * 0.8
 const MEDIA_WIDTH = width - 32
 const MEDIA_HEIGHT = (MEDIA_WIDTH * 16) / 9
 
-export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true }) => {
+
+export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, cardHeight, cardWidth }) => {
   const router = useRouter()
   const { likePost } = usePost()
+
+  const resolvedHeight = cardHeight ?? CARD_HEIGHT
+  const resolvedWidth = cardWidth ?? MEDIA_WIDTH
 
   const [isLike, setIsLike] = useState(post.isLiked)
   const [likeCount, setLikeCount] = useState(post.likesCount)
@@ -93,7 +100,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true }) =>
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 50 }).current
 
   const containerStyle = post.media.length > 0
-    ? [styles.card, { height: CARD_HEIGHT }]
+    ? [styles.card, { height: resolvedHeight }]
     : styles.card
 
   return (
@@ -116,13 +123,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true }) =>
           onViewableItemsChanged={onViewableItemsChanged}
           viewabilityConfig={viewabilityConfig}
           renderItem={({ item, index }) => (
-            <View style={[styles.mediaContainer, { width: MEDIA_WIDTH, height: MEDIA_HEIGHT }]}>
+            <View style={[styles.mediaContainer, { width: resolvedWidth, height: MEDIA_HEIGHT }]}>
               <PostMedia
                 mediaUrl={item.url}
-                isActive={isVisible && index === visibleIndex} // ✅ only active video plays with sound
-                style={styles.media}
+                isActive={isVisible && index === visibleIndex}
+                style={[styles.media, { width: resolvedWidth, height: MEDIA_HEIGHT }]}
               />
             </View>
+
           )}
           style={styles.carousel}
           contentContainerStyle={{ paddingBottom: 10 }}
