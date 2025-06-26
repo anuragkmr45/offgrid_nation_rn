@@ -68,18 +68,28 @@ export default function MarketplaceScreen() {
       const granted = await requestLocationPermission()
       if (!granted) return
 
-      const formatted = await getFormattedLocation()
-      if (!formatted?.length) {
-        console.warn('Invalid coordinates:', formatted)
+      let formatted: string | null = null
+      let retries = 0
+
+      while (!formatted && retries < 5) {
+        formatted = await getFormattedLocation()
+        if (formatted) break
+        await new Promise((res) => setTimeout(res, 500))
+        retries++
+      }
+
+      if (!formatted) {
+        console.warn('Could not fetch location after retries')
         return
       }
 
       const [latStr, lngStr] = formatted.split(',')
       const lat = parseFloat(latStr)
       const lng = parseFloat(lngStr)
+
       setCoords({ latitude: lat, longitude: lng })
 
-      const rev = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng })
+      const rev = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng }).catch(() => [])
       if (rev.length) {
         const place = rev[0]
         setReadableLocation(`${place.city ?? place.region}, ${place.country}`)
@@ -88,17 +98,24 @@ export default function MarketplaceScreen() {
       if (query) setSearchQuery(query)
       if (categoryId) setSelectedCategoryId(categoryId)
 
-      setScreenReady(true) // ✅ signal UI to render
+      setScreenReady(true)
     } catch (err) {
       console.error('[fetchData] error:', err)
     }
   }
 
+
   useEffect(() => {
+    const timeout = setTimeout(() => {
+      setScreenReady(true) // fallback to show UI anyway
+    }, 5000)
+
     fetchData()
+
+    return () => clearTimeout(timeout)
   }, [])
 
-  if (!isScreenReady || isLoading) {
+  if (!isScreenReady || (isLoading && products.length === 0)) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <StatusBar backgroundColor={theme.colors.background} animated barStyle="dark-content" />
