@@ -21,9 +21,9 @@ export const SortOptionsSheet: React.FC<Props> = ({
   const options = [
     { key: 'relevance', label: 'Relevance' },
     { key: 'popularity', label: 'Popularity' },
-    { key: 'price_low_high', label: 'Price – low to high' },
-    { key: 'price_high_low', label: 'Price – high to low' },
-    { key: 'ratings', label: 'Ratings – high to low' },
+    { key: 'priceAsc', label: 'Price – low to high' },
+    { key: 'priceDesc', label: 'Price – high to low' },
+    { key: 'rating', label: 'Ratings – high to low' },
     { key: 'recent', label: 'Recently Uploaded' },
   ]
 
