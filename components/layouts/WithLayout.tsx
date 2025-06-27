@@ -56,7 +56,7 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
         type: 'info',
         text1: 'For Weather reports tap',
         position: 'top',
-        visibilityTime: 2000,
+        visibilityTime: 4000,
         autoHide: true,
         onPress: () => {
           router.push('/root/settings/WeatherVideos')

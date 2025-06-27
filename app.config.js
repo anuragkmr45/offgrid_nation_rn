@@ -10,13 +10,14 @@ export default {
     orientation: 'portrait',
     icon: './assets/images/icon.png',
     userInterfaceStyle: 'automatic',
-    ios: { supportsTablet: true },
+    ios: { supportsTablet: true, buildeIdentifier: "com.anuragkmr_45.offgridnation" },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
+      package: "com.anuragkmr_45.offgridnation"
     },
     web: {
       bundler: 'metro',
@@ -25,15 +26,16 @@ export default {
     },
     plugins: [
       'expo-router',
-      [
-        'expo-splash-screen',
-        {
-          image: './assets/images/splash-icon.png',
-          imageWidth: 200,
-          resizeMode: 'contain',
-          backgroundColor: '#ffffff',
-        },
-      ],
+      // '@react-native-google-signin/google-signin'
+      // [
+      //   'expo-splash-screen',
+      //   {
+      //     image: './assets/images/splash-icon.png',
+      //     imageWidth: 200,
+      //     resizeMode: 'contain',
+      //     backgroundColor: '#ffffff',
+      //   },
+      // ],
     ],
     experiments: { typedRoutes: true },
     extra: {

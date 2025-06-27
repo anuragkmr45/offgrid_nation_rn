@@ -1,4 +1,3 @@
-import { Appearance } from 'react-native';
 import { Colors } from '../Colors';
 
 export interface ThemeTokens {
@@ -57,5 +56,6 @@ export const darkTheme: ThemeTokens = {
   },
 };
 
-const colorScheme = Appearance.getColorScheme();
-export const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+// const colorScheme = Appearance.getColorScheme();
+// export const theme = colorScheme === 'dark' ? darkTheme : lightTheme;
+export const theme = lightTheme;
