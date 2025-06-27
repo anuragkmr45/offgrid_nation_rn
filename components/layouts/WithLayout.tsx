@@ -1,19 +1,9 @@
-// components/common/WithLayout.tsx
-
-/**
- * A layout HOC that wraps screens in:
- *  • a modifiable StatusBar
- *  • a top header (logo + store & menu icons) with configurable bg color
- *  • a content area
- *  • a bottom “glass” nav bar with blur + translucency
- */
-
 import { theme } from '@/constants/theme'
 import { TAB_EVENTS, TabEventEmitter } from '@/utils/TabEventEmitter'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { BlurView } from 'expo-blur'
 import { Link, usePathname, useRouter } from 'expo-router'
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
   Dimensions,
   Image,
@@ -24,6 +14,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 
 // Icon‐name unions
 type IoniconName = React.ComponentProps<typeof Ionicons>['name']
@@ -57,6 +48,24 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
     route: string
     label: string
   }
+
+  // Periodic toast to remind about weather videos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      Toast.show({
+        type: 'info',
+        text1: 'For Weather reports tap',
+        position: 'top',
+        visibilityTime: 2000,
+        autoHide: true,
+        onPress: () => {
+          router.push('/root/settings/WeatherVideos')
+        },
+      })
+    }, 60000) // every 60 seconds
+
+    return () => clearInterval(interval)
+  }, [router])
 
   // Bottom‐nav definitions
   const navItems: NavItem[] = [
@@ -106,9 +115,9 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
         animated
       />
 
-      <SafeAreaView style={[styles.container, { backgroundColor: statusBarBgColor }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: statusBarBgColor }]}>  
         {/* ===== TOP HEADER ===== */}
-        <View style={[styles.topBar, { backgroundColor: headerBgColor }]}>
+        <View style={[styles.topBar, { backgroundColor: headerBgColor }]}>  
           <Image
             source={{ uri: "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png" }}
             style={styles.logo}

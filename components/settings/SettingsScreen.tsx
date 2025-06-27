@@ -41,13 +41,10 @@ export const SettingsScreen: React.FC = () => {
     },
     {
       key: 'weather_details',
-      icon: 'shield-outline' as const,
+      icon: 'cloud-outline' as const,
       title: 'Weather Details',
       subtitle: 'Checkout latest weather status.',
-      onPress: () => router.push({
-        pathname: '/root/settings/WeatherVideos',
-        params: { channelHandle: '@weathermanplus' }
-      }),
+      onPress: () => router.push('/root/settings/WeatherVideos'),
     },
     {
       key: 'notifications',

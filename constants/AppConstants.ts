@@ -1,0 +1,1 @@
+export const AVATAR_FALLBACK: string = "https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png"

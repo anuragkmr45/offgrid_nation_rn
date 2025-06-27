@@ -1,99 +1,104 @@
-// // components/chat/ConversationScreen.tsx
+// components/chat/ConversationScreen.tsx
 
-import { useMarkReadMutation } from '@/features/chat/api/chatApi';
-import { useChatMessages } from '@/features/chat/hooks/useChat';
-import { useAppSelector } from '@/store/hooks';
+import { theme } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef } from 'react';
-import {
-  FlatList,
-  KeyboardAvoidingView,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
-
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, KeyboardAvoidingView, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
-import { theme } from '../../constants/theme';
 import { Loader } from '../common';
 import { ChatInputBar } from './ChatInputBar';
 import { ConversationHeader } from './ConversationHeader';
 import { MessageBubble } from './MessageBubble';
 import { SharedPostBubble } from './SharedPostBubble';
 
+import { AVATAR_FALLBACK } from '@/constants/AppConstants';
+import {
+  useGetMessagesByConversationQuery,
+  useGetMessagesByRecipientQuery,
+  useMarkReadMutation,
+  useSendMessageMutation,
+} from '@/features/chat/api/chatApi';
+import { useAppSelector } from '@/store/hooks';
+
 interface ConversationScreenProps {
-  chatId: string;
+  chatId: string; // recipient user ID
   avatarUrl?: string;
   name?: string;
 }
 
-export const ConversationScreen: React.FC<ConversationScreenProps> = ({
-  chatId,
-  avatarUrl,
-  name,
-}) => {
+export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, avatarUrl, name }) => {
   const router = useRouter();
-  const userId = useAppSelector((state) => state.auth.user?._id);
+  const userId = useAppSelector(state => state.auth.user?._id);
 
-  const {
-    messages,
-    isLoading,
-    sendMessage,
-    sending,
-    loadMore,
-  } = useChatMessages(chatId);
+  // Track conversationId (becomes defined after first send or from history)
+  const [conversationId, setConversationId] = useState<string | undefined>(undefined);
 
-  const [markRead] = useMarkReadMutation();
+  // Historical load until we know conversationId
+  const { data: history = [], isLoading: historyLoading } = useGetMessagesByRecipientQuery(
+    { recipientId: chatId, limit: 20 },
+    { skip: !!conversationId }
+  );
 
-  // only clear unread once
-  const didMarkRead = useRef(false);
+  // On history load, pick conversationId from first message
   useEffect(() => {
-    if (chatId && !didMarkRead.current) {
-      markRead(chatId);
-      didMarkRead.current = true;
+    if (!conversationId && history.length > 0) {
+      setConversationId(history[0].conversationId);
     }
-  }, [chatId]);
+  }, [history, conversationId]);
 
-  const handleSend = useCallback(async (txt: string) => {
-    const payload = {
-      recipient: chatId,
-      actionType: 'text',
-      text: txt,
-      // conversationId: chatId,
-    };
-    console.log({ payload });
+  // Real-time + paginated once we have a convId
+  const { data: realtime = [], isLoading: rtLoading } = useGetMessagesByConversationQuery(
+    { conversationId: conversationId!, cursor: "", limit: 20 },
+    { skip: !conversationId }
+  );
 
-    try {
-      const result = await sendMessage(payload as any).unwrap();
-      console.log('⟵ sendMessage result:', result);
-    } catch (err: any) {
-      Toast.show({ type: "error", text1: err?.data?.message || "Unable to send msg" })
-      console.error('✖ sendMessage failed:', err);
+  // Choose data & loading based on convId presence
+  const messages = conversationId ? realtime : history;
+  const loading = conversationId ? rtLoading : historyLoading;
+
+  // Mark as read once when convId appears
+  const [markRead] = useMarkReadMutation();
+  const didMarkRef = useRef(false);
+  useEffect(() => {
+    if (conversationId && !didMarkRef.current) {
+      markRead(conversationId);
+      didMarkRef.current = true;
     }
-  }, [chatId, sendMessage]);
+  }, [conversationId, markRead]);
+
+  // Sending messages: real-time if convId, else first send
+  const [sendMessage, { isLoading: sending }] = useSendMessageMutation();
+  const handleSend = useCallback(
+    async (text: string) => {
+      try {
+        if (conversationId) {
+          // Real-time send
+          await sendMessage({ recipient: chatId, actionType: 'text', text, conversationId }).unwrap();
+        } else {
+          // First message create conv
+          const result = await sendMessage({ recipient: chatId, actionType: 'text', text }).unwrap();
+          setConversationId(result.conversationId);
+        }
+      } catch (err: any) {
+        Toast.show({ type: 'error', text1: err.data?.message || 'Unable to send message' });
+      }
+    },
+    [chatId, conversationId, sendMessage]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar animated backgroundColor={theme.colors.background} barStyle={'dark-content'} />
+      <StatusBar animated backgroundColor={theme.colors.background} barStyle="dark-content" />
       <ConversationHeader
-        avatarUrl={
-          avatarUrl ??
-          'https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png'
-        }
+        avatarUrl={avatarUrl || AVATAR_FALLBACK}
         name={name || 'Chat'}
         onBack={() => router.back()}
       />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-      // behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      // keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
-      >
-        {isLoading && <Loader />}
+      <KeyboardAvoidingView style={styles.flex}>
+        {loading && <Loader />}
 
-        {messages.length === 0 && (
+        {!loading && messages.length === 0 && (
           <View style={styles.empty}>
             <Text style={styles.emptyText}>Start a conversation…</Text>
           </View>
@@ -104,32 +109,18 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({
           inverted
           keyExtractor={(m) => m._id}
           renderItem={({ item }) => {
-            const outgoing = item?.sender?._id === userId;
-            const timestamp = new Date(item.sentAt).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            });
+            const outgoing = item.sender._id === userId;
+            const timestamp = new Date(item.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             if (item.actionType === 'post') {
-              return (
-                <SharedPostBubble
-                  post={item.postPayload}
-                  timestamp={timestamp}
-                  outgoing={outgoing}
-                />
-              );
+              return <SharedPostBubble post={item.postPayload} timestamp={timestamp} outgoing={outgoing} />;
             }
-
-            return (
-              <MessageBubble
-                text={item.text || ''}
-                timestamp={timestamp}
-                outgoing={outgoing}
-              />
-            );
+            return <MessageBubble text={item.text || ''} timestamp={timestamp} outgoing={outgoing} />;
           }}
           contentContainerStyle={styles.messages}
-          onEndReached={loadMore}
+          onEndReached={() => {
+            /* optionally handle pagination: for real-time load more or history older */
+          }}
         />
 
         <ChatInputBar onSend={handleSend} loading={sending} />
@@ -142,12 +133,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   flex: { flex: 1 },
   messages: { padding: 12 },
-  empty: {
-    paddingTop: 24,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: theme.colors.textSecondary,
-    fontSize: 14,
-  },
+  empty: { paddingTop: 24, alignItems: 'center' },
+  emptyText: { color: theme.colors.textSecondary, fontSize: 14 },
 });

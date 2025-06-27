@@ -24,9 +24,9 @@ export default function MyProfileRoute() {
   useFocusEffect(
     useCallback(() => {
       refetchProfile()
-      refetchFollowers?.()
-      refetchFollowing?.()
-      refetchPosts?.()
+      // refetchFollowers?.()
+      // refetchFollowing?.()
+      // refetchPosts?.()
     }, [refetchProfile])
   )
 
@@ -66,16 +66,5 @@ export default function MyProfileRoute() {
       />
     </>
   )
-}
-function refetchFollowers() {
-  throw new Error('Function not implemented.')
-}
-
-function refetchFollowing() {
-  throw new Error('Function not implemented.')
-}
-
-function refetchPosts() {
-  throw new Error('Function not implemented.')
 }
 

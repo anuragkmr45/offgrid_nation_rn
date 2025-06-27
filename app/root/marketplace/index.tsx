@@ -141,12 +141,14 @@ export default function MarketplaceScreen() {
         <Text style={styles.errorText}>Error loading products.</Text>
       ) : (
         <>
+        <View>
           <MarketplaceFilters
             onSearchChange={(q) => fetchData(q)}
             onSellPress={() => setSellSheetVisible(true)}
             onSortPress={() => setSortSheetVisible(true)}
             onCategoryPress={() => setCatSheetVisible(true)}
           />
+        </View>
 
           <SectionHeader title="Today’s picks" location={readableLocation} />
 

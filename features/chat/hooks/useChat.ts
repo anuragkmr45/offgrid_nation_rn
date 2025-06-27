@@ -1,72 +1,121 @@
 // src/features/chat/hooks/useChat.ts
 import { useEffect, useRef, useState } from 'react';
-import { useGetMessagesQuery, useSendMessageMutation } from '../api/chatApi';
+import {
+  useGetConversationsQuery,
+  useGetMessagesByConversationQuery,
+  useGetMessagesByRecipientQuery,
+  useMarkReadMutation,
+  useSearchUsersQuery,
+  useSendMessageMutation,
+} from '../api/chatApi';
 import type { Message } from '../types';
 
 /**
- * Hook to fetch and paginate chat messages, with real-time updates via RTK Query & Pusher.
- * @param conversationId - the ID of the conversation to load messages for
+ * Hook to manage conversations and chat messages with real-time updates.
+ * Provides conversation list, search, message fetching, sending, and read marking.
  */
-export const useChatMessages = (conversationId: string) => {
-  // pagination cursor (ISO timestamp of last loaded message)
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
+export const useChat = (conversationId?: string) => {
+  // --- Conversations & Search ---
+  const {
+    data: conversations = [],
+    isLoading: convLoading,
+    error: convError,
+    refetch: refetchConversations,
+  } = useGetConversationsQuery(undefined, { refetchOnMountOrArgChange: true });
 
-  // fetch each page whenever `conversationId` or `cursor` changes
+  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    data: users = [],
+    isLoading: userSearchLoading,
+    error: userSearchError,
+  } = useSearchUsersQuery(searchTerm, { skip: !searchTerm });
+
+  // --- Messages by Recipient (historical) ---
+  const {
+    data: history = [],
+    isLoading: historyLoading,
+    error: historyError,
+    refetch: refetchHistory,
+  } = useGetMessagesByRecipientQuery(
+    { recipientId: conversationId ?? '' },
+    { skip: !conversationId }
+  );
+
+  // --- Messages by Conversation (real-time + pagination) ---
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const limit = 20;
+
   const {
     data: page = [],
-    isLoading,
-    error,
-  } = useGetMessagesQuery({ recipientId: conversationId, limit: 20 }, { refetchOnMountOrArgChange: true, refetchOnFocus: true });
-  // } = useGetMessagesQuery({ conversationId, cursor });
+    isLoading: pageLoading,
+    error: pageError,
+  } = useGetMessagesByConversationQuery(
+    { conversationId: conversationId ?? '', cursor, limit },
+    { skip: !conversationId, refetchOnMountOrArgChange: true }
+  );
 
-  // accumulate pages in a single list
   const [allMessages, setAllMessages] = useState<Message[]>([]);
-
-  // track last page's last-message ID to avoid duplicate appends
   const lastPageIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // determine a stable ID for this page: the last message's _id, or null
     const newPageId = page.length ? page[page.length - 1]._id : null;
-
-    // if this page hasn't changed, do nothing
     if (newPageId === lastPageIdRef.current) return;
     lastPageIdRef.current = newPageId;
 
     if (cursor) {
-      // older pages → append to end
       setAllMessages(prev => [...prev, ...page]);
     } else {
-      // initial load or reset → replace
       setAllMessages(page);
     }
   }, [page, cursor]);
 
-  // reset everything when switching conversations
   useEffect(() => {
     setCursor(undefined);
     setAllMessages([]);
     lastPageIdRef.current = null;
   }, [conversationId]);
 
-  // mutation for sending messages
-  const [sendMessage, { isLoading: sending }] = useSendMessageMutation();
-
-  // load more: set the cursor to the oldest loaded message's sentAt timestamp
   const loadMore = () => {
     const last = allMessages[allMessages.length - 1];
-    if (last?.sentAt) {
-      setCursor(last.sentAt);
-    }
+    if (last?.sentAt) setCursor(last.sentAt);
   };
 
+  // --- Sending & Read ---
+  const [sendMessage, { isLoading: sending, error: sendError }] = useSendMessageMutation();
+  const [markRead, { isLoading: marking, error: markError }] = useMarkReadMutation();
+
+  // mark conversation read on mount
+  useEffect(() => {
+    if (conversationId) markRead(conversationId);
+  }, [conversationId, markRead]);
+
   return {
+    // Conversations
+    conversations,
+    convLoading,
+    convError,
+    refetchConversations,
+    // User Search
+    users,
+    userSearchLoading,
+    userSearchError,
+    setSearchTerm,
+    // Historical messages
+    history,
+    historyLoading,
+    historyError,
+    refetchHistory,
+    // Real-time messages
     messages: allMessages,
-    isLoading,
-    error,
+    pageLoading,
+    pageError,
+    loadMore,
+    // Actions
     sendMessage,
     sending,
-    loadMore,
-    setAllMessages,
-  };
+    sendError,
+    markRead,
+    marking,
+    markError,
+  } as const;
 };

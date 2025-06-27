@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     alignItems: 'center',
-    height: 80,
+    height: 75,
   },
   searchContainer: {
     flexDirection: 'row',
