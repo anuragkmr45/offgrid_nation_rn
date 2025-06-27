@@ -16,7 +16,7 @@ export const useChatMessages = (conversationId: string) => {
     data: page = [],
     isLoading,
     error,
-  } = useGetMessagesQuery({ recipientId: conversationId,  limit: 20 });
+  } = useGetMessagesQuery({ recipientId: conversationId, limit: 20 }, { refetchOnMountOrArgChange: true, refetchOnFocus: true });
   // } = useGetMessagesQuery({ conversationId, cursor });
 
   // accumulate pages in a single list
@@ -24,7 +24,7 @@ export const useChatMessages = (conversationId: string) => {
 
   // track last page's last-message ID to avoid duplicate appends
   const lastPageIdRef = useRef<string | null>(null);
-  
+
   useEffect(() => {
     // determine a stable ID for this page: the last message's _id, or null
     const newPageId = page.length ? page[page.length - 1]._id : null;

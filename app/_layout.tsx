@@ -56,8 +56,6 @@ function NotificationListener() {
       pusherSvc.init();
       const channel = pusherSvc.subscribeChannel(`notifications.${userId}`);
       channel.bind('push-noti', (data: any) => {
-        console.log({data});
-        
         Notifications.scheduleNotificationAsync({
           content: {
             title: `${data.sender.username} sent you a message`,

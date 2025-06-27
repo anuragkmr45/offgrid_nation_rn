@@ -9,6 +9,8 @@ import type {
   ConversationUpdatedEvent,
   MediaUploadResponse,
   Message,
+  MessageReadEvent,
+  NewMessageEvent,
   User
 } from '../types';
 
@@ -119,20 +121,62 @@ export const chatApi = createApi({
     //     pusherSvc.unsubscribeChannel(channel.name);
     //   },
     // }),
-    getMessages: build.query<Message[], { recipientId: string; limit?: number }>({
-      query: ({ recipientId, limit = 20 }) => ({
-        url: `/conversations/messages?recipient=${recipientId}&limit=${limit}`,
+    // src/features/chat/api/chatApi.ts
+    getMessages: build.query<Message[], { recipientId: string; cursor?: string, limit?: number }>({
+      query: ({ recipientId, cursor }) => ({
+        url: `/conversations/messages?recipient=${recipientId}&limit=3&$cursor=${cursor}`,
         method: 'GET',
       }),
       providesTags: (result, error, { recipientId }) =>
         result
           ? [
-            ...result.map((m) => ({ type: 'Messages' as const, id: m._id })),
+            ...result.map(m => ({ type: 'Messages' as const, id: m._id })),
             { type: 'Messages' as const, id: recipientId },
           ]
           : [],
-    }),
+      async onCacheEntryAdded(
+        { recipientId, cursor },
+        { updateCachedData, cacheDataLoaded, cacheEntryRemoved, getState }
+      ) {
+        await cacheDataLoaded;
+        const state = getState() as RootState;
+        const myUserId = state.auth.user?._id;
+        if (!myUserId) return;
 
+        const pusher = PusherService.getInstance();
+        pusher.init();
+        const channel = pusher.subscribeChannel(`direct.${recipientId}`);
+
+        // New messages
+        channel.bind('new-message', (data: NewMessageEvent) => {
+          updateCachedData(draft => {
+            // dedupe
+            if (!draft.find(m => m._id === data._id)) {
+              draft.unshift({
+                ...data,
+                sender: { _id: data.sender } as User,
+                recipient: { _id: data.recipient } as User,
+              });
+            }
+          });
+        });
+
+        // Read receipts
+        channel.bind('message-read', (_: MessageReadEvent) => {
+          updateCachedData(draft => {
+            draft.forEach(m => {
+              if (m.sender._id === myUserId) {
+                m.readAt = new Date().toISOString();
+              }
+            });
+          });
+        });
+
+        await cacheEntryRemoved;
+        channel.unbind_all();
+        pusher.unsubscribeChannel(`direct.${recipientId}`);
+      },
+    }),
 
     // 3) Search users
     searchUsers: build.query<User[], string>({

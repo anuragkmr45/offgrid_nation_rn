@@ -37,7 +37,6 @@ const VerifyOtp: React.FC = () => {
     const trimedOTP= otp.trim();
 
     try {
-      console.log({ mobile: mobile, otp: trimedOTP });
       
       await triggerVerifyForgotOtp({ mobile: mobile, otp: trimedOTP });
       Toast.show({
@@ -48,8 +47,6 @@ const VerifyOtp: React.FC = () => {
         router.push({ pathname: '/auth/forgot-password/Reset', params: { mobile } });
       }, 1500);
     } catch (error: any) {
-      console.log({error});
-      
       const errorMessage = error?.data?.error || 'OTP verification fails.';
       Toast.show({
         type: "error",

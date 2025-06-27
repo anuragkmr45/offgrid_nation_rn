@@ -37,9 +37,9 @@ export default {
     ],
     experiments: { typedRoutes: true },
     extra: {
-      CHAT_SERVICE_URL: process.env.CHAT_SERVICE_URL,
       PUSHER_KEY: process.env.PUSHER_KEY,
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
+      YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
     },
   },
 };

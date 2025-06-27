@@ -29,8 +29,8 @@ export const ChatScreen: React.FC = () => {
           c.lastMessage.actionType === 'text'
             ? c.lastMessage.text || ''
             : c.lastMessage.actionType === 'media'
-            ? '📷 Media'
-            : '🔗 Shared post',
+              ? '📷 Media'
+              : '🔗 Shared post',
         timestamp: new Date(c.updatedAt).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -41,25 +41,25 @@ export const ChatScreen: React.FC = () => {
   )
 
   // filter by search term
-  const filtered: ChatListData[] = useMemo(
-    () =>
-      items.filter(i =>
-        i.name.toLowerCase().includes(search.toLowerCase())
-      ),
-    [items, search]
-  )
+  // const filtered: ChatListData[] = useMemo(
+  //   () =>
+  //     items.filter(i =>
+  //       i.name.toLowerCase().includes(search.toLowerCase())
+  //     ),
+  //   [items, search]
+  // )
 
   // navigate into conversation
   const onPress = useCallback((item: ChatListData) => {
-      router.push({
-        pathname: '/root/chat/Conversation',
-        params: {
-          recipientId: item.recipientId,
-          recipientName: item.name || item.username,
-          profilePicture: item.avatarUrl,
-        },
-      })
-    }, [router])
+    router.push({
+      pathname: '/root/chat/Conversation',
+      params: {
+        recipientId: item.recipientId,
+        recipientName: item.name || item.username,
+        profilePicture: item.avatarUrl,
+      },
+    })
+  }, [router])
 
   return (
     <WithLayout>
@@ -81,18 +81,18 @@ export const ChatScreen: React.FC = () => {
         )}
 
         {/* Main chat list */}
-        <ChatList data={items} onItemPress={onPress}  />
+        <ChatList data={items} onItemPress={onPress} />
 
         {/* User search modal for finding/starting chats */}
         <UserSearchModal
           visible={sheetVisible}
           onClose={() => setSheetVisible(false)}
           onSelect={user => {
-            if (user.conversationId) {
+            if (user._id) {
               router.push({
                 pathname: '/root/chat/Conversation',
                 params: {
-                  recipientId: user.conversationId,
+                  recipientId: user._id,
                   recipientName: user.fullName || user.username,
                   profilePicture: user.profilePicture,
                 },

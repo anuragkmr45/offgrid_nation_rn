@@ -30,7 +30,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'person-circle-outline' as const,
       title: 'Profiles',
       subtitle: 'Manage your connected experience and profile setups here.',
-      onPress: () => {router.push('/root/profile/ProfileScreen')},
+      onPress: () => { router.push('/root/profile/ProfileScreen') },
     },
     {
       key: 'privacy',
@@ -40,11 +40,21 @@ export const SettingsScreen: React.FC = () => {
       onPress: () => console.log('Go to Privacy'),
     },
     {
+      key: 'weather_details',
+      icon: 'shield-outline' as const,
+      title: 'Weather Details',
+      subtitle: 'Checkout latest weather status.',
+      onPress: () => router.push({
+        pathname: '/root/settings/WeatherVideos',
+        params: { channelHandle: '@weathermanplus' }
+      }),
+    },
+    {
       key: 'notifications',
       icon: 'notifications-outline' as const,
       title: 'Notifications',
       subtitle: 'Messages, likes, following & followers',
-      onPress: () => {router.push('/root/settings/Notifications')},
+      onPress: () => { router.push('/root/settings/Notifications') },
     },
     {
       key: 'language',

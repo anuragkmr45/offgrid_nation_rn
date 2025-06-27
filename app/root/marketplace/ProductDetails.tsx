@@ -5,6 +5,8 @@ import { MediaCarousel } from '@/components/common/MediaCarousel'
 import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
 import { ProductDetailsInfo } from '@/components/marketplace/ProductDetailsInfo'
 import { theme } from '@/constants/theme'
+import { User } from '@/features/auth/types'
+import { useSendMessageMutation } from '@/features/chat/api/chatApi'
 import { RootState } from '@/store/store'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import React, { useEffect, useState } from 'react'
@@ -17,10 +19,11 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 import { useSelector } from 'react-redux'
 
 interface Owner {
-  userId: string
+  _id: string
   username: string
   profilePicture: string
 }
@@ -44,7 +47,9 @@ export interface ProductDetails {
 export default function ProductDetailsScreen() {
   const { productId = "" } = useLocalSearchParams<{ productId: string }>()
   const router = useRouter()
-    const token = useSelector((state: RootState) => state.auth.accessToken);
+  const token = useSelector((state: RootState) => state.auth.accessToken);
+  const [sendMessage, { isLoading: sending, error: sendError }] = useSendMessageMutation()
+  const currentUser = useSelector((state: RootState) => state.auth.user) as User | null
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | undefined>()
@@ -70,18 +75,36 @@ export default function ProductDetailsScreen() {
       .finally(() => setLoading(false))
   }, [productId])
 
-  const handleChat = () => {
+  const handleChat = async () => {
     if (!product) return
-    router.push({
-      pathname: '/root/chat/Conversation',
-      params: {
-        recipientId: product.owner.userId,
-        recipientName: product.owner.username,
-        profilePicture: product.owner.profilePicture,
-      },
-    })
+    try {
+      const payload = {
+        recipient: product.owner._id,
+        actionType: 'text' as const,
+        text: `HII!, i am instreade in ${product.title}`,
+      }
+      await sendMessage(payload).unwrap()
+      
+      Toast.show({
+        type: "success",
+        text1: "Enquiry made successfully!!"
+      })
+      // Optionally, now navigate into the conversation:
+      // router.push({
+      //   pathname: '/root/chat/Conversation',
+      //   params: {
+      //     recipientId: product.owner.userId,
+      //     recipientName: product.owner.username,
+      //     profilePicture: product.owner.profilePicture,
+      //   },
+      // })
+    } catch (err) {
+      Toast.show({
+        type: "success",
+        text1: "Enquiry fails!!"
+      })
+    }
   }
-console.log({product, loading});
 
   if (loading) {
     return (
@@ -102,7 +125,7 @@ console.log({product, loading});
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" animated backgroundColor={theme.colors.background} />
-      <MarketplaceHeader title={product.title.toUpperCase()} onBack={() => {router.back()}}/>
+      <MarketplaceHeader title={product.title.toUpperCase()} onBack={() => { router.back() }} />
       {/* Carousel + Info */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <MediaCarousel mediaUrls={product.images} />
@@ -111,16 +134,16 @@ console.log({product, loading});
           <ProductDetailsInfo product={product} />
         </View>
       </ScrollView>
-
-      {/* Sticky “Chat with Seller” button */}
-      <View style={styles.footer}>
-        <Button
-          text="Chat with Seller"
-          onPress={handleChat}
-          style={styles.chatButton}
-          textColor={theme.colors.background}
-        />
-      </View>
+      {product?.owner?._id !== currentUser?._id && (
+        <View style={styles.footer}>
+          <Button
+            text={"ENQUIRY"}
+            onPress={handleChat}
+            style={styles.chatButton}
+            textColor={theme.colors.background}
+          />
+        </View>
+      )}
     </SafeAreaView>
   )
 }

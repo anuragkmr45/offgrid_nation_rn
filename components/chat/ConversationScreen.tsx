@@ -44,7 +44,6 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({
     sending,
     loadMore,
   } = useChatMessages(chatId);
-  console.log({ messages });
 
   const [markRead] = useMarkReadMutation();
 
@@ -105,7 +104,7 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({
           inverted
           keyExtractor={(m) => m._id}
           renderItem={({ item }) => {
-            const outgoing = item.sender._id === userId;
+            const outgoing = item?.sender?._id === userId;
             const timestamp = new Date(item.sentAt).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
