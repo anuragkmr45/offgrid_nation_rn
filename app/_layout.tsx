@@ -63,9 +63,9 @@ function NotificationListener() {
               data?.actionType === 'text'
                 ? data.text
                 : data?.actionType === 'media'
-                ? `${data.sender.username} sent a media file`
-                : `${data.sender.username} shared a post`,
-            data: { conversationId: data.conversationId },
+                  ? `${data.sender.username} sent a media file`
+                  : `${data.sender.username} shared a post`,
+            data: { recipientId: data.sender._id, recipientName: data.sender.username, recipientAvatar: data.sender.profilePicture },
           },
           trigger: null,
         });
@@ -74,9 +74,20 @@ function NotificationListener() {
 
     // Handle tap on notification
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      const convId = response.notification.request.content.data.conversationId;
-      if (convId) {
-        router.push('/root/chat/Conversation');
+      const data = response.notification.request.content.data as {
+        recipientId?: string;
+        recipientName?: string;
+        recipientAvatar?: string;
+      };
+
+      if (data.recipientId) {
+        router.push({
+          pathname: '/root/chat/Conversation', params: {
+            recipientId: data.recipientId,
+            recipientName: data.recipientName,
+            profilePicture: data.recipientAvatar,
+          }
+        });
       }
     });
 

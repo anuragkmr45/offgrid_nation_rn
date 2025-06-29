@@ -75,7 +75,7 @@ export const chatApi = createApi({
     }),
 
     // 2a) Fetch messages by recipient (historical)
-    getMessagesByRecipient: build.query<Message[], { recipientId: string; limit?: number }>({
+    getMessagesByRecipient: build.query<Message[], { recipientId: string; limit?: number, cursor?: string }>({
       query: ({ recipientId, limit = 20 }) => ({
         url: `/conversations/messages?recipient=${recipientId}&limit=${limit}`,
         method: 'GET',
@@ -120,7 +120,7 @@ export const chatApi = createApi({
             if (!draft.find(m => m._id === data._id)) {
               draft.unshift({
                 ...data,
-                sender: { _id: data.sender } as User,
+                sender: data.sender,
                 recipient: { _id: data.recipient } as User,
               });
             }
@@ -131,7 +131,7 @@ export const chatApi = createApi({
         channel.bind('message-read', (_: MessageReadEvent) => {
           updateCachedData(draft => {
             draft.forEach(m => {
-              if (m.sender._id === myUserId) {
+              if (m.sender === myUserId) {
                 m.readAt = new Date().toISOString();
               }
             });
@@ -168,7 +168,7 @@ export const chatApi = createApi({
                 draft.unshift({
                   _id: tempId,
                   conversationId,
-                  sender: { _id: myUserId } as User,
+                  sender: myUserId ,
                   recipient: { _id: recipient } as User,
                   text: actionType === 'text' ? text || '' : null,
                   attachments: attachments ?? null,

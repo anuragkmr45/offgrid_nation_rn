@@ -24,7 +24,7 @@ export interface Conversation {
 export interface Message {
   _id: string;
   conversationId: string;
-  sender: User;
+  sender: string;
   recipient: User;
   text?: string | null;
   attachments?: { type: 'image' | 'video' | 'audio'; url: string }[] | null;

@@ -1,51 +1,96 @@
 import { ResizeMode, Video } from 'expo-av';
-import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { theme } from '../../constants/theme';
+import { CustomModal } from '../common';
+import { PostCard } from '../common/feeds/PostCard';
 
 export interface SharedPostBubbleProps {
   post: {
-    userId: { fullName: string; profilePicture: string };
-    media: string[];
+    _id: string;
     content: string;
+    media: string[];
+    createdAt: string;
+    updatedAt: string;
+    commentsCount: number;
+    likesCount: number;
+    isLiked: boolean;
+    isFollowing: boolean;
+    userId: {
+      _id: string;
+      username: string;
+      fullName: string;
+      profilePicture: string;
+    };
   };
   timestamp: string;
   outgoing?: boolean;
 }
+
 
 export const SharedPostBubble: React.FC<SharedPostBubbleProps> = ({ post, timestamp, outgoing = false }) => {
   const containerStyle = outgoing ? styles.bubbleOutgoing : styles.bubbleIncoming;
   const hasMedia = post.media.length > 0;
   const mediaUrl = hasMedia ? post.media[0] : null;
   const isVideo = mediaUrl?.includes('/posts/video/');
+  const [isModalVisible, setModalVisible] = useState(false);
+  const { width, height } = Dimensions.get('window');
 
   return (
-    <View style={[styles.container, containerStyle]}>
-      <View style={styles.header}>
-        <Image source={{ uri: post.userId.profilePicture }} style={styles.avatar} />
-        <Text style={styles.name}>{post.userId.fullName}</Text>
-      </View>
-
-      {hasMedia && (
-        <View style={styles.mediaContainer}>
-          {isVideo ? (
-            <Video
-              source={{ uri: mediaUrl! }}
-              style={styles.media}
-              resizeMode={ResizeMode.COVER}
-              useNativeControls
-              shouldPlay={false}
-              isLooping
-            />
-          ) : (
-            <Image source={{ uri: mediaUrl! }} style={styles.media} resizeMode="cover" />
-          )}
+    <>
+      <TouchableOpacity style={[styles.container, containerStyle]} activeOpacity={0.8} onPress={() => setModalVisible(true)}>
+        <View style={styles.header}>
+          <Image source={{ uri: post.userId.profilePicture }} style={styles.avatar} />
+          <Text style={styles.name}>{post.userId.fullName || "offgrid-user"}</Text>
         </View>
-      )}
 
-      <Text style={styles.content}>{post.content}</Text>
-      <Text style={styles.time}>{timestamp}</Text>
-    </View>
+        {hasMedia && (
+          <View style={styles.mediaContainer}>
+            {isVideo ? (
+              <Video
+                source={{ uri: mediaUrl! }}
+                style={styles.media}
+                resizeMode={ResizeMode.COVER}
+                useNativeControls
+                shouldPlay={false}
+                isLooping
+              />
+            ) : (
+              <Image source={{ uri: mediaUrl! }} style={styles.media} resizeMode="cover" />
+            )}
+          </View>
+        )}
+
+        <Text style={styles.content}>{post.content}</Text>
+        <Text style={styles.time}>{timestamp}</Text>
+      </TouchableOpacity>
+      <CustomModal visible={isModalVisible} onClose={() => setModalVisible(false)} style={styles.fullscreenContainer}>
+        {/* 1️⃣ Close button at top-right */}
+        <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+          <Text style={styles.closeButtonText}>×</Text>
+        </TouchableOpacity>
+
+        {/* 2️⃣ Fullscreen PostCard */}
+        <PostCard
+          post={{
+            postId: post._id,
+            user: {
+              avatar: post.userId.profilePicture,
+              username: post.userId.username,
+            },
+            timestamp,
+            media: post.media.map((url, idx) => ({ id: `${idx}`, url })),
+            caption: post.content,
+            isLiked: post.isLiked,
+            commentsCount: post.commentsCount,
+            likesCount: post.likesCount,
+          }}
+          cardHeight={height-120}
+          cardWidth={width/1.2}
+        />
+      </CustomModal>
+
+    </>
   );
 };
 
@@ -86,7 +131,7 @@ const styles = StyleSheet.create({
   },
   mediaContainer: {
     // marginTop: 6,
-    width: '100%',
+    width: 200,
     height: 160,
     borderRadius: 8,
     overflow: 'hidden',
@@ -105,5 +150,29 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 4,
     alignSelf: 'flex-end',
+  },
+  fullscreenContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'flex-start',
+    backgroundColor: theme.colors.background,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40, // adjust based on safe area
+    right: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 28,
+    lineHeight: 28,
   },
 });
