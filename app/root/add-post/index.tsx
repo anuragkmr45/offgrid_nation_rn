@@ -9,13 +9,12 @@ import {
   pickFromCamera,
   pickMultipleFromGallery
 } from '@/utils/imagePicker'
-import { getFormattedLocation } from '@/utils/location'
+import { compressImage } from '@/utils/mediaCompressor'
 import { MediaTypeOptions } from 'expo-image-picker'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -42,43 +41,55 @@ export default function AddPostRoute() {
     setMedia(m => [...m, ...uris])
   }
 
-  const handleLocation = async () => {
-    const loc = await getFormattedLocation()
-    if (loc) {
-      setLocation(loc)
-    } else {
-      Alert.alert('Unable to fetch location.')
-    }
-  }
+  // const handleLocation = async () => {
+  //   const loc = await getFormattedLocation()
+  //   if (loc) {
+  //     setLocation(loc)
+  //   } else {
+  //     Alert.alert('Unable to fetch location.')
+  //   }
+  // }
 
   const handlePost = async (text: string) => {
-    // Build array of “file” objects for FormData
-    const files = media.map(uri => {
-      const name = uri.split('/').pop() || 'file'
-      const isVideo = /\.(mp4|mov|webm)$/i.test(uri)
-      return {
-        uri,
-        name,
-        type: isVideo ? 'video/mp4' : 'image/jpeg'
-      } as any /* React Native FormData uses this shape */
-    })
-
     try {
+      // 1) Compress only images before upload:
+      const compressedFiles = await Promise.all(
+        media.map(async (uri) => {
+          // detect video by extension
+          const isVideo = /\.(mp4|mov|webm)$/i.test(uri.toLowerCase())
+
+          // if it's an image, run through expo-image-manipulator
+          const uploadUri = isVideo
+            ? uri
+            : await compressImage(uri)
+
+          const name = uploadUri.split('/').pop() || 'file'
+          const type = isVideo ? 'video/mp4' : 'image/jpeg'
+          return { uri: uploadUri, name, type } as any
+        })
+      )
+
+      // 2) Build FormData
+      const formData = new FormData()
+      formData.append('content', text)
+      if (location) formData.append('location', location)
+      compressedFiles.forEach(f => formData.append('media', f))
+
+      // 3) Make the API call
       await createPost({
         content: text,
-        location: location || undefined,
-        media: files,
+        location: location || "",
+        media: compressedFiles,
       }).unwrap()
 
-      // Success → reset form
-      Alert.alert('Posted!', 'Your post was uploaded.')
-      Toast.show({ type: "success", text1: "Your post was uploaded." })
+      // 4) Success feedback
+      Toast.show({ type: 'success', text1: 'Your post was uploaded.' })
       setMedia([])
       setLocation(null)
       router.replace('/root/feed')
-    } catch (error: any) {
-      const err = error?.data?.message || "Fail to post"
-      Toast.show({ type: "error", text1: err })
+    } catch (err: any) {
+      const errMsg = err?.data?.message || 'Failed to post. Please try again.'
+      Toast.show({ type: 'error', text1: errMsg })
     }
   }
 
@@ -101,7 +112,7 @@ export default function AddPostRoute() {
             onPost={handlePost}
             onCameraTap={handleCamera}
             onGalleryTap={handleGallery}
-            onLocationTap={handleLocation}
+            // onLocationTap={handleLocation}
             mediaUris={media}
             location={location}
             isPosting={isLoading}

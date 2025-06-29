@@ -17,7 +17,7 @@ export interface PostComposerProps {
   onPost: (text: string) => void
   onCameraTap: () => void
   onGalleryTap: () => void
-  onLocationTap: () => void
+  onLocationTap?: () => void
   mediaUris: string[]
   location?: string | null
   isPosting: boolean
@@ -84,9 +84,9 @@ export const PostComposer: React.FC<PostComposerProps> = ({
           </TouchableOpacity>
 
           {/* Location */}
-          <TouchableOpacity onPress={onLocationTap} disabled={isPosting} style={styles.iconButton}>
+         {onLocationTap && <TouchableOpacity onPress={onLocationTap} disabled={isPosting} style={styles.iconButton}>
             <Ionicons name="location-outline" size={24} color={theme.colors.textSecondary} />
-          </TouchableOpacity>
+          </TouchableOpacity>}
 
           {/* Post */}
           <TouchableOpacity
