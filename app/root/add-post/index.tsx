@@ -77,7 +77,7 @@ export default function AddPostRoute() {
       setLocation(null)
       router.replace('/root/feed')
     } catch (error: any) {
-      const err = error?.data?.error || "Fail to post"
+      const err = error?.data?.message || "Fail to post"
       Toast.show({ type: "error", text1: err })
     }
   }

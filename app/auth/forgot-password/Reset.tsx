@@ -1,5 +1,6 @@
 // src/app/auth/forgot-password/ResetNewPassword.tsx
-import { Button, Modal } from '@/components/common'
+import { Button, CustomModal } from '@/components/common'
+import Header from '@/components/common/Header'
 import { theme } from '@/constants/theme'
 import { useAuth } from '@/features/auth/hooks/useAuth'
 import {
@@ -12,6 +13,7 @@ import React, { useState } from 'react'
 import {
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -29,7 +31,7 @@ const ResetNewPassword: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const { triggerResetPassword } = useAuth()
-      const { mobile } = useLocalSearchParams<{ mobile: string }>()
+  const { mobile } = useLocalSearchParams<{ mobile: string }>()
 
   // validation
   const passwordError = validatePassword(password)
@@ -49,11 +51,9 @@ const ResetNewPassword: React.FC = () => {
       // })
       setShowModal(true)
       // After showing modal, auto-navigate
-      setTimeout(() => router.replace('/auth/login/Login'), 2500)
+      setTimeout(() => router.replace('/auth/login/Login'), 1500)
     } catch (error: any) {
-      console.log({ error });
-
-      const errorMessage = error?.data?.error || 'Reset password fails.';
+      const errorMessage = error?.data?.message || 'Reset password fails.';
       Toast.show({
         type: "error",
         text1: errorMessage
@@ -68,18 +68,17 @@ const ResetNewPassword: React.FC = () => {
       // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
       >
+        <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
         <SafeAreaView style={styles.safeArea}>
 
-          {/* Header with back button */}
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Ionicons
-                name="arrow-back"
-                size={24}
-                color={theme.colors.background}
-              />
-            </TouchableOpacity>
-          </View>
+          <Header
+            // title="Registeration"
+            onBack={() => router.back()}
+            backgroundColor={theme.colors.primary}
+            titleColor={theme.colors.background}
+            iconColor={theme.colors.background}
+          // showShadow
+          />
 
           {/* Main content */}
           <View style={styles.topContainer}>
@@ -145,13 +144,15 @@ const ResetNewPassword: React.FC = () => {
               disabled={!isValid}
               style={[styles.button, !isValid && styles.buttonDisabled]}
               textColor={theme.colors.primary}
+              debounce
+              loaderStyle={theme.colors.textPrimary}
             />
           </View>
         </SafeAreaView>
       </KeyboardAvoidingView>
 
       {/* Success Modal */}
-      <Modal
+      <CustomModal
         visible={showModal}
         onClose={() => setShowModal(false)}
         title=""
@@ -168,7 +169,7 @@ const ResetNewPassword: React.FC = () => {
           <Text style={styles.modalText}>Please wait...</Text>
           <Text style={styles.modalText}>You will be directed to login screen</Text>
         </View>
-      </Modal>
+      </CustomModal>
     </>
   )
 }
@@ -189,8 +190,8 @@ const styles = StyleSheet.create({
   topContainer: { flex: 1 },
   title: {
     fontSize: theme.fontSizes.displaySmall,
-    fontWeight: "600",
-    color: theme.colors.textPrimary,
+    fontWeight: "700",
+    color: theme.colors.background,
     marginBottom: 8,
   },
   subtitle: {
@@ -202,12 +203,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   input: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
     borderRadius: 15,
     height: 50,
     paddingHorizontal: 16,
     paddingRight: 48,
-    color: theme.colors.background,
+    color: theme.colors.textPrimary,
   },
   eyeButton: {
     position: 'absolute',
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
   button: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
   },
   buttonDisabled: { opacity: 0.6 },
   modalInner: { alignItems: 'center', marginVertical: 40 },

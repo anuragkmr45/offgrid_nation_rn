@@ -36,7 +36,7 @@ export async function toggleFollowUser({
         return isNowFollowing
     } catch (err: any) {
 
-        Toast.show({ type: 'error', text1: err?.data?.error || "Error" })
+        Toast.show({ type: 'error', text1: err?.data?.message || "Error" })
         return false
     }
 }

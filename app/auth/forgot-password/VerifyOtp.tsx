@@ -1,8 +1,8 @@
 import { Button, InputField } from '@/components/common';
+import Header from '@/components/common/Header';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validateOTP } from '@/utils/validation/signupValidation';
-import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -18,26 +18,38 @@ import Toast from 'react-native-toast-message';
 
 const VerifyOtp: React.FC = () => {
   const router = useRouter();
-    const { mobile } = useLocalSearchParams<{ mobile: string }>()
+  const { mobile } = useLocalSearchParams<{ mobile: string }>()
   const [otp, setOtp] = useState('');
-  const [resending, setResending] = useState(false);
-  const { triggerVerifyForgotOtp } = useAuth();
+  const [isLoading, setIslanding] = useState(false);
+  const { triggerVerifyForgotOtp, triggerForgotPassword } = useAuth();
 
   // validate OTP
   const otpError = validateOTP(otp);
   const isValid = otpError === null;
 
   const handleResend = async () => {
-    setResending(true);
-    // TODO: resend reset OTP
-    setResending(false);
+    setIslanding(true);
+    try {
+      console.log({mobile});
+      
+      const resend = await triggerForgotPassword({ mobile })
+
+      Toast.show({
+        type: 'success',
+        text1: resend.message || `OTP resent to ${mobile}`,
+      })
+    } catch (err: any) {
+      const errorMessage = err?.data?.message || 'Fail to resend OTP.'
+      Toast.show({ type: 'error', text1: errorMessage })
+    } finally {
+      setIslanding(false);
+    }
   };
 
   const handleNext = async () => {
-    const trimedOTP= otp.trim();
-
+    setIslanding(true)
+    const trimedOTP = otp.trim();
     try {
-      
       await triggerVerifyForgotOtp({ mobile: mobile, otp: trimedOTP });
       Toast.show({
         type: "success",
@@ -47,11 +59,13 @@ const VerifyOtp: React.FC = () => {
         router.push({ pathname: '/auth/forgot-password/Reset', params: { mobile } });
       }, 1500);
     } catch (error: any) {
-      const errorMessage = error?.data?.error || 'OTP verification fails.';
+      const errorMessage = error?.data?.message || 'OTP verification fails.';
       Toast.show({
         type: "error",
         text1: errorMessage
       })
+    } finally {
+      setIslanding(false)
     }
   };
 
@@ -62,13 +76,14 @@ const VerifyOtp: React.FC = () => {
     //   keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
     >
       <SafeAreaView style={styles.safeArea}>
-
-        {/* Header with back button */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={24} color={theme.colors.background} />
-          </TouchableOpacity>
-        </View>
+        <Header
+          // title="Registeration"
+          onBack={() => router.back()}
+          backgroundColor={theme.colors.primary}
+          titleColor={theme.colors.background}
+          iconColor={theme.colors.background}
+        // showShadow
+        />
 
         {/* Main content */}
         <View style={styles.topContainer}>
@@ -86,9 +101,10 @@ const VerifyOtp: React.FC = () => {
           />
           {otpError && <Text style={styles.errorText}>{otpError}</Text>}
 
-          <TouchableOpacity onPress={handleResend} disabled={resending}>
-            <Text style={[styles.resendText, resending && { opacity: 0.5 }]}>Didn't receive email? Resend.</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', marginTop: 8 }}>
+            <Text style={[styles.resendText, isLoading && styles.resendDisabled]}>Have not received ?</Text>
+            <TouchableOpacity disabled={isLoading} style={{ marginLeft: 6 }} onPress={handleResend}><Text style={{ color: theme.colors.background, fontWeight: '700' }}>Resend OTP</Text></TouchableOpacity>
+          </View>
         </View>
 
         {/* Footer button */}
@@ -96,9 +112,12 @@ const VerifyOtp: React.FC = () => {
           <Button
             text="Continue"
             onPress={handleNext}
-            disabled={!isValid}
+            disabled={!isValid || isLoading}
             style={[styles.button, !isValid && styles.buttonDisabled]}
             textColor={theme.colors.primary}
+            debounce
+            loaderStyle={theme.colors.textPrimary}
+            loading={isLoading}
           />
         </View>
       </SafeAreaView>
@@ -126,8 +145,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: theme.fontSizes.displaySmall,
-    fontWeight: "600",
-    color: theme.colors.textPrimary,
+    fontWeight: "700",
+    color: theme.colors.background,
     marginBottom: 8,
   },
   subtitle: {
@@ -135,12 +154,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   input: {
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
     borderRadius: 15,
     height: 50,
     paddingHorizontal: 16,
     marginBottom: 4,
-    color: theme.colors.background,
+    color: theme.colors.textPrimary,
   },
   errorText: {
     color: theme.colors.accent,
@@ -149,7 +168,9 @@ const styles = StyleSheet.create({
   },
   resendText: {
     color: theme.colors.textPrimary,
-    marginTop: 8,
+  },
+  resendDisabled: {
+    opacity: 0.6,
   },
   bottomContainer: {
     width: '100%',
@@ -158,7 +179,7 @@ const styles = StyleSheet.create({
   button: {
     height: 50,
     borderRadius: 25,
-    backgroundColor: theme.colors.textPrimary,
+    backgroundColor: theme.colors.background,
   },
   buttonDisabled: {
     opacity: 0.6,

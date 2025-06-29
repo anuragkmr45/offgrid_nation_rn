@@ -3,9 +3,9 @@ import { theme } from '@/constants/theme'
 import { useSocial } from '@/features/social/hooks/useSocial'
 import React, { useState } from 'react'
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity
+  StyleSheet,
+  Text,
+  TouchableOpacity
 } from 'react-native'
 import Toast from 'react-native-toast-message'
 
@@ -29,7 +29,7 @@ export const FollowUnfollow: React.FC<FollowUnfollowProps> = ({
             await followUser(handle).unwrap()
             Toast.show({type: "success", text1: `Follow/Unfollow ${handle} succefully` })
         } catch (err: any) {
-            const error = err?.data?.error || `Error while toggle follow`
+            const error = err?.data?.message || `Error while toggle follow`
             setIsFollowing(!nextState)
             Toast.show({type: "error", text1: error })
         }

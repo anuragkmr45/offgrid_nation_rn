@@ -1,11 +1,13 @@
+import { debounce } from '@/utils/debounce'
 import { Video } from 'expo-av'
 import { BlurView } from 'expo-blur'
-import React from 'react'
+import React, { useEffect, useMemo } from 'react'
 import {
   ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
+  KeyboardTypeOptions,
   Modal as RNModal,
   StyleSheet,
   Text,
@@ -24,6 +26,9 @@ export interface ButtonProps {
   textColor?: string
   icon?: string
   iconPosition?: 'left' | 'right'
+  debounce?: boolean
+  debounceDelay?: number
+  loaderStyle?: any
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -35,33 +40,53 @@ export const Button: React.FC<ButtonProps> = ({
   textColor,
   icon,
   iconPosition = 'left',
-}) => (
-  <TouchableOpacity
-    onPress={onPress}
-    disabled={disabled || loading}
-    style={[styles.button, { backgroundColor: theme.colors.primary }, style]}
-  >
-    {loading ? (
-      <ActivityIndicator color={theme.colors.background} />
-    ) : (
-      <View
-        style={[
-          styles.content,
-          {
-            flexDirection: iconPosition === 'left' ? 'row' : 'row-reverse',
-            alignItems: 'center',
-          },
-        ]}
-      >
-        {/* {icon && <View style={styles.iconWrapper}>{icon}</View>} */}
-        {icon && <View style={styles.iconWrapper}><Image source={{uri: icon}} style={{width: 20, height: 20}} /></View>}
-        <Text style={[styles.buttonText, { color: textColor }]}>
-          {text}
-        </Text>
-      </View>
-    )}
-  </TouchableOpacity>
-)
+  debounce: useDebounce = false,
+  debounceDelay = 300,
+  loaderStyle
+}) => {
+  const handler = useMemo(() => {
+    return useDebounce
+      ? debounce(onPress, debounceDelay)
+      : onPress
+  }, [onPress, useDebounce, debounceDelay])
+
+  // Cancel pending debounced call on unmount
+  useEffect(() => {
+    return () => {
+      if (useDebounce && typeof handler === 'function' && 'cancel' in handler) {
+        ; (handler as any).cancel()
+      }
+    }
+  }, [handler, useDebounce])
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled || loading}
+      style={[styles.button, { backgroundColor: theme.colors.primary }, style]}
+    >
+      {loading ? (
+        <ActivityIndicator color={loaderStyle} />
+      ) : (
+        <View
+          style={[
+            styles.content,
+            {
+              flexDirection: iconPosition === 'left' ? 'row' : 'row-reverse',
+              alignItems: 'center',
+            },
+          ]}
+        >
+          {/* {icon && <View style={styles.iconWrapper}>{icon}</View>} */}
+          {icon && <View style={styles.iconWrapper}><Image source={{ uri: icon }} style={{ width: 20, height: 20 }} /></View>}
+          <Text style={[styles.buttonText, { color: textColor }]}>
+            {text}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  )
+}
 
 // 2. Modal
 export interface ModalProps {
@@ -69,12 +94,12 @@ export interface ModalProps {
   title?: string
   children: React.ReactNode
   onClose: () => void
-  style: any
+  style?: any
 }
 export const CustomModal: React.FC<ModalProps> = ({ visible, title, children, onClose, style }) => (
   <RNModal transparent visible={visible} animationType="fade">
     <BlurView intensity={50} style={styles.modalOverlay}>
-      <View style={[styles.modalContent,style, { backgroundColor: theme.colors.background }]}>
+      <View style={[styles.modalContent, style, { backgroundColor: theme.colors.background }]}>
         {title && <Text style={styles.modalTitle}>{title}</Text>}
         <View>{children}</View>
         <TouchableOpacity onPress={onClose} style={styles.modalClose}>
@@ -95,16 +120,16 @@ export interface SearchBarProps {
   style?: any
   editable?: boolean
 }
-export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSubmitEditing,onFocus, placeholder, style, editable = true }) => (
+export const SearchBar: React.FC<SearchBarProps> = ({ value, onChangeText, onSubmitEditing, onFocus, placeholder, style, editable = true }) => (
   <BlurView intensity={20} style={styles.searchContainer}>
     <TextInput
       value={value}
       onChangeText={onChangeText}
       onSubmitEditing={onSubmitEditing}
-      onFocus={onFocus} 
+      onFocus={onFocus}
       placeholder={placeholder || 'Search...'}
       placeholderTextColor={theme.colors.textSecondary}
-      style={[styles.searchInput,style, { color: theme.colors.textPrimary }]}
+      style={[styles.searchInput, style, { color: theme.colors.textPrimary }]}
       returnKeyType="default"
       editable={editable}
     />
@@ -124,7 +149,7 @@ export interface InputFieldProps {
   onChangeText: (text: string) => void
   placeholder?: string
   secureTextEntry?: boolean
-  keyboardType?: any
+  keyboardType?: KeyboardTypeOptions
   style?: any
 }
 export const InputField: React.FC<InputFieldProps> = ({ value, onChangeText, placeholder, secureTextEntry, keyboardType, style }) => (
@@ -201,12 +226,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalContent: {
-  width: '94%', // ⬅️ Make it almost full width
-  maxHeight: '80%', // ⬅️ Allow more vertical height
-  borderRadius: 16,
-  padding: 16,
-  backgroundColor: theme.colors.background,
-},
+    width: '94%', // ⬅️ Make it almost full width
+    maxHeight: '80%', // ⬅️ Allow more vertical height
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: theme.colors.background,
+  },
 
   modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 12, color: theme.colors.textPrimary },
   modalClose: { marginTop: 16, alignSelf: 'flex-end' },
@@ -217,7 +242,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: theme.colors.background,
   },
-  searchInput: { flex: 1, fontSize: 16, padding: 18},
+  searchInput: { flex: 1, fontSize: 16, padding: 18 },
   loaderContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -235,5 +260,5 @@ const styles = StyleSheet.create({
   carouselItem: { width, justifyContent: 'center', alignItems: 'center' },
   image: { width: width - 32, height: 280, borderRadius: 8 },
   video: { width: width - 32, height: 280, borderRadius: 8 },
-  
+
 })

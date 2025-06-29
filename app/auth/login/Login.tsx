@@ -3,7 +3,7 @@ import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Image,
@@ -19,9 +19,15 @@ import Toast from 'react-native-toast-message';
 
 export default function LoginScreen() {
   const router = useRouter()
+  const { username: usernameParam, password: pwdParam } = useLocalSearchParams<{
+    username?: string;
+    password?: string;
+  }>()
+  console.log({usernameParam, pwdParam});
+  
   const { login, isLoginLoading } = useAuth()
-  const [identifier, setIdentifier] = useState('')
-  const [password, setPassword] = useState('')
+  const [identifier, setIdentifier] = useState(usernameParam || '');
+  const [password, setPassword]   = useState(pwdParam || '');
   const [isShowPass, setIsShowPass] = useState(false);
 
   const identifierError = validateLoginUsername(identifier)
@@ -37,7 +43,7 @@ export default function LoginScreen() {
       });
       router.replace('/root/feed');
     } catch (err: any) {
-      const errorMessage = err?.data?.error || 'Login failed, please try again.';
+      const errorMessage = err?.data?.message || 'Login failed, please try again.';
       Toast.show({
         type: 'error',
         text1: errorMessage,

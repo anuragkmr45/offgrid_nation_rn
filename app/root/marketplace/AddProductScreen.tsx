@@ -112,7 +112,7 @@ export default function AddProductScreen() {
         router.back()
       }, 1600);
     } catch (err: any) {
-      const error = err?.data?.error || 'Error while publishing product'
+      const error = err?.data?.message || 'Error while publishing product'
       console.log({ error })
       Toast.show({ type: 'error', text1: error })
     }

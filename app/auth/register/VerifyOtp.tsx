@@ -1,31 +1,44 @@
 import { Button, InputField } from '@/components/common';
+import Header from '@/components/common/Header';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { debounce } from '@/utils/debounce';
 import { validateOTP } from '@/utils/validation/signupValidation';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
 const VerifyOtp: React.FC = () => {
     const router = useRouter()
-  const { mobile } = useLocalSearchParams<{ mobile: string }>()
+    const { username, mobile } = useLocalSearchParams<{ username: string, mobile: string }>()
     const [otp, setOtp] = useState('');
     const [resending, setResending] = useState(false);
-    const {verifyRegistration} = useAuth();
+    const { verifyRegistration, register } = useAuth();
 
     const otpError = validateOTP(otp);
     const isValid = otpError === null;
 
     const handleResend = async () => {
         setResending(true);
-        // TODO: call resendOtp API
-        // await resendOtp();
-        setResending(false);
+        try {
+            const resend = await register({ username, mobile })
+
+            Toast.show({
+                type: 'success',
+                text1: resend.message || `OTP resent to ${mobile}`,
+            })
+        } catch (err: any) {
+            const errorMessage = err?.data?.message || 'Fail to resend OTP.'
+            Toast.show({ type: 'error', text1: errorMessage })
+        } finally {
+            setResending(false);
+        }
     };
 
-    const handleNext = async() => {
+    const handleNext = async () => {
+        setResending(true)
         const trimedOTP = otp.trim();
         if (trimedOTP.trim().length === 0) {
             Toast.show({
@@ -34,29 +47,39 @@ const VerifyOtp: React.FC = () => {
             })
         }
         try {
-            const res =  await verifyRegistration({mobile, otp: trimedOTP}); 
-             Toast.show({
+            const res = await verifyRegistration({ mobile, otp: trimedOTP });
+            Toast.show({
                 type: "success",
                 text1: res.message
             })
             setTimeout(() => {
-                router.push({pathname: '/auth/register/Complete', params: { mobile }});
+                router.push({ pathname: '/auth/register/Complete', params: { username, mobile } });
             }, 1500);
-        } catch (error: any ) {
+        } catch (error: any) {
             const errorMessage = error?.data?.message || 'OTP verify fails.';
             Toast.show({
                 type: "error",
                 text1: errorMessage
             })
+        } finally {
+            setResending(false)
         }
     };
 
+    const debouncedHandleResend = useMemo(() => debounce(handleResend, 1000), [handleResend]);
+    useEffect(() => {
+        return () => {
+            debouncedHandleResend.cancel();
+        };
+    }, [debouncedHandleResend]);
+
+
     return (
         <SafeAreaView style={styles.container}>
+            <StatusBar backgroundColor={theme.colors.primary} animated barStyle={'light-content'} />
+            <Header onBack={() => router.back()} title='Enter OTP' backgroundColor={theme.colors.primary} titleColor={theme.colors.background} showShadow iconColor={theme.colors.background} />
             {/* Top Section */}
             <View style={styles.topContainer}>
-                <Text style={styles.title}>Enter OTP</Text>
-
                 <InputField
                     value={otp}
                     onChangeText={setOtp}
@@ -65,9 +88,10 @@ const VerifyOtp: React.FC = () => {
                     style={styles.input}
                 />
 
-                <TouchableOpacity onPress={handleResend} disabled={resending}>
-                    <Text style={[styles.resendText, resending && styles.resendDisabled]}>Have not received? Resend</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', marginTop: 8 }}>
+                    <Text style={[styles.resendText, resending && styles.resendDisabled]}>Have not received ?</Text>
+                    <TouchableOpacity disabled={resending} style={{ marginLeft: 6 }} onPress={handleResend}><Text style={{ color: theme.colors.background, fontWeight: '700' }}>Resend OTP</Text></TouchableOpacity>
+                </View>
             </View>
 
             {/* Bottom Section */}
@@ -78,6 +102,10 @@ const VerifyOtp: React.FC = () => {
                     disabled={!isValid}
                     style={[styles.button, !isValid && styles.buttonDisabled]}
                     textColor={theme.colors.primary}
+                    debounce
+                    debounceDelay={3000}
+                    loaderStyle={theme.colors.textPrimary}
+                    loading={resending}
                 />
 
                 <View style={styles.signInFooter}>
@@ -98,10 +126,9 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: theme.colors.primary,
         justifyContent: 'space-between',
-        paddingHorizontal: 24,
     },
     topContainer: {
-        marginTop: 24,
+        paddingHorizontal: 24,
     },
     title: {
         textAlign: 'center',
@@ -119,7 +146,6 @@ const styles = StyleSheet.create({
         borderWidth: 0,
     },
     resendText: {
-        marginTop: 8,
         color: theme.colors.textPrimary,
         // textAlign: 'center',
         fontWeight: "600",
@@ -129,11 +155,12 @@ const styles = StyleSheet.create({
     },
     bottomContainer: {
         paddingBottom: 24,
+        paddingHorizontal: 24,
     },
     button: {
         height: 50,
         borderRadius: 25,
-        backgroundColor: theme.colors.textPrimary,
+        backgroundColor: theme.colors.background,
     },
     buttonDisabled: {
         opacity: 0.6,
@@ -147,6 +174,7 @@ const styles = StyleSheet.create({
     },
     signInLink: {
         fontWeight: "600",
+        color: theme.colors.background
     },
 });
 

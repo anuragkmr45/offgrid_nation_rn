@@ -3,13 +3,13 @@ import { useProfile } from '@/features/profile/hooks/useProfile'
 import { pickFromGallery } from '@/utils/imagePicker'
 import React, { useState } from 'react'
 import {
-    Image,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity
 } from 'react-native'
 import Toast from 'react-native-toast-message'
 
@@ -61,7 +61,7 @@ export const EditProfileModal: React.FC<Props> = ({
             await uploadPicture(formData)
             setAvatar(uri)
         } catch (err: any) {
-            Toast.show({ type: "error", text1: err?.data?.error || "Fail to Update Profile" })
+            Toast.show({ type: "error", text1: err?.data?.message || "Fail to Update Profile" })
         }
     }
 

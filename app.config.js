@@ -10,14 +10,14 @@ export default {
     orientation: 'portrait',
     icon: './assets/images/icon.png',
     userInterfaceStyle: 'automatic',
-    ios: { supportsTablet: true, buildeIdentifier: "com.anuragkmr_45.offgridnation" },
+    ios: { supportsTablet: true, bundleIdentifier: "com.anuragkmr45.offgridnation",infoPlist: { ITSAppUsesNonExemptEncryption: false} },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
-      package: "com.anuragkmr_45.offgridnation"
+      package: "com.anuragkmr45.offgridnation"
     },
     web: {
       bundler: 'metro',
@@ -26,22 +26,15 @@ export default {
     },
     plugins: [
       'expo-router',
-      // '@react-native-google-signin/google-signin'
-      // [
-      //   'expo-splash-screen',
-      //   {
-      //     image: './assets/images/splash-icon.png',
-      //     imageWidth: 200,
-      //     resizeMode: 'contain',
-      //     backgroundColor: '#ffffff',
-      //   },
-      // ],
     ],
     experiments: { typedRoutes: true },
     extra: {
       PUSHER_KEY: process.env.PUSHER_KEY,
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
       YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
+      eas: {
+        projectId: "7131e8cf-6f8c-4ccd-bcc4-fab788fd5d7c"
+      }
     },
   },
 };
