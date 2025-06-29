@@ -7,11 +7,10 @@ import {
     FlatList,
     RefreshControl,
     SafeAreaView,
-    StatusBar,
     StyleSheet,
-    Text,
+    Text
 } from 'react-native'
-import { MarketplaceHeader } from '../marketplace/MarketplaceHeader'
+import Header from '../common/Header'
 import { NotificationItem } from './NotificationItem'
 
 export const NotificationScreen: React.FC = () => {
@@ -75,15 +74,11 @@ export const NotificationScreen: React.FC = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar
-                backgroundColor={theme.colors.primary}
-                barStyle="light-content"
-                animated
-            />
-            <MarketplaceHeader
+            <Header
                 onBack={() => router.back()}
                 backgroundColor={theme.colors.primary}
                 title="Notifications"
+                iconColor={theme.colors.background}
             />
 
             {notificationsData?.items?.length === 0 ? (
