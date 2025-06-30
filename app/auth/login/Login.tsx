@@ -1,10 +1,11 @@
 import { Button, InputField } from '@/components/common';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useGoogleSignIn } from '@/utils/googleLogin';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -23,11 +24,11 @@ export default function LoginScreen() {
     username?: string;
     password?: string;
   }>()
-  console.log({usernameParam, pwdParam});
-  
+  const { request: gRequest, userData, promptAsync: googleSignIn } = useGoogleSignIn();
+
   const { login, isLoginLoading } = useAuth()
   const [identifier, setIdentifier] = useState(usernameParam || '');
-  const [password, setPassword]   = useState(pwdParam || '');
+  const [password, setPassword] = useState(pwdParam || '');
   const [isShowPass, setIsShowPass] = useState(false);
 
   const identifierError = validateLoginUsername(identifier)
@@ -50,6 +51,14 @@ export default function LoginScreen() {
       });
     }
   };
+
+  useEffect(() => {
+    if (userData) {
+      console.log('🎉 Firebase UID:', userData.uid);
+      console.log('Name:', userData.name);
+      console.log('Email:', userData.email);
+    }
+  }, [userData]);
 
   return (
     <KeyboardAvoidingView
@@ -113,7 +122,7 @@ export default function LoginScreen() {
           <Button
             icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/google-icon_sxmrhm.png"
             text="Continue with Google"
-            onPress={() => {/* TODO: Google login */ }}
+            onPress={() => googleSignIn()}
             style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
           // override text color
           />

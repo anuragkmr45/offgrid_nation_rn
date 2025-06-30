@@ -5,7 +5,7 @@ export default {
   expo: {
     name: 'Offgrid Nation',
     slug: 'offgrid-nation',
-    scheme: 'offgrid',
+    scheme: 'offgridnation',
     version: '1.0.0',
     orientation: 'portrait',
     icon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
@@ -14,7 +14,8 @@ export default {
       buildNumber: '6',
       supportsTablet: true,
       bundleIdentifier: "com.anuragkmr45.offgridnation",
-      infoPlist: { ITSAppUsesNonExemptEncryption: false }
+      infoPlist: { ITSAppUsesNonExemptEncryption: false },
+      googleServicesFile: "./GoogleService‑Info.plist"
     },
     android: {
       adaptiveIcon: {
@@ -22,7 +23,8 @@ export default {
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
-      package: "com.anuragkmr45.offgridnation"
+      package: "com.anuragkmr45.offgridnation",
+      googleServicesFile: "./google‑services.json"
     },
     web: {
       bundler: 'metro',
@@ -31,6 +33,7 @@ export default {
     },
     plugins: [
       'expo-router',
+      "@react-native-google-signin/google-signin"
     ],
     experiments: { typedRoutes: true },
     extra: {

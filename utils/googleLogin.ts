@@ -1,30 +1,58 @@
-// // utils/googleLogin.ts
-// import * as Google from 'expo-auth-session/providers/google';
-// import * as WebBrowser from 'expo-web-browser';
-// import { jwtDecode } from 'jwt-decode';
+// utils/googleLogin.ts
 
-// WebBrowser.maybeCompleteAuthSession();
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth';
+import { useEffect, useState } from 'react';
 
-// export async function signInWithGoogleAsync(): Promise<{ idToken: string, email: string, name: string } | null> {
-//   const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+WebBrowser.maybeCompleteAuthSession();
 
-//   const [request, response, promptAsync] = Google.useAuthRequest({
-//     clientId: CLIENT_ID,
-//     iosClientId: CLIENT_ID,
-//     androidClientId: CLIENT_ID,
-//     webClientId: CLIENT_ID,
-//   });
+// Firebase config (you can replace with env vars or secure methods)
+const firebaseConfig = {
+  apiKey: "AIzaSyCkmvEHFlDn01G2poD61lJXsVg3_i2DwWo",
+  authDomain: "offgrid-nation.firebaseapp.com",
+  databaseURL: "https://offgrid-nation-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "offgrid-nation",
+  storageBucket: "offgrid-nation.firebasestorage.app",
+  messagingSenderId: "758180883916",
+  appId: "1:758180883916:android:bf4603a6def4e665964169",
+};
 
-//   const result = await promptAsync();
+initializeApp(firebaseConfig);
 
-//   if (result.type === 'success' && result.authentication?.idToken) {
-//     const decoded: any = jwtDecode(result.authentication.idToken);
-//     return {
-//       idToken: result.authentication.idToken,
-//       email: decoded.email,
-//       name: decoded.name || 'User',
-//     };
-//   }
+/**
+ * Custom hook that sets up Google sign-in and provides a function to trigger it,
+ * along with the result when available.
+ */
+export function useGoogleSignIn() {
+  const [userData, setUserData] = useState<{ uid: string; name: string; email: string } | null>(null);
 
-//   return null;
-// }
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com", // Web
+    iosClientId: "758180883916-0uavc2mn583050i6hp91ukcc4o87f2t2.apps.googleusercontent.com",
+    androidClientId: "758180883916-kgjro0u4h4ifjofa4ib1gugmav5gh8ei.apps.googleusercontent.com",
+    selectAccount: true,
+  });
+
+  useEffect(() => {
+    (async () => {
+      if (response?.type === 'success' && response.params.id_token) {
+        const idToken = response.params.id_token;
+        const credential = GoogleAuthProvider.credential(idToken);
+        const auth = getAuth();
+        const userCred: UserCredential = await signInWithCredential(auth, credential);
+        const user = userCred.user;
+        const data = {
+          uid: user.uid,
+          name: user.displayName || '',
+          email: user.email || '',
+        };
+        console.log('Google sign-in success:', data);
+        setUserData(data);
+      }
+    })();
+  }, [response]);
+
+  return { request, userData, promptAsync };
+}
