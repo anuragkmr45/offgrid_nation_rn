@@ -8,12 +8,17 @@ export default {
     scheme: 'offgrid',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/images/icon.png',
+    icon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
     userInterfaceStyle: 'automatic',
-    ios: { supportsTablet: true, bundleIdentifier: "com.anuragkmr45.offgridnation",infoPlist: { ITSAppUsesNonExemptEncryption: false} },
+    ios: {
+      buildNumber: '6',
+      supportsTablet: true,
+      bundleIdentifier: "com.anuragkmr45.offgridnation",
+      infoPlist: { ITSAppUsesNonExemptEncryption: false }
+    },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/adaptive-icon.png',
+        foregroundImage: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
@@ -22,7 +27,7 @@ export default {
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './assets/images/favicon.png',
+      favicon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
     },
     plugins: [
       'expo-router',
@@ -31,9 +36,10 @@ export default {
     extra: {
       PUSHER_KEY: process.env.PUSHER_KEY,
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
-      YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
-      eas: {
-        projectId: "7131e8cf-6f8c-4ccd-bcc4-fab788fd5d7c"
+      username: process.env.APP_USERNAME,
+      password: process.env.APP_PASSWORD,
+      "eas": {
+        "projectId": "7b24be75-fffd-444e-8bb5-fb53d221c8ff"
       }
     },
   },

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "758180883916",
+    "firebase_url": "https://offgrid-nation-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "offgrid-nation",
+    "storage_bucket": "offgrid-nation.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:758180883916:android:bf4603a6def4e665964169",
+        "android_client_info": {
+          "package_name": "com.anuragkmr_45.offgridnation"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "758180883916-kgjro0u4h4ifjofa4ib1gugmav5gh8ei.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anuragkmr_45.offgridnation",
+            "certificate_hash": "c77b77a9eb8357d44ba72bccea9623137cd89e4a"
+          }
+        },
+        {
+          "client_id": "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkmvEHFlDn01G2poD61lJXsVg3_i2DwWo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "758180883916-0uavc2mn583050i6hp91ukcc4o87f2t2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.offgridnation.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

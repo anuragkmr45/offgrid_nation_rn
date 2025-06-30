@@ -18,6 +18,10 @@
       "android": {
         "buildType": "apk",
         "autoIncrement": true
+      },
+      "env": {
+        "APP_USERNAME": "APP_USERNAME",
+        "APP_PASSWORD": "APP_PASSWORD"
       }
     }
   },
