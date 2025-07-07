@@ -41,6 +41,7 @@ export default {
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
       username: process.env.APP_USERNAME,
       password: process.env.APP_PASSWORD,
+      googleClientId: "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com",
       "eas": {
         "projectId": "7b24be75-fffd-444e-8bb5-fb53d221c8ff"
       }

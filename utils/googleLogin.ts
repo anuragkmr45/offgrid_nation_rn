@@ -2,7 +2,7 @@
 
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
-import { initializeApp } from 'firebase/app';
+import { getApps, initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth';
 import { useEffect, useState } from 'react';
 
@@ -19,7 +19,9 @@ const firebaseConfig = {
   appId: "1:758180883916:android:8c1cb81f28074914964169",
 };
 
-initializeApp(firebaseConfig);
+if (!getApps().length) {
+  initializeApp(firebaseConfig);
+}
 
 /**
  * Custom hook that sets up Google sign-in and provides a function to trigger it,
