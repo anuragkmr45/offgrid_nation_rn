@@ -88,10 +88,11 @@ export const CommentModal: React.FC<CommentModalProps> = ({ postId, visible, onC
           ) : (
             <FlatList
               data={comments}
+              style={{flex: 1}}
               keyExtractor={(item) => item._id}
               onRefresh={commentRefetch}
               refreshing={isLoadingComments}
-              contentContainerStyle={{ paddingBottom: 16 }}
+              contentContainerStyle={{flexGrow: 1, paddingBottom: 16 }}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
                 const showAllReplies = expandedComments[item._id] ?? false

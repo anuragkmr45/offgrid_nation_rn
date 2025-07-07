@@ -39,8 +39,9 @@ export interface LoginResponse {
 
 /** Request for social login */
 export interface SocialLoginPayload {
-  firebaseIdToken: string
-  provider: 'apple' | 'google'
+  firebaseUid: string
+  email: string
+  fullName: string
 }
 
 /** Payload for forgot-password request */

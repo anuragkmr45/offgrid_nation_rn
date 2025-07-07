@@ -16,7 +16,7 @@ const firebaseConfig = {
   projectId: "offgrid-nation",
   storageBucket: "offgrid-nation.firebasestorage.app",
   messagingSenderId: "758180883916",
-  appId: "1:758180883916:android:bf4603a6def4e665964169",
+  appId: "1:758180883916:android:8c1cb81f28074914964169",
 };
 
 initializeApp(firebaseConfig);
@@ -31,7 +31,7 @@ export function useGoogleSignIn() {
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com", // Web
     iosClientId: "758180883916-0uavc2mn583050i6hp91ukcc4o87f2t2.apps.googleusercontent.com",
-    androidClientId: "758180883916-kgjro0u4h4ifjofa4ib1gugmav5gh8ei.apps.googleusercontent.com",
+    androidClientId: "758180883916-rc2v435b4em5medgkkun30jo2gbece6a.apps.googleusercontent.com",
     selectAccount: true,
   });
 

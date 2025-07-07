@@ -2,6 +2,7 @@ import { Button, InputField } from '@/components/common';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useGoogleSignIn } from '@/utils/googleLogin';
+import { useAppleSignIn } from '@/utils/useAppleSignIn';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -24,9 +25,10 @@ export default function LoginScreen() {
     username?: string;
     password?: string;
   }>()
-  const { request: gRequest, userData, promptAsync: googleSignIn } = useGoogleSignIn();
+  const { request: gRequest, userData:googleUserData, promptAsync: googleSignIn } = useGoogleSignIn();
+  const {userData: appleUserData, signIn: appleSingin} = useAppleSignIn()
 
-  const { login, isLoginLoading } = useAuth()
+  const { login, isLoginLoading, socialLogin } = useAuth()
   const [identifier, setIdentifier] = useState(usernameParam || '');
   const [password, setPassword] = useState(pwdParam || '');
   const [isShowPass, setIsShowPass] = useState(false);
@@ -53,12 +55,17 @@ export default function LoginScreen() {
   };
 
   useEffect(() => {
-    if (userData) {
-      console.log('🎉 Firebase UID:', userData.uid);
-      console.log('Name:', userData.name);
-      console.log('Email:', userData.email);
+     const user = googleUserData ?? appleUserData;
+    if (user) {
+      const { uid ="", name ="", email="" } = user || {};
+      socialLogin({
+        firebaseUid: uid,
+        email: email,
+        fullName: name,
+      })
+
     }
-  }, [userData]);
+  }, [googleUserData, appleUserData]);
 
   return (
     <KeyboardAvoidingView
@@ -129,7 +136,7 @@ export default function LoginScreen() {
           <Button
             icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/apple-icon_quyjuw.png"
             text="Continue with Apple"
-            onPress={() => {/* TODO: Apple login */ }}
+            onPress={() => { appleSingin}}
             style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
             textColor={theme.colors.background}
           />

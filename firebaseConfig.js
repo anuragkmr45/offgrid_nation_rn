@@ -12,7 +12,7 @@ const firebaseConfig = {
   projectId: "offgrid-nation",
   storageBucket: "offgrid-nation.appspot.com",
   messagingSenderId: "758180883916",
-  appId: "1:758180883916:android:17ea7cc279f3d5c1964169",
+  appId: "1:758180883916:android:8c1cb81f28074914964169",
   databaseURL:
     "https://offgrid-nation-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
