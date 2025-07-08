@@ -15,7 +15,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.anuragkmr45.offgridnation",
       infoPlist: { ITSAppUsesNonExemptEncryption: false },
-      googleServicesFile: "./GoogleService‑Info.plist"
+      googleServicesFile: "./GoogleService-Info.plist"
     },
     android: {
       adaptiveIcon: {
@@ -24,7 +24,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: "com.anuragkmr45.offgridnation",
-      googleServicesFile: "./google‑services.json"
+      googleServicesFile: "./google-services.json"
     },
     web: {
       bundler: 'metro',
@@ -37,6 +37,7 @@ export default {
     ],
     experiments: { typedRoutes: true },
     extra: {
+      androidReleaseClientId: process.env.ANDROID_RELEASE_CLIENT_ID,
       PUSHER_KEY: process.env.PUSHER_KEY,
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
       username: process.env.APP_USERNAME,

@@ -1,60 +1,84 @@
 // utils/googleLogin.ts
-
-import * as Google from 'expo-auth-session/providers/google';
-import * as WebBrowser from 'expo-web-browser';
-import { getApps, initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth';
+import {
+  GoogleSignin,
+  statusCodes
+} from '@react-native-google-signin/google-signin';
+import {
+  GoogleAuthProvider,
+  signInWithCredential,
+  type UserCredential
+} from 'firebase/auth';
 import { useEffect, useState } from 'react';
+import { auth } from '../firebaseConfig';
 
-WebBrowser.maybeCompleteAuthSession();
+/* ──────────────────────────────────────────────────
+   ⚙️  Configure Google Sign-In
+   ────────────────────────────────────────────────── */
+GoogleSignin.configure({
+  webClientId:
+    '758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com',
+  iosClientId:
+    '758180883916-0uavc2mn583050i6hp91ukcc4o87f2t2.apps.googleusercontent.com',
+  offlineAccess: false,
+  scopes: ['profile', 'email'],
+});
 
-// Firebase config (you can replace with env vars or secure methods)
-const firebaseConfig = {
-  apiKey: "AIzaSyCkmvEHFlDn01G2poD61lJXsVg3_i2DwWo",
-  authDomain: "offgrid-nation.firebaseapp.com",
-  databaseURL: "https://offgrid-nation-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "offgrid-nation",
-  storageBucket: "offgrid-nation.firebasestorage.app",
-  messagingSenderId: "758180883916",
-  appId: "1:758180883916:android:8c1cb81f28074914964169",
-};
+type SignedUser = { uid: string; name: string | null; email: string | null };
 
-if (!getApps().length) {
-  initializeApp(firebaseConfig);
-}
-
-/**
- * Custom hook that sets up Google sign-in and provides a function to trigger it,
- * along with the result when available.
- */
+/* ──────────────────────────────────────────────────
+   📲  Hook: useGoogleSignIn
+   ────────────────────────────────────────────────── */
 export function useGoogleSignIn() {
-  const [userData, setUserData] = useState<{ uid: string; name: string; email: string } | null>(null);
+  const [user, setUser] = useState<SignedUser | null>(null);
 
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com", // Web
-    iosClientId: "758180883916-0uavc2mn583050i6hp91ukcc4o87f2t2.apps.googleusercontent.com",
-    androidClientId: "758180883916-rc2v435b4em5medgkkun30jo2gbece6a.apps.googleusercontent.com",
-    selectAccount: true,
-  });
-
+  /* silent sign-in on mount */
   useEffect(() => {
     (async () => {
-      if (response?.type === 'success' && response.params.id_token) {
-        const idToken = response.params.id_token;
-        const credential = GoogleAuthProvider.credential(idToken);
-        const auth = getAuth();
-        const userCred: UserCredential = await signInWithCredential(auth, credential);
-        const user = userCred.user;
-        const data = {
-          uid: user.uid,
-          name: user.displayName || '',
-          email: user.email || '',
-        };
-        console.log('Google sign-in success:', data);
-        setUserData(data);
+      try {
+        await GoogleSignin.signInSilently(); 
+        const { idToken } = await GoogleSignin.getTokens();
+        if (idToken) await firebaseSignIn(idToken);
+        
+      } catch {
+        /* no cached credentials */
       }
     })();
-  }, [response]);
+  }, []);
 
-  return { request, userData, promptAsync };
+  /* interactive account picker */
+  async function promptAsync() {
+    try {
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      await GoogleSignin.signIn(); // GoogleUser
+      const { idToken } = await GoogleSignin.getTokens();
+      if (idToken) await firebaseSignIn(idToken);
+    } catch (err: any) {
+      if (err.code === statusCodes.SIGN_IN_CANCELLED) return;            // user cancelled
+      if (err.code === statusCodes.IN_PROGRESS) return;                  // already running
+      if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        console.warn('Play services not available');
+        return;
+      }
+      console.error('GoogleSignin error', err);
+    }
+  }
+
+  /* exchange Google ID-token → Firebase credential */
+  async function firebaseSignIn(idToken: string) {
+    const credential = GoogleAuthProvider.credential(idToken);
+    const { user: fbUser }: UserCredential = await signInWithCredential(
+      auth,
+      credential,
+    );
+    setUser({
+      uid: fbUser.uid,
+      name: fbUser.displayName,
+      email: fbUser.email,
+    });
+  }
+
+  /* match the signature you use elsewhere:
+     const { user, promptAsync } = useGoogleSignIn(); */
+  return { user, promptAsync };
 }

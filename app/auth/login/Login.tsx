@@ -25,8 +25,8 @@ export default function LoginScreen() {
     username?: string;
     password?: string;
   }>()
-  const { request: gRequest, userData:googleUserData, promptAsync: googleSignIn } = useGoogleSignIn();
-  const {userData: appleUserData, signIn: appleSingin} = useAppleSignIn()
+  const { user: googleUserData, promptAsync: googleSignIn } = useGoogleSignIn();
+  const { userData: appleUserData, signIn: appleSingin } = useAppleSignIn()
 
   const { login, isLoginLoading, socialLogin } = useAuth()
   const [identifier, setIdentifier] = useState(usernameParam || '');
@@ -54,18 +54,23 @@ export default function LoginScreen() {
     }
   };
 
+  // in LoginScreen.tsx
   useEffect(() => {
-     const user = googleUserData ?? appleUserData;
-    if (user) {
-      const { uid ="", name ="", email="" } = user || {};
-      socialLogin({
-        firebaseUid: uid,
-        email: email,
-        fullName: name,
-      })
+    const providerUser = googleUserData ?? appleUserData
+    if (!providerUser) return
 
-    }
-  }, [googleUserData, appleUserData]);
+    const { uid, name, email } = providerUser
+      ; (async () => {
+        try {
+          await socialLogin({ firebaseUid: uid, fullName: name ?? '', email: email ?? '' })
+          // only runs if unwrap() succreeded
+          router.replace('/root/feed')
+        } catch {
+          Toast.show({ type: 'error', text1: 'Social login failed. Please try again.' })
+        }
+      })()
+  }, [googleUserData, appleUserData, socialLogin, router])
+
 
   return (
     <KeyboardAvoidingView
@@ -136,7 +141,7 @@ export default function LoginScreen() {
           <Button
             icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/apple-icon_quyjuw.png"
             text="Continue with Apple"
-            onPress={() => { appleSingin}}
+            onPress={() => { appleSingin }}
             style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
             textColor={theme.colors.background}
           />
@@ -235,11 +240,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 })
-function loginWithGoogle(jwt: string) {
-  throw new Error('Function not implemented.')
-}
-
-function saveSession(authKey: void) {
-  throw new Error('Function not implemented.')
-}
-
