@@ -18,7 +18,7 @@
         "foregroundImage": "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png",
         "backgroundColor": "#ffffff"
       },
-      "googleServicesFile": "./google‑services.json",
+      "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "package": "com.anuragkmr_45.offgridnation"
     },

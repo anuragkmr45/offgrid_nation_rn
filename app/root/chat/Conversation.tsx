@@ -1,6 +1,7 @@
 // app/root/chat/[chatId].tsx
 
 import { ConversationScreen } from '@/components/chat/ConversationScreen';
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 import { theme } from '@/constants/theme';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -17,11 +18,13 @@ export default function ChatPage() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <StatusBar animated backgroundColor={theme.colors.background} barStyle="dark-content" />
-      <ConversationScreen
-        chatId={recipientId || ""}
-        avatarUrl={profilePicture || "https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png"}
-        name={recipientName || "offgrid-user"}
-      />
+      <ProtectedLayout>
+        <ConversationScreen
+          chatId={recipientId || ""}
+          avatarUrl={profilePicture || "https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png"}
+          name={recipientName || "offgrid-user"}
+        />
+      </ProtectedLayout>
     </SafeAreaView>
   );
 }

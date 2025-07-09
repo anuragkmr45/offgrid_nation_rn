@@ -28,7 +28,7 @@ export const store = configureStore({
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
       // keep serializableCheck on, to catch mistakes
-      serializableCheck: { ignoredActions: ['persist/PERSIST'] },
+      serializableCheck: { ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'persist/PURGE'], ignoredPaths: ['_persist'], },
     })
       .concat(authApi.middleware)
       .concat(profileApi.middleware)

@@ -1,5 +1,6 @@
 // src/screens/FeedScreen.tsx
 import { PostCard, PostType } from '@/components/common/feeds/PostCard';
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 import { WithLayout } from '@/components/layouts/WithLayout';
 import { theme } from '@/constants/theme';
 import { useFeed } from '@/features/content/feed/hooks/useFeed';
@@ -72,35 +73,37 @@ export default function FeedScreen() {
 
   return (
     <WithLayout>
-      <FlatList<FeedPost>
-        contentContainerStyle={styles.container}
-        data={posts}
-        renderItem={renderItem}
-        ref={flatListRef}
-        keyExtractor={(item) => item._id}
-        refreshControl={
-          <RefreshControl
-            refreshing={isFetching}
-            onRefresh={refetch}
-            tintColor={theme.colors.primary}
-          />
-        }
-        onEndReached={() => {
-          if (!isLoading && hasMore) fetchNext();
-        }}
-        onEndReachedThreshold={0.5}
-        ListFooterComponent={
-          hasMore ? (
-            <View style={styles.loader}>
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            </View>
-          ) : null
-        }
-        ListFooterComponentStyle={{ paddingBottom: 16 }}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-      />
-      <View style={{ marginBottom: 30 }} />
+      <ProtectedLayout>
+        <FlatList<FeedPost>
+          contentContainerStyle={styles.container}
+          data={posts}
+          renderItem={renderItem}
+          ref={flatListRef}
+          keyExtractor={(item) => item._id}
+          refreshControl={
+            <RefreshControl
+              refreshing={isFetching}
+              onRefresh={refetch}
+              tintColor={theme.colors.primary}
+            />
+          }
+          onEndReached={() => {
+            if (!isLoading && hasMore) fetchNext();
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.loader}>
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              </View>
+            ) : null
+          }
+          ListFooterComponentStyle={{ paddingBottom: 16 }}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+        />
+        <View style={{ marginBottom: 30 }} />
+      </ProtectedLayout>
     </WithLayout>
   );
 }

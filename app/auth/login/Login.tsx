@@ -6,7 +6,7 @@ import { useAppleSignIn } from '@/utils/useAppleSignIn';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -55,21 +55,23 @@ export default function LoginScreen() {
   };
 
   // in LoginScreen.tsx
-  useEffect(() => {
-    const providerUser = googleUserData ?? appleUserData
-    if (!providerUser) return
+  // useEffect(() => {
+  //   if (!!(googleUserData || appleUserData)) {
+  //     const providerUser = googleUserData ?? appleUserData
+  //     if (!providerUser) return; 
 
-    const { uid, name, email } = providerUser
-      ; (async () => {
-        try {
-          await socialLogin({ firebaseUid: uid, fullName: name ?? '', email: email ?? '' })
-          // only runs if unwrap() succreeded
-          router.replace('/root/feed')
-        } catch {
-          Toast.show({ type: 'error', text1: 'Social login failed. Please try again.' })
-        }
-      })()
-  }, [googleUserData, appleUserData, socialLogin, router])
+  //     const { uid, name, email } = providerUser || {};
+  //     (async () => {
+  //       try {
+  //         await socialLogin({ firebaseUid: uid, fullName: name ?? '', email: email ?? '' })
+  //         // only runs if unwrap() succreeded
+  //         router.replace('/root/feed')
+  //       } catch {
+  //         Toast.show({ type: 'error', text1: 'Social login failed. Please try again.' })
+  //       }
+  //     })()
+  //   }
+  // }, [googleUserData, appleUserData, socialLogin, router])
 
 
   return (

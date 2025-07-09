@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 import { SettingItem } from './SettingItem'
 
 export const SettingsScreen: React.FC = () => {
@@ -37,7 +38,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'shield-outline' as const,
       title: 'Privacy',
       subtitle: 'Blocked accounts, Account privacy',
-      onPress: () => console.log('Go to Privacy'),
+      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
     },
     {
       key: 'weather_details',
@@ -58,7 +59,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'globe-outline' as const,
       title: 'App Language',
       subtitle: `English (device's language)`,
-      onPress: () => console.log('Go to Language'),
+      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
     },
     {
       key: 'help',
@@ -156,7 +157,6 @@ export const SettingsScreen: React.FC = () => {
                   onPress={() => {
                     setShowLogoutModal(false)
                     logout()
-                    router.replace('/auth/login/Login')
                   }}
                 >
                   <Text style={styles.logoutText}>Log out</Text>

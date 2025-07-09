@@ -11,7 +11,6 @@ export default {
     icon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
     userInterfaceStyle: 'automatic',
     ios: {
-      buildNumber: '6',
       supportsTablet: true,
       bundleIdentifier: "com.anuragkmr45.offgridnation",
       infoPlist: { ITSAppUsesNonExemptEncryption: false },

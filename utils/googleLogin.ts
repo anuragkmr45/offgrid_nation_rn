@@ -1,14 +1,16 @@
 // utils/googleLogin.ts
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   GoogleSignin,
   statusCodes
 } from '@react-native-google-signin/google-signin';
+import { useRouter } from 'expo-router';
 import {
   GoogleAuthProvider,
   signInWithCredential,
   type UserCredential
 } from 'firebase/auth';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { auth } from '../firebaseConfig';
 
 /* ──────────────────────────────────────────────────
@@ -30,20 +32,21 @@ type SignedUser = { uid: string; name: string | null; email: string | null };
    ────────────────────────────────────────────────── */
 export function useGoogleSignIn() {
   const [user, setUser] = useState<SignedUser | null>(null);
-
+  const { socialLogin } = useAuth();
+  const router = useRouter();
   /* silent sign-in on mount */
-  useEffect(() => {
-    (async () => {
-      try {
-        await GoogleSignin.signInSilently(); 
-        const { idToken } = await GoogleSignin.getTokens();
-        if (idToken) await firebaseSignIn(idToken);
-        
-      } catch {
-        /* no cached credentials */
-      }
-    })();
-  }, []);
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       await GoogleSignin.signInSilently();
+  //       const { idToken } = await GoogleSignin.getTokens();
+  //       if (idToken) await firebaseSignIn(idToken);
+
+  //     } catch {
+  //       /* no cached credentials */
+  //     }
+  //   })();
+  // }, []);
 
   /* interactive account picker */
   async function promptAsync() {
@@ -76,6 +79,9 @@ export function useGoogleSignIn() {
       name: fbUser.displayName,
       email: fbUser.email,
     });
+    await socialLogin({ firebaseUid: fbUser.uid, fullName: fbUser.displayName ?? '', email: fbUser.email ?? '' })
+    // only runs if unwrap() succreeded
+    router.replace('/root/feed')
   }
 
   /* match the signature you use elsewhere:

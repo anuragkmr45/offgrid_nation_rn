@@ -1,5 +1,5 @@
 // src/core/api/baseQueryWithLogoutOn401.ts
-import { logout } from '@/features/auth/slice/authSlice'
+import { logoutAndRedirect } from '@/features/auth/slice/authSlice'
 import type { RootState } from '@/store/store'
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query'
 import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
@@ -24,7 +24,8 @@ export const baseQueryWithLogoutOn401: BaseQueryFn<
 
   if (result.error?.status === 401) {
     // Just logout; reset other APIs elsewhere
-    api.dispatch(logout())
+    api.dispatch(logoutAndRedirect ())
+
   }
 
   return result
