@@ -1,5 +1,6 @@
 // app/premium/webview.tsx
 
+import ProtectedLayout from '@/components/layouts/ProtectedLayout';
 import { theme } from '@/constants/theme';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef } from 'react';
@@ -53,20 +54,22 @@ export default function PremiumWebView() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={theme.colors.background} animated barStyle={'dark-content'} />
-      <WebView
-        ref={webviewRef}
-        source={{ uri: url }}
-        style={styles.webview}
-        onNavigationStateChange={handleNavStateChange}
-        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
-        originWhitelist={['*']}
-        startInLoadingState
-        renderLoading={() => (
-          <View style={styles.loader}>
-            <ActivityIndicator size="large" />
-          </View>
-        )}
-      />
+      <ProtectedLayout>
+        <WebView
+          ref={webviewRef}
+          source={{ uri: url }}
+          style={styles.webview}
+          onNavigationStateChange={handleNavStateChange}
+          onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+          originWhitelist={['*']}
+          startInLoadingState
+          renderLoading={() => (
+            <View style={styles.loader}>
+              <ActivityIndicator size="large" />
+            </View>
+          )}
+        />
+      </ProtectedLayout>
     </SafeAreaView>
   )
 }

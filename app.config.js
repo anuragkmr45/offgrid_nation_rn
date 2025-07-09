@@ -5,35 +5,45 @@ export default {
   expo: {
     name: 'Offgrid Nation',
     slug: 'offgrid-nation',
-    scheme: 'offgrid',
+    scheme: 'offgridnation',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/images/icon.png',
+    icon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
     userInterfaceStyle: 'automatic',
-    ios: { supportsTablet: true, bundleIdentifier: "com.anuragkmr45.offgridnation",infoPlist: { ITSAppUsesNonExemptEncryption: false} },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: "com.anuragkmr45.offgridnation",
+      infoPlist: { ITSAppUsesNonExemptEncryption: false },
+      googleServicesFile: "./GoogleService-Info.plist"
+    },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/adaptive-icon.png',
+        foregroundImage: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
-      package: "com.anuragkmr45.offgridnation"
+      package: "com.anuragkmr45.offgridnation",
+      googleServicesFile: "./google-services.json"
     },
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './assets/images/favicon.png',
+      favicon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
     },
     plugins: [
       'expo-router',
+      "@react-native-google-signin/google-signin"
     ],
     experiments: { typedRoutes: true },
     extra: {
+      androidReleaseClientId: process.env.ANDROID_RELEASE_CLIENT_ID,
       PUSHER_KEY: process.env.PUSHER_KEY,
       PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
-      YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
-      eas: {
-        projectId: "7131e8cf-6f8c-4ccd-bcc4-fab788fd5d7c"
+      username: process.env.APP_USERNAME,
+      password: process.env.APP_PASSWORD,
+      googleClientId: "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com",
+      "eas": {
+        "projectId": "7b24be75-fffd-444e-8bb5-fb53d221c8ff"
       }
     },
   },

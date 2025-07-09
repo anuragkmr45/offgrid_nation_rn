@@ -1,3 +1,4 @@
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { ProfileScreen } from '@/components/profile/ProfileScreen'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
@@ -50,7 +51,7 @@ export default function MyProfileRoute() {
   }
 
   return (
-    <>
+    <ProtectedLayout>
       <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
       <ProfileScreen
         loading={false}
@@ -64,7 +65,7 @@ export default function MyProfileRoute() {
         onUserPress={(u) => router.push(`/root/profile/${u}`)}
         onPostPress={(id) => { }}
       />
-    </>
+    </ProtectedLayout>
   )
 }
 

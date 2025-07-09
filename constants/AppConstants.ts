@@ -1,1 +1,5 @@
 export const AVATAR_FALLBACK: string = "https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png"
+export const LIKE_ICON: string = "https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/post-like-icon_tk5wtx.png"
+export const DISLIKE_ICON: string = "https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/post-dislike-icon_wfnpoq.png"
+export const COMMENT_ICON: string = "https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/comment-icon_tpavcd.png"
+export const SHARE_ICON: string = "https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/share-icon_ij6xgh.png"

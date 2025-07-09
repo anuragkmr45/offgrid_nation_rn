@@ -1,5 +1,6 @@
 // app/premium/index.tsx
 
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { WithLayout } from '@/components/layouts/WithLayout'
 import { PremiumFeedError } from '@/components/premium/PremiumFeedError'
 import { PremiumFeedLoader } from '@/components/premium/PremiumFeedLoader'
@@ -75,14 +76,16 @@ export default function PremiumScreen() {
   if (premiumFeed?.isPremium === false) {
     return (
       <WithLayout>
-        <PremiumSubscribeOverlay
-          onPayTap={async () => {
-            const url = await initiatePayment()
+        <ProtectedLayout>
+          <PremiumSubscribeOverlay
+            onPayTap={async () => {
+              const url = await initiatePayment()
 
-            router.push({ pathname: '/root/premium/webview', params: { url } })
-          }}
-          isLoading={checkoutLoading}
-        />
+              router.push({ pathname: '/root/premium/webview', params: { url } })
+            }}
+            isLoading={checkoutLoading}
+          />
+        </ProtectedLayout>
       </WithLayout>
     )
   }
@@ -92,27 +95,29 @@ export default function PremiumScreen() {
     return (
       <WithLayout headerBgColor={"#Fbbc06"}>
         <StatusBar backgroundColor={"#Fbbc06"} animated barStyle="dark-content" />
-        <View style={{ backgroundColor: "#Fbbc06", flex: 1, paddingBottom: 30 }}>
-          <FlatList
-            data={premiumFeed.posts}
-            ref={flatListRef}
-            keyExtractor={(post) => post._id}
-            contentContainerStyle={{ padding: 12 }}
-            refreshing={premiumFeedLoading}
-            onRefresh={refetchPremiumFeed}
-            renderItem={({ item }) => (
-              <PremiumPostWidget
-                post={item}
-                onProfileTap={() => {
-                  // TODO: navigate to user's profile
-                }}
-              />
-            )}
-          />
-        </View>
+        <ProtectedLayout>
+          <View style={{ backgroundColor: "#Fbbc06", flex: 1, paddingBottom: 30 }}>
+            <FlatList
+              data={premiumFeed.posts}
+              ref={flatListRef}
+              keyExtractor={(post) => post._id}
+              contentContainerStyle={{ padding: 12 }}
+              refreshing={premiumFeedLoading}
+              onRefresh={refetchPremiumFeed}
+              renderItem={({ item }) => (
+                <PremiumPostWidget
+                  post={item}
+                  onProfileTap={() => {
+                    // TODO: navigate to user's profile
+                  }}
+                />
+              )}
+            />
+          </View>
+        </ProtectedLayout>
       </WithLayout>
     )
   }
 
-  return <WithLayout headerBgColor={theme.colors.primary}><PremiumFeedError message="No premium content available." /></WithLayout>
+  return <WithLayout headerBgColor={theme.colors.primary}><ProtectedLayout><PremiumFeedError message="No premium content available." /></ProtectedLayout></WithLayout>
 }

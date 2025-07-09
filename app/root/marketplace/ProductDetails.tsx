@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/common'
 import { MediaCarousel } from '@/components/common/MediaCarousel'
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
 import { ProductDetailsInfo } from '@/components/marketplace/ProductDetailsInfo'
 import { theme } from '@/constants/theme'
@@ -84,7 +85,7 @@ export default function ProductDetailsScreen() {
         text: `HII!, i am instreade in ${product.title}`,
       }
       await sendMessage(payload).unwrap()
-      
+
       Toast.show({
         type: "success",
         text1: "Enquiry made successfully!!"
@@ -109,7 +110,9 @@ export default function ProductDetailsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ProtectedLayout>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </ProtectedLayout>
       </SafeAreaView>
     )
   }
@@ -117,7 +120,9 @@ export default function ProductDetailsScreen() {
     return (
       <SafeAreaView style={styles.center}>
         <StatusBar barStyle="dark-content" animated />
-        <Text style={styles.errorText}>Failed to load product details.</Text>
+        <ProtectedLayout>
+          <Text style={styles.errorText}>Failed to load product details.</Text>
+        </ProtectedLayout>
       </SafeAreaView>
     )
   }
@@ -125,25 +130,27 @@ export default function ProductDetailsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" animated backgroundColor={theme.colors.background} />
-      <MarketplaceHeader title={product.title.toUpperCase()} onBack={() => { router.back() }} />
-      {/* Carousel + Info */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <MediaCarousel mediaUrls={product.images} />
+      <ProtectedLayout>
+        <MarketplaceHeader title={product.title.toUpperCase()} onBack={() => { router.back() }} />
+        {/* Carousel + Info */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <MediaCarousel mediaUrls={product.images} />
 
-        <View style={styles.infoWrapper}>
-          <ProductDetailsInfo product={product} />
-        </View>
-      </ScrollView>
-      {product?.owner?._id !== currentUser?._id && (
-        <View style={styles.footer}>
-          <Button
-            text={"ENQUIRY"}
-            onPress={handleChat}
-            style={styles.chatButton}
-            textColor={theme.colors.background}
-          />
-        </View>
-      )}
+          <View style={styles.infoWrapper}>
+            <ProductDetailsInfo product={product} />
+          </View>
+        </ScrollView>
+        {product?.owner?._id !== currentUser?._id && (
+          <View style={styles.footer}>
+            <Button
+              text={"ENQUIRY"}
+              onPress={handleChat}
+              style={styles.chatButton}
+              textColor={theme.colors.background}
+            />
+          </View>
+        )}
+      </ProtectedLayout>
     </SafeAreaView>
   )
 }

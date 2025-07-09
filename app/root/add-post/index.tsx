@@ -1,5 +1,6 @@
 // app/add-post/index.tsx
 
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { WithLayout } from '@/components/layouts/WithLayout'
 import { MediaCarousel } from '@/components/post/MediaCarousel'
 import { PostComposer } from '@/components/post/PostComposer'
@@ -100,35 +101,37 @@ export default function AddPostRoute() {
   return (
     <WithLayout headerBgColor={theme.colors.primary}>
       <StatusBar backgroundColor={theme.colors.primary} animated barStyle={'dark-content'} />
-      <View style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {error ? (
-            <Text style={styles.errorText}>
-              {typeof error === 'string' ? error : 'An error occurred.'}
-            </Text>
-          ) : null}
+      <ProtectedLayout>
+        <View style={styles.safe}>
+          <ScrollView contentContainerStyle={styles.scroll}>
+            {error ? (
+              <Text style={styles.errorText}>
+                {typeof error === 'string' ? error : 'An error occurred.'}
+              </Text>
+            ) : null}
 
-          <PostComposer
-            onPost={handlePost}
-            onCameraTap={handleCamera}
-            onGalleryTap={handleGallery}
-            // onLocationTap={handleLocation}
-            mediaUris={media}
-            location={location}
-            isPosting={isLoading}
-          />
+            <PostComposer
+              onPost={handlePost}
+              onCameraTap={handleCamera}
+              onGalleryTap={handleGallery}
+              // onLocationTap={handleLocation}
+              mediaUris={media}
+              location={location}
+              isPosting={isLoading}
+            />
 
-          {media.length > 0 && (
-            <MediaCarousel uris={media} onRemove={handleRemove} />
-          )}
+            {media.length > 0 && (
+              <MediaCarousel uris={media} onRemove={handleRemove} />
+            )}
 
-          {isLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-            </View>
-          )}
-        </ScrollView>
-      </View>
+            {isLoading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </ProtectedLayout>
     </WithLayout>
   )
 }
