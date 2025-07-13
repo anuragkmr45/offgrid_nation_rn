@@ -1,30 +1,43 @@
-import { Button, InputField } from '@/components/common';
-import Header from '@/components/common/Header';
-import { theme } from '@/constants/theme';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { debounce } from '@/utils/debounce';
-import { validateOTP } from '@/utils/validation/signupValidation';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
-import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
+import { Button } from '@/components/common'
+import Header from '@/components/common/Header'
+import OtpInput from '@/components/common/OtpInput '
+import { theme } from '@/constants/theme'
+import { useAuth } from '@/features/auth/hooks/useAuth'
+import { debounce } from '@/utils/debounce'
+import { validateOTP } from '@/utils/validation/signupValidation'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import React, { useEffect, useMemo, useState } from 'react'
+import {
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    TouchableWithoutFeedback,
+    View,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 
 const VerifyOtp: React.FC = () => {
     const router = useRouter()
-    const { username, mobile } = useLocalSearchParams<{ username: string, mobile: string }>()
-    const [otp, setOtp] = useState('');
-    const [resending, setResending] = useState(false);
-    const { verifyRegistration, register } = useAuth();
+    const { username, mobile } = useLocalSearchParams<{
+        username: string
+        mobile: string
+    }>()
+    const [otp, setOtp] = useState('')
+    const [resending, setResending] = useState(false)
+    const { verifyRegistration, register } = useAuth()
 
-    const otpError = validateOTP(otp);
-    const isValid = otpError === null;
+    const otpError = validateOTP(otp)
+    const isValid = otpError === null
 
     const handleResend = async () => {
-        setResending(true);
+        setResending(true)
         try {
             const resend = await register({ username, mobile })
-
             Toast.show({
                 type: 'success',
                 text1: resend.message || `OTP resent to ${mobile}`,
@@ -33,125 +46,170 @@ const VerifyOtp: React.FC = () => {
             const errorMessage = err?.data?.message || 'Fail to resend OTP.'
             Toast.show({ type: 'error', text1: errorMessage })
         } finally {
-            setResending(false);
+            setResending(false)
         }
-    };
+    }
 
     const handleNext = async () => {
         setResending(true)
-        const trimedOTP = otp.trim();
-        if (trimedOTP.trim().length === 0) {
-            Toast.show({
-                type: "error",
-                text1: "OTP should not be empty"
-            })
+        const trimmedOTP = otp.trim()
+        if (trimmedOTP.length === 0) {
+            Toast.show({ type: 'error', text1: 'OTP should not be empty' })
+            setResending(false)
+            return
         }
+
         try {
-            const res = await verifyRegistration({ mobile, otp: trimedOTP });
-            Toast.show({
-                type: "success",
-                text1: res.message
-            })
+            const res = await verifyRegistration({ mobile, otp: trimmedOTP })
+            Toast.show({ type: 'success', text1: res.message })
             setTimeout(() => {
-                router.push({ pathname: '/auth/register/Complete', params: { username, mobile } });
-            }, 1500);
+                router.push({
+                    pathname: '/auth/register/Complete',
+                    params: { username, mobile },
+                })
+            }, 1500)
         } catch (error: any) {
-            const errorMessage = error?.data?.message || 'OTP verify fails.';
-            Toast.show({
-                type: "error",
-                text1: errorMessage
-            })
+            const errorMessage = error?.data?.message || 'OTP verify fails.'
+            Toast.show({ type: 'error', text1: errorMessage })
         } finally {
             setResending(false)
         }
-    };
+    }
 
-    const debouncedHandleResend = useMemo(() => debounce(handleResend, 1000), [handleResend]);
-    useEffect(() => {
-        return () => {
-            debouncedHandleResend.cancel();
-        };
-    }, [debouncedHandleResend]);
-
+    const debouncedHandleResend = useMemo(
+        () => debounce(handleResend, 1000),
+        [handleResend]
+    )
+    useEffect(() => () => debouncedHandleResend.cancel(), [debouncedHandleResend])
 
     return (
         <SafeAreaView style={styles.container}>
-            <StatusBar backgroundColor={theme.colors.primary} animated barStyle={'light-content'} />
-            <Header onBack={() => router.back()} title='Enter OTP' backgroundColor={theme.colors.primary} titleColor={theme.colors.background} showShadow iconColor={theme.colors.background} />
-            {/* Top Section */}
-            <View style={styles.topContainer}>
-                <InputField
-                    value={otp}
-                    onChangeText={setOtp}
-                    placeholder="Enter OTP"
-                    keyboardType="number-pad"
-                    style={styles.input}
-                />
+            <StatusBar
+                backgroundColor={theme.colors.primary}
+                animated
+                barStyle="light-content"
+            />
 
-                <View style={{ flexDirection: 'row', marginTop: 8 }}>
-                    <Text style={[styles.resendText, resending && styles.resendDisabled]}>Have not received ?</Text>
-                    <TouchableOpacity disabled={resending} style={{ marginLeft: 6 }} onPress={handleResend}><Text style={{ color: theme.colors.background, fontWeight: '700' }}>Resend OTP</Text></TouchableOpacity>
-                </View>
-            </View>
+            <KeyboardAvoidingView
+                style={styles.flex}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={styles.flex}>
+                        <Header
+                            onBack={() => router.back()}
+                            title="Enter OTP"
+                            backgroundColor={theme.colors.primary}
+                            titleColor={theme.colors.background}
+                            showShadow
+                            iconColor={theme.colors.background}
+                        />
 
-            {/* Bottom Section */}
-            <View style={styles.bottomContainer}>
-                <Button
-                    onPress={handleNext}
-                    text="Next"
-                    disabled={!isValid}
-                    style={[styles.button, !isValid && styles.buttonDisabled]}
-                    textColor={theme.colors.primary}
-                    debounce
-                    debounceDelay={3000}
-                    loaderStyle={theme.colors.textPrimary}
-                    loading={resending}
-                />
+                        {/* Top Section */}
+                        <View style={styles.topContainer}>
+                            {/* <InputField
+                                value={otp}
+                                onChangeText={setOtp}
+                                placeholder="Enter OTP"
+                                keyboardType="number-pad"
+                                style={styles.input}
+                            /> */}
+                            <OtpInput
+                                length={6}
+                                onChange={setOtp}
+                                containerStyle={styles.input}
+                                boxStyle={{ borderColor: theme.colors.background }}
+                            />
+                            <View style={styles.resendRow}>
+                                <Text
+                                    style={[
+                                        styles.resendText,
+                                        resending && styles.resendDisabled,
+                                    ]}
+                                >
+                                    Haven’t received?
+                                </Text>
+                                <TouchableOpacity
+                                    disabled={resending}
+                                    onPress={handleResend}
+                                    style={styles.resendButton}
+                                >
+                                    <Text style={styles.resendLink}>Resend OTP</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
 
-                <View style={styles.signInFooter}>
-                    <Text style={styles.signInText}>
-                        Already have an account?{' '}
-                        <Text style={styles.signInLink} onPress={() => router.push('/auth/login/Login')}>
-                            Sign In
-                        </Text>
-                    </Text>
-                </View>
-            </View>
+                        {/* Bottom Section */}
+                        <View style={styles.bottomContainer}>
+                            <Button
+                                onPress={handleNext}
+                                text="Next"
+                                disabled={!isValid}
+                                style={[styles.button, !isValid && styles.buttonDisabled]}
+                                textColor={theme.colors.primary}
+                                debounce
+                                debounceDelay={3000}
+                                loaderStyle={theme.colors.textPrimary}
+                                loading={resending}
+                            />
+
+                            <View style={styles.signInFooter}>
+                                <Text style={styles.signInText}>
+                                    Already have an account?{' '}
+                                    <Text
+                                        style={styles.signInLink}
+                                        onPress={() => router.push('/auth/login/Login')}
+                                    >
+                                        Sign In
+                                    </Text>
+                                </Text>
+                            </View>
+                        </View>
+                    </View>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
         </SafeAreaView>
-    );
-};
+    )
+}
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: theme.colors.primary,
+    },
+    flex: {
+        flex: 1,
         justifyContent: 'space-between',
     },
     topContainer: {
         paddingHorizontal: 24,
     },
-    title: {
-        textAlign: 'center',
-        fontSize: theme.fontSizes.headlineSmall,
-        fontWeight: "600",
-        color: theme.colors.textPrimary,
-        marginBottom: 32,
-    },
     input: {
-        // backgroundColor: theme.colors.,
         borderRadius: 10,
         height: 50,
         marginVertical: 8,
         paddingHorizontal: 16,
         borderWidth: 0,
     },
+    resendRow: {
+        flexDirection: 'row',
+        marginTop: 8,
+        alignItems: 'center',
+    },
     resendText: {
         color: theme.colors.textPrimary,
-        // textAlign: 'center',
-        fontWeight: "600",
+        fontWeight: '600',
     },
     resendDisabled: {
         opacity: 0.6,
+    },
+    resendButton: {
+        marginLeft: 6,
+    },
+    resendLink: {
+        color: theme.colors.background,
+        fontWeight: '700',
     },
     bottomContainer: {
         paddingBottom: 24,
@@ -173,9 +231,9 @@ const styles = StyleSheet.create({
         color: theme.colors.textPrimary,
     },
     signInLink: {
-        fontWeight: "600",
-        color: theme.colors.background
+        fontWeight: '600',
+        color: theme.colors.background,
     },
-});
+})
 
-export default VerifyOtp;
+export default VerifyOtp

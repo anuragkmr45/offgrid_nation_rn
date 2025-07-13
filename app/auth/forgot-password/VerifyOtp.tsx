@@ -1,5 +1,6 @@
-import { Button, InputField } from '@/components/common';
+import { Button } from '@/components/common';
 import Header from '@/components/common/Header';
+import OtpInput from '@/components/common/OtpInput ';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { validateOTP } from '@/utils/validation/signupValidation';
@@ -8,6 +9,7 @@ import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,8 +32,8 @@ const VerifyOtp: React.FC = () => {
   const handleResend = async () => {
     setIslanding(true);
     try {
-      console.log({mobile});
-      
+      console.log({ mobile });
+
       const resend = await triggerForgotPassword({ mobile })
 
       Toast.show({
@@ -50,13 +52,13 @@ const VerifyOtp: React.FC = () => {
     setIslanding(true)
     const trimedOTP = otp.trim();
     try {
-      await triggerVerifyForgotOtp({ mobile: mobile, otp: trimedOTP });
-      Toast.show({
-        type: "success",
-        text1: "OTP verified"
-      })
+      // await triggerVerifyForgotOtp({ mobile: mobile, otp: trimedOTP });
+      // Toast.show({
+      //   type: "success",
+      //   text1: "OTP verified"
+      // })
       setTimeout(() => {
-        router.push({ pathname: '/auth/forgot-password/Reset', params: { mobile } });
+        router.push({ pathname: '/auth/forgot-password/Reset', params: { mobile: "csd" } });
       }, 1500);
     } catch (error: any) {
       const errorMessage = error?.data?.message || 'OTP verification fails.';
@@ -72,10 +74,11 @@ const VerifyOtp: React.FC = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-    //   behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    //   keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0}
     >
       <SafeAreaView style={styles.safeArea}>
+        <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
         <Header
           // title="Registeration"
           onBack={() => router.back()}
@@ -92,12 +95,18 @@ const VerifyOtp: React.FC = () => {
             We have sent an OTP code to your email. Enter the OTP code below to verify.
           </Text>
 
-          <InputField
+          {/* <InputField
             value={otp}
             onChangeText={setOtp}
             placeholder="Enter your OTP"
             keyboardType="number-pad"
             style={styles.input}
+          /> */}
+          <OtpInput
+            length={6}
+            onChange={setOtp}
+            containerStyle={styles.input}
+            boxStyle={{ borderColor: theme.colors.background}}
           />
           {otpError && <Text style={styles.errorText}>{otpError}</Text>}
 
@@ -154,12 +163,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   input: {
-    backgroundColor: theme.colors.background,
+    // backgroundColor: theme.colors.background,
     borderRadius: 15,
     height: 50,
     paddingHorizontal: 16,
     marginBottom: 4,
-    color: theme.colors.textPrimary,
+    color: theme.colors.background,
   },
   errorText: {
     color: theme.colors.accent,
