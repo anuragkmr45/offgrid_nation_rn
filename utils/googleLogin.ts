@@ -11,6 +11,7 @@ import {
   type UserCredential
 } from 'firebase/auth';
 import { useState } from 'react';
+import Toast from 'react-native-toast-message';
 import { auth } from '../firebaseConfig';
 
 /* ──────────────────────────────────────────────────
@@ -32,26 +33,20 @@ type SignedUser = { uid: string; name: string | null; email: string | null };
    ────────────────────────────────────────────────── */
 export function useGoogleSignIn() {
   const [user, setUser] = useState<SignedUser | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { socialLogin } = useAuth();
   const router = useRouter();
-  /* silent sign-in on mount */
-  // useEffect(() => {
-  //   (async () => {
-  //     try {
-  //       await GoogleSignin.signInSilently();
-  //       const { idToken } = await GoogleSignin.getTokens();
-  //       if (idToken) await firebaseSignIn(idToken);
-
-  //     } catch {
-  //       /* no cached credentials */
-  //     }
-  //   })();
-  // }, []);
 
   /* interactive account picker */
   async function promptAsync() {
+    setIsLoading(true)
     try {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      const alreadySignedIn = GoogleSignin.getCurrentUser();
+      if (alreadySignedIn) {
+        await GoogleSignin.signOut();
+      }
 
       await GoogleSignin.signIn(); // GoogleUser
       const { idToken } = await GoogleSignin.getTokens();
@@ -60,31 +55,42 @@ export function useGoogleSignIn() {
       if (err.code === statusCodes.SIGN_IN_CANCELLED) return;            // user cancelled
       if (err.code === statusCodes.IN_PROGRESS) return;                  // already running
       if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.warn('Play services not available');
+        Toast.show({ type: "error", text1: "Google Play services not available" })
         return;
       }
       console.error('GoogleSignin error', err);
+    } finally {
+      setIsLoading(false)
     }
   }
 
   /* exchange Google ID-token → Firebase credential */
   async function firebaseSignIn(idToken: string) {
-    const credential = GoogleAuthProvider.credential(idToken);
-    const { user: fbUser }: UserCredential = await signInWithCredential(
-      auth,
-      credential,
-    );
-    setUser({
-      uid: fbUser.uid,
-      name: fbUser.displayName,
-      email: fbUser.email,
-    });
-    await socialLogin({ firebaseUid: fbUser.uid, fullName: fbUser.displayName ?? '', email: fbUser.email ?? '' })
-    // only runs if unwrap() succreeded
-    router.replace('/root/feed')
+    setIsLoading(true)
+    try {
+      const credential = GoogleAuthProvider.credential(idToken);
+      const { user: fbUser }: UserCredential = await signInWithCredential(
+        auth,
+        credential,
+      );
+      const { uid = "", displayName = "", email = "" } = fbUser || {}
+      setUser({
+        uid: uid,
+        name: displayName,
+        email: email,
+      });
+      await socialLogin({ firebaseUid: uid, fullName: displayName ?? "", email: email ?? "" });
+      // only runs if unwrap() succreeded
+      router.replace('/root/feed')
+    } catch (error: any) {
+      const err = error?.data?.message || "Error while google login"
+      Toast.show({ type: 'error', text1: err })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   /* match the signature you use elsewhere:
      const { user, promptAsync } = useGoogleSignIn(); */
-  return { user, promptAsync };
+  return { user, promptAsync, isLoading };
 }

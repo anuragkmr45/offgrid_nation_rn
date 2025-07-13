@@ -1,8 +1,8 @@
 import { Button, InputField } from '@/components/common';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAppleSignIn } from '@/utils/appleSignIn';
 import { useGoogleSignIn } from '@/utils/googleLogin';
-import { useAppleSignIn } from '@/utils/useAppleSignIn';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -25,10 +25,10 @@ export default function LoginScreen() {
     username?: string;
     password?: string;
   }>()
-  const { user: googleUserData, promptAsync: googleSignIn } = useGoogleSignIn();
-  const { userData: appleUserData, signIn: appleSingin } = useAppleSignIn()
+  const { promptAsync: googleSignIn, isLoading: googleAuthLoading } = useGoogleSignIn();
+  const { signIn: appleSingin, isLoading: appleAuthLoading } = useAppleSignIn()
 
-  const { login, isLoginLoading, socialLogin } = useAuth()
+  const { login, isLoginLoading } = useAuth()
   const [identifier, setIdentifier] = useState(usernameParam || '');
   const [password, setPassword] = useState(pwdParam || '');
   const [isShowPass, setIsShowPass] = useState(false);
@@ -53,26 +53,6 @@ export default function LoginScreen() {
       });
     }
   };
-
-  // in LoginScreen.tsx
-  // useEffect(() => {
-  //   if (!!(googleUserData || appleUserData)) {
-  //     const providerUser = googleUserData ?? appleUserData
-  //     if (!providerUser) return; 
-
-  //     const { uid, name, email } = providerUser || {};
-  //     (async () => {
-  //       try {
-  //         await socialLogin({ firebaseUid: uid, fullName: name ?? '', email: email ?? '' })
-  //         // only runs if unwrap() succreeded
-  //         router.replace('/root/feed')
-  //       } catch {
-  //         Toast.show({ type: 'error', text1: 'Social login failed. Please try again.' })
-  //       }
-  //     })()
-  //   }
-  // }, [googleUserData, appleUserData, socialLogin, router])
-
 
   return (
     <KeyboardAvoidingView
@@ -100,7 +80,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               placeholder="Password"
               secureTextEntry={!isShowPass}
-              style={{ paddingRight: 40 }}           // make room for the icon
+              style={{ paddingRight: 40, color: theme.colors.textPrimary }}           // make room for the icon
             />
             <TouchableOpacity
               style={styles.eyeButton}
@@ -138,14 +118,19 @@ export default function LoginScreen() {
             text="Continue with Google"
             onPress={() => googleSignIn()}
             style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
+            disabled={googleAuthLoading}
+            loading={googleAuthLoading}
           // override text color
           />
           <Button
             icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/apple-icon_quyjuw.png"
             text="Continue with Apple"
-            onPress={() => { appleSingin }}
+            onPress={appleSingin}
+            // onPress={() => { }}
             style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
             textColor={theme.colors.background}
+            disabled={appleAuthLoading}
+            loading={appleAuthLoading}
           />
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -202,7 +187,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   forgotText: {
-    color: theme.colors.textPrimary,
+    color: theme.colors.background,
     fontWeight: '600',
     fontSize: 14,
   },

@@ -9,8 +9,10 @@ export function useAppleSignIn() {
         name: string;
         email: string;
     } | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const signIn = async () => {
+        setIsLoading(true)
         try {
             // 1. Generate nonces
             const rawNonce = randomUUID();
@@ -26,7 +28,7 @@ export function useAppleSignIn() {
             });
 
             // 3. Exchange for Firebase credential
-            const { identityToken, fullName, email } = appleResponse;
+            const { identityToken, fullName, email } = appleResponse || {};
             if (!identityToken) throw new Error('Apple Sign-In failed to return identityToken');
 
             const provider = new OAuthProvider('apple.com');
@@ -39,20 +41,22 @@ export function useAppleSignIn() {
             const userCred: UserCredential = await signInWithCredential(auth, firebaseCred);
 
             // 4. Extract and store user data
-            const { uid, displayName } = userCred.user;
+            const { user: { uid = "", displayName = "", email: emailFromUserCred } } = userCred || {};
             setUserData({
                 uid,
                 name: displayName || fullName?.familyName || '',
-                email: userCred?.user?.email || email || '',
+                email: emailFromUserCred || email || '',
             });
         } catch (err) {
             if ((err as any).code === 'ERR_REQUEST_CANCELED') {
-                // user cancelled
+                return
             } else {
                 console.error('Apple sign-in error:', err);
             }
+        } finally {
+            setIsLoading(true)
         }
     };
 
-    return { userData, signIn };
+    return { userData, signIn, isLoading };
 }
