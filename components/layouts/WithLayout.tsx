@@ -1,5 +1,6 @@
 // WithLayout.tsx
 
+import { APP_LOGO_BLACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { TAB_EVENTS, TabEventEmitter } from '@/utils/TabEventEmitter'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
@@ -121,7 +122,7 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
         {/* ===== TOP HEADER ===== */}
         <View style={[styles.topBar, { backgroundColor: headerBgColor }]}>
           <Image
-            source={{ uri: "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png" }}
+            source={{ uri: APP_LOGO_BLACK }}
             style={styles.logo}
             resizeMode="contain"
           />

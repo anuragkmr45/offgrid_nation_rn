@@ -1,4 +1,5 @@
 import { Button, InputField } from '@/components/common';
+import { APP_LOGO_WHITE } from '@/constants/AppConstants';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAppleSignIn } from '@/utils/appleSignIn';
@@ -63,7 +64,7 @@ export default function LoginScreen() {
       <View style={{ width: '100%', flex: 1 }}>
         <View style={styles.logoContainer}>
           <Image
-            source={{ uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901306/fr-bg-white_hea7pb.png' }}
+            source={{ uri: APP_LOGO_WHITE }}
             style={styles.logo}
           />
         </View>

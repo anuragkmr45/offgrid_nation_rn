@@ -1,3 +1,4 @@
+import { APP_LOGO_WHITE } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { useAppSelector } from '@/store/hooks'
 import { persistor } from '@/store/store'
@@ -57,8 +58,7 @@ export default function SplashScreen() {
         <Text style={styles.title}>Welcome to</Text>
         <Image
           source={{
-            uri:
-              'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901306/fr-bg-white_hea7pb.png',
+            uri: APP_LOGO_WHITE
           }}
           style={styles.logo}
           resizeMode="contain"
