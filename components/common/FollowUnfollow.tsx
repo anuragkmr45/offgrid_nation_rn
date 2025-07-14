@@ -3,35 +3,37 @@ import { theme } from '@/constants/theme'
 import { useSocial } from '@/features/social/hooks/useSocial'
 import React, { useState } from 'react'
 import {
-  StyleSheet,
-  Text,
-  TouchableOpacity
+    ActivityIndicator,
+    StyleProp,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    ViewStyle
 } from 'react-native'
 import Toast from 'react-native-toast-message'
 
 export interface FollowUnfollowProps {
     handle: string
     isFollowing?: boolean
+    buttonStyle?: StyleProp<ViewStyle>
 }
 
-export const FollowUnfollow: React.FC<FollowUnfollowProps> = ({
-    isFollowing: initial = false,handle
+export const FollowUnfollowButton: React.FC<FollowUnfollowProps> = ({
+    isFollowing: initial, handle, buttonStyle
 }) => {
     const [isFollowing, setIsFollowing] = useState(initial)
     const { followUser, isFollowLoading } = useSocial()
 
     const toggleFollow = async () => {
         const nextState = !isFollowing
-        // optimistic UI update
         setIsFollowing(nextState)
-
         try {
             await followUser(handle).unwrap()
-            Toast.show({type: "success", text1: `Follow/Unfollow ${handle} succefully` })
+            Toast.show({ type: "success", text1: `Follow/Unfollow ${handle} succefully` })
         } catch (err: any) {
             const error = err?.data?.message || `Error while toggle follow`
             setIsFollowing(!nextState)
-            Toast.show({type: "error", text1: error })
+            Toast.show({ type: "error", text1: error })
         }
     }
 
@@ -40,16 +42,17 @@ export const FollowUnfollow: React.FC<FollowUnfollowProps> = ({
             onPress={toggleFollow}
             style={[
                 styles.followButton,
-                isFollowing && styles.followingButton
+                isFollowing && styles.followingButton,
+                buttonStyle
             ]}
             activeOpacity={0.7}
         >
-            <Text style={[
+            {isFollowLoading ? <ActivityIndicator color={theme.colors.background} /> : <Text style={[
                 styles.followText,
                 isFollowing && styles.followingText
             ]}>
-                {isFollowing ? 'Unfollow' : 'Following'}
-            </Text>
+                {isFollowing ? 'Unfollow' : 'Follow'}
+            </Text>}
         </TouchableOpacity>
     )
 }

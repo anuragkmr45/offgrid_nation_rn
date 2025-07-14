@@ -1,5 +1,5 @@
 // components/search/AccountCard.tsx
-import { FollowUnfollow } from "@/components/common/FollowUnfollow";
+import { FollowUnfollowButton } from "@/components/common/FollowUnfollow";
 import { theme } from '@/constants/theme';
 import { useRouter } from 'expo-router';
 import React from 'react';
@@ -16,15 +16,13 @@ export interface AccountCardProps {
     fullName: string
     handle: string
     isFollowing?: boolean
-    onToggleFollow?: (newState: boolean) => void
 }
 
 export const AccountCard: React.FC<AccountCardProps> = ({
     avatarUrl,
     fullName,
     handle,
-    isFollowing: initial = false,
-    onToggleFollow,
+    isFollowing: initial,
 }) => {
     const router = useRouter()
     const username = handle.startsWith('@') ? handle.slice(1) : handle;
@@ -43,7 +41,7 @@ export const AccountCard: React.FC<AccountCardProps> = ({
                     </View>
                 </TouchableOpacity>
             </View>
-            <FollowUnfollow handle={username} isFollowing={initial} />
+            <FollowUnfollowButton handle={username} isFollowing={initial} />
         </View>
     )
 }
