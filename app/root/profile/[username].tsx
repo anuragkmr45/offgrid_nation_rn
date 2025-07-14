@@ -21,7 +21,7 @@ export default function UserProfileRoute() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
-        <Text>Loading profile...</Text>
+        <Text>Fetching {username} profile...</Text>
       </View>
     )
   }
@@ -47,7 +47,6 @@ export default function UserProfileRoute() {
         onAvatarEdit={() => { }}
         onFieldEdit={() => { }}
         onUserPress={(u) => router.push(`/root/profile/${u}`)}
-        onPostPress={() => { }}
       />
     </ProtectedLayout>
   )

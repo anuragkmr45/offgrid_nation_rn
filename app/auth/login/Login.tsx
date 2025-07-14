@@ -69,7 +69,7 @@ export default function LoginScreen() {
         </View>
         <View style={styles.formContainer}>
           <InputField
-            value={identifier.trim().toLowerCase()}
+            value={identifier}
             onChangeText={setIdentifier}
             placeholder="Username, Phone number or email"
             keyboardType="default"

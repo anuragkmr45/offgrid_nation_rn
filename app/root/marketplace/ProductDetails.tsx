@@ -60,12 +60,11 @@ export default function ProductDetailsScreen() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | undefined>()
   const [product, setProduct] = useState<ProductDetails | null>(null)
-  console.log(typeof product);
 
   useEffect(() => {
     if (!productId) return
     setLoading(true)
-    fetch(`https://api.theoffgridnation.com/products/${productId}`, {
+    fetch(`https://apiv2.theoffgridnation.com/products/${productId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

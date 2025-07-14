@@ -33,6 +33,10 @@ export default function AddPostRoute() {
   const [createPost, { isLoading, error }] = useCreatePostMutation()
 
   const handleCamera = async () => {
+    if (media.length >= 5) {
+      Toast.show({ type: 'info', text1: 'You can only upload up to 5 items.' });
+      return;
+    }
     const uri = await pickFromCamera(MediaTypeOptions.All)
     if (uri) setMedia(m => [...m, uri])
   }

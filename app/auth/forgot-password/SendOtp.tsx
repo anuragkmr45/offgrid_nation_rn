@@ -35,8 +35,7 @@ const SendOtp: React.FC = () => {
   const handleNext = async () => {
     setIsLoading(true)
     try {
-      const phoneWithCountryCode = `+${callingCode[0]} ${phone}`
-      console.log({ phoneWithCountryCode });
+      const phoneWithCountryCode = `+${callingCode[0]} ${phone}`;
       await triggerForgotPassword({ mobile: phoneWithCountryCode })
       Toast.show({ type: 'success', text1: 'OTP sent' })
       setTimeout(() => {

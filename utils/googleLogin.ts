@@ -58,7 +58,6 @@ export function useGoogleSignIn() {
         Toast.show({ type: "error", text1: "Google Play services not available" })
         return;
       }
-      console.error('GoogleSignin error', err);
     } finally {
       setIsLoading(false)
     }

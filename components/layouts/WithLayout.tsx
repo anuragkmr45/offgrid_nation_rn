@@ -161,9 +161,10 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
           style={[
             styles.bottomNav,
             {
-              alignSelf: 'center',
-              width: 306,
-              bottom: insets.bottom + 16,
+              left: (Dimensions.get('window').width - 306) / 2,
+              // alignSelf: 'center',
+              // width: 306,
+              bottom: insets.bottom,
             },
           ]}
         >
@@ -244,11 +245,12 @@ const styles = StyleSheet.create({
 
   // Bottom “glass” nav bar
   bottomNav: {
-    // position: 'absolute',
+    position: 'absolute',
+    width: 306,
     height: 46,
     borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.33)',
     overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.33)',
   },
   bottomNavContent: {
     flex: 1,

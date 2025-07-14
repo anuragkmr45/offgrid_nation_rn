@@ -32,8 +32,6 @@ const VerifyOtp: React.FC = () => {
   const handleResend = async () => {
     setIslanding(true);
     try {
-      console.log({ mobile });
-
       const resend = await triggerForgotPassword({ mobile })
 
       Toast.show({

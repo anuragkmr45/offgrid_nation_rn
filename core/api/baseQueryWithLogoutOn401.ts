@@ -5,7 +5,7 @@ import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolk
 import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 export const baseQuery = fetchBaseQuery({
-  baseUrl: 'https://api.theoffgridnation.com',
+  baseUrl: 'https://apiv2.theoffgridnation.com',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.accessToken
     if (token) {
