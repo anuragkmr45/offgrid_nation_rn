@@ -2,7 +2,7 @@
 
 import { theme } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, StyleSheet, Text, View } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Loader } from '../common';
@@ -85,10 +85,14 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, 
 
   // Merge and deduplicate messages
   const combinedMessagesMap = new Map<string, any>();
-  [...messages, ...historicalMessages].forEach((msg) => {
-    combinedMessagesMap.set(msg._id, msg);
-  });
-  const combinedMessages = Array.from(combinedMessagesMap.values());
+  const combinedMessages = useMemo(() => {
+    [...messages, ...historicalMessages].forEach(msg =>
+      combinedMessagesMap.set(msg._id, msg)
+    );
+    return Array.from(combinedMessagesMap.values()).sort(
+      (a, b) => new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
+    );
+  }, [messages, historicalMessages]);
 
   return (
     <View style={styles.container}>
@@ -113,7 +117,7 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, 
           keyExtractor={(m) => m._id}
           renderItem={({ item }) => {
             const { sender, sentAt, actionType, postPayload, text } = item || {}
-            
+
             const outgoing = sender === userId;
             const timestamp = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 

@@ -24,7 +24,7 @@ export const baseQueryWithLogoutOn401: BaseQueryFn<
 
   if (result.error?.status === 401) {
     // Just logout; reset other APIs elsewhere
-    api.dispatch(logoutAndRedirect ())
+    api.dispatch(logoutAndRedirect())
 
   }
 
