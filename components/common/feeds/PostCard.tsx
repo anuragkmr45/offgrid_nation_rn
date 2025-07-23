@@ -21,6 +21,7 @@ import {
   ViewToken
 } from 'react-native'
 import Toast from 'react-native-toast-message'
+import WebView from 'react-native-webview'
 import { PostMedia } from './PostMedia'
 
 // Icons
@@ -174,12 +175,39 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
           contentContainerStyle={{ paddingBottom: 10 }}
         />
       ) : hasOnlyLink ? (
+        <View>
+          <WebView
+            source={{ uri: post.caption.trim().match(urlRegex)?.[0] ?? '' }}
+            style={{
+              width: resolvedWidth,
+              height: MEDIA_HEIGHT/1.4,
+              marginHorizontal: 16,
+              borderRadius: theme.borderRadius,
+              overflow: 'hidden',
+            }}
+            javaScriptEnabled
+            domStorageEnabled
+          />
+          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+            <Text style={styles.caption}>
+              {renderWithLinks(displayedCaption)}
+              {!isCaptionExpanded && isCaptionLong ? '...' : ''}
+            </Text>
+            {isCaptionLong && (
+              <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
+                <Text style={styles.toggleText}>
+                  {isCaptionExpanded ? 'Read less' : 'Read more'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
         /* ----- LINK-ONLY post (no media, nothing else) ------ */
-        <TouchableOpacity
-          style={styles.linkOnlyContainer}
-          onPress={() => Linking.openURL(post.caption.trim())}>
-          <Text style={styles.linkText}>{post.caption.trim()}</Text>
-        </TouchableOpacity>
+        // <TouchableOpacity
+        //   style={styles.linkOnlyContainer}
+        //   onPress={() => Linking.openURL(post.caption.trim())}>
+        //   <Text style={styles.linkText}>{post.caption.trim()}</Text>
+        // </TouchableOpacity>
       ) : (
         <View style={styles.textOnlyContainer}>
           <Text style={styles.textOnly}>{post.caption}</Text>
