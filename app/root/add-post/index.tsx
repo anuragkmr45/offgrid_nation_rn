@@ -27,12 +27,17 @@ import Toast from 'react-native-toast-message'
 export default function AddPostRoute() {
   const [media, setMedia] = useState<string[]>([])
   const [location, setLocation] = useState<string | null>(null)
+  const [link, setLink] = useState<string>('')
   const router = useRouter()
 
   // RTK-Query mutation hook
   const [createPost, { isLoading, error }] = useCreatePostMutation()
 
   const handleCamera = async () => {
+    if (media.length >= 5) {
+      Toast.show({ type: 'info', text1: 'You can only upload up to 5 items.' });
+      return;
+    }
     const uri = await pickFromCamera(MediaTypeOptions.All)
     if (uri) setMedia(m => [...m, uri])
   }
@@ -87,6 +92,7 @@ export default function AddPostRoute() {
       Toast.show({ type: 'success', text1: 'Your post was uploaded.' })
       setMedia([])
       setLocation(null)
+      setLink('')  
       router.replace('/root/feed')
     } catch (err: any) {
       const errMsg = err?.data?.message || 'Failed to post. Please try again.'
@@ -118,6 +124,8 @@ export default function AddPostRoute() {
               mediaUris={media}
               location={location}
               isPosting={isLoading}
+              linkValue={link} 
+              onLinkChange={setLink}
             />
 
             {media.length > 0 && (

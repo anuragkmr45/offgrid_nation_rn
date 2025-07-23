@@ -2,6 +2,7 @@
 
 import { ConversationScreen } from '@/components/chat/ConversationScreen';
 import ProtectedLayout from '@/components/layouts/ProtectedLayout';
+import { AVATAR_FALLBACK } from '@/constants/AppConstants';
 import { theme } from '@/constants/theme';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -14,6 +15,7 @@ export default function ChatPage() {
     recipientName?: string;
     profilePicture?: string;
   }>();
+  console.log({ recipientId, recipientName, profilePicture });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
@@ -21,8 +23,8 @@ export default function ChatPage() {
       <ProtectedLayout>
         <ConversationScreen
           chatId={recipientId || ""}
-          avatarUrl={profilePicture || "https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png"}
-          name={recipientName || "offgrid-user"}
+          avatarUrl={profilePicture || AVATAR_FALLBACK}
+          name={recipientName || "OffgridUser"}
         />
       </ProtectedLayout>
     </SafeAreaView>

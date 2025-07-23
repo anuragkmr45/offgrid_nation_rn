@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native'
+import Toast from 'react-native-toast-message'
 
 export interface PostComposerProps {
   onPost: (text: string) => void
@@ -21,6 +22,8 @@ export interface PostComposerProps {
   mediaUris: string[]
   location?: string | null
   isPosting: boolean
+  linkValue: string
+  onLinkChange: (v: string) => void
 }
 
 export const PostComposer: React.FC<PostComposerProps> = ({
@@ -31,26 +34,35 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   mediaUris,
   location,
   isPosting,
+  linkValue, onLinkChange,
 }) => {
   const [text, setText] = useState('')
   const [charCount, setCharCount] = useState(0)
+  const [linkInput, setLinkInput] = useState(linkValue)
   const maxChars = 400
 
   useEffect(() => {
     setCharCount(text.length)
   }, [text])
 
+  useEffect(() => setLinkInput(linkValue), [linkValue])
+
   const handlePost = () => {
-    const trimmed = text.trim()
-    if (!trimmed) {
-      Alert.alert('Cannot post empty text.')
+    const txt = text.trim()
+    const lnk = linkInput.trim()
+    if (!txt && !lnk) {
+      Alert.alert('Add some text or a link before posting.')
       return
     }
-    if (trimmed.length > maxChars) {
-      Alert.alert('Post too long.')
+    if (lnk && !/^https?:\/\//i.test(lnk)) {
+      Alert.alert('Please enter a valid URL (http:// or https://).')
       return
     }
-    onPost(trimmed)
+    const finalText = lnk
+      ? (txt ? `${txt}\n${lnk}` : lnk)                   // 🆕 merge link into text
+      : txt
+
+    onPost(finalText)
   }
 
   const debouncedTextChange = debounce((t: string) => setText(t), 100)
@@ -67,6 +79,17 @@ export const PostComposer: React.FC<PostComposerProps> = ({
         onChangeText={debouncedTextChange}
       />
 
+      {/* <TextInput
+        placeholder="Add a link (optional)"
+        placeholderTextColor={theme.colors.textSecondary}
+        style={styles.linkInput}
+        keyboardType="url"
+        autoCapitalize="none"
+        editable={!isPosting}
+        value={linkInput}
+        onChangeText={setLinkInput}
+      /> */}
+
       <View style={styles.bottomRow}>
         <Text style={styles.counter}>
           {charCount}/{maxChars}
@@ -74,17 +97,29 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 
         <View style={styles.iconRow}>
           {/* Camera */}
-          <TouchableOpacity onPress={onCameraTap} disabled={isPosting} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => {
+            if (mediaUris.length >= 5) {
+              Toast.show({ type: 'error', text1: 'You can only add up to 5 items.' })
+            } else {
+              onCameraTap()
+            }
+          }} disabled={isPosting} style={[styles.iconButton, mediaUris.length >= 5 && styles.disabledIcon,]}>
             <Ionicons name="camera-outline" size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           {/* Gallery */}
-          <TouchableOpacity onPress={onGalleryTap} disabled={isPosting} style={styles.iconButton}>
+          <TouchableOpacity onPress={() => {
+            if (mediaUris.length >= 5) {
+              Toast.show({ type: 'error', text1: 'You can only add up to 5 items.' })
+            } else {
+              onGalleryTap()
+            }
+          }} disabled={isPosting} style={[styles.iconButton, mediaUris.length >= 5 && styles.disabledIcon,]}>
             <Ionicons name="images-outline" size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>
 
           {/* Location */}
-         {onLocationTap && <TouchableOpacity onPress={onLocationTap} disabled={isPosting} style={styles.iconButton}>
+          {onLocationTap && <TouchableOpacity onPress={onLocationTap} disabled={isPosting} style={styles.iconButton}>
             <Ionicons name="location-outline" size={24} color={theme.colors.textSecondary} />
           </TouchableOpacity>}
 
@@ -117,57 +152,70 @@ export const PostComposer: React.FC<PostComposerProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.background,
-    margin:          16,
-    borderRadius:    theme.borderRadius,
-    padding:         12,
-    shadowColor:     '#000',
-    shadowOpacity:   0.1,
-    shadowRadius:    4,
-    elevation:       2,
+    margin: 16,
+    borderRadius: theme.borderRadius,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   input: {
-    minHeight:         80,
-    color:             theme.colors.textPrimary,
-    fontSize:          theme.fontSizes.bodyLarge,
+    minHeight: 80,
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSizes.bodyLarge,
     textAlignVertical: 'top',
+  },
+  linkInput: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.textSecondary,
+    borderRadius: theme.borderRadius,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSizes.bodyMedium,
   },
   bottomRow: {
     marginTop: 'auto',
   },
   counter: {
     alignSelf: 'flex-end',
-    color:     theme.colors.textSecondary,
-    fontSize:  theme.fontSizes.bodyMedium,
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSizes.bodyMedium,
   },
   iconRow: {
     flexDirection: 'row',
-    alignItems:    'center',
-    marginTop:     8,
+    alignItems: 'center',
+    marginTop: 8,
   },
   iconButton: {
-    padding:     8,
+    padding: 8,
     marginRight: 8,
   },
   postButton: {
-    marginLeft:        'auto',
-    backgroundColor:   theme.colors.primary,
-    borderRadius:      theme.borderRadius,
+    marginLeft: 'auto',
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius,
     paddingHorizontal: 16,
-    paddingVertical:   8,
+    paddingVertical: 8,
   },
   postDisabled: {
     backgroundColor: theme.colors.textSecondary,
   },
   postText: {
-    color:      theme.colors.background,
+    color: theme.colors.background,
     fontWeight: "700",
   },
   postTextDisabled: {
     color: theme.colors.background + 'aa',
   },
   locationText: {
-    marginTop:    4,
-    color:        theme.colors.textSecondary,
-    fontSize:     theme.fontSizes.bodyMedium,
+    marginTop: 4,
+    color: theme.colors.textSecondary,
+    fontSize: theme.fontSizes.bodyMedium,
+  },
+  disabledIcon: {
+    opacity: 0.5,
   },
 })

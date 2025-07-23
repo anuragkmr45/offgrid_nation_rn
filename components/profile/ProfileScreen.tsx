@@ -1,11 +1,12 @@
 // components/profile/ProfileScreen.tsx
 
+import { AVATAR_FALLBACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { MarketplaceHeader } from '../marketplace/MarketplaceHeader'
+import Header from '../common/Header'
 import { EditProfileModal } from './EditProfileModal'
 import { ProfileHeader } from './ProfileHeader'
 import { ProfileTabs } from './ProfileTabs'
@@ -20,17 +21,17 @@ interface Props {
   onAvatarEdit: () => void
   onFieldEdit: (f: 'username' | 'fullName' | 'bio') => void
   onUserPress: (username: string) => void
-  onPostPress: (id: string) => void
 }
 
 export const ProfileScreen: React.FC<Props> = ({
   loading, user,
   followers, following, posts,
   isSelf, onAvatarEdit, onFieldEdit,
-  onUserPress, onPostPress,
+  onUserPress,
 }) => {
   const router = useRouter()
   const [showEditModal, setShowEditModal] = useState(false)
+  const { _id, username = "", fullName = "", bio = "", profilePicture = "", followersCount = 0, followingCount = "", postsCount = 0, isFollowing } = user || {}
 
   if (loading) {
     return (
@@ -49,30 +50,33 @@ export const ProfileScreen: React.FC<Props> = ({
 
   return (
     <SafeAreaView style={s.container}>
-      <MarketplaceHeader backgroundColor={theme.colors.primary} onBack={() => { router.back() }} title={user.fullName || user.username} />
+      <Header backgroundColor={theme.colors.primary} onBack={() => { router.back() }} titleColor={theme.colors.background} iconColor={theme.colors.background} title={fullName || username} />
       <FlatList
         data={[{ key: 'dummy' }]}
         renderItem={() => null}
         ListHeaderComponent={
           <View>
             <ProfileHeader
-              fullName={user.fullName || "Update full name"}
-              username={user.username || ""}
-              bio={user.bio}
-              avatarUrl={user.profilePicture}
-              isEditable={isSelf}
+              userId={_id}
+              fullName={fullName ?? "OffgridUser"}
+              username={username ?? ""}
+              bio={bio ?? ""}
+              isFollowing={isFollowing || false}
+              avatarUrl={profilePicture ?? AVATAR_FALLBACK}
+              isEditable={isSelf || false}
               onAvatarEdit={() => setShowEditModal(true)}
               onFieldEdit={() => setShowEditModal(true)}
             />
             <ProfileTabs
-              followerCount={user.followersCount || 0}
-              followingCount={user.followingCount || 0}
-              postCount={user.postsCount || 0}
+              username={username ?? ""}
+              avatarUrl={profilePicture ?? AVATAR_FALLBACK}
+              followerCount={followersCount || 0}
+              followingCount={followingCount || 0}
+              postCount={postsCount || 0}
               followers={followers}
               following={following}
               posts={posts}
               onUserPress={onUserPress}
-              onPostPress={onPostPress}
             />
           </View>
         }

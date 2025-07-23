@@ -76,9 +76,10 @@ export const chatApi = createApi({
 
     // 2a) Fetch messages by recipient (historical)
     getMessagesByRecipient: build.query<Message[], { recipientId: string; limit?: number, cursor?: string }>({
-      query: ({ recipientId, limit = 20 }) => ({
-        url: `/conversations/messages?recipient=${recipientId}&limit=${limit}`,
+      query: ({ recipientId, limit = 20, cursor }) => ({
+        url: '/conversations/messages',
         method: 'GET',
+        params: {recipient: recipientId, limit, cursor}
       }),
       providesTags: (result, error, { recipientId }) =>
         result

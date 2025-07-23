@@ -106,7 +106,6 @@ export default function AddProductScreen() {
 
     try {
       await createProduct(formData).unwrap()
-      console.log(formData);
 
       Toast.show({ type: 'success', text1: 'Product added successfully' })
       setTimeout(() => {
@@ -114,7 +113,6 @@ export default function AddProductScreen() {
       }, 1600);
     } catch (err: any) {
       const error = err?.data?.message || 'Error while publishing product'
-      console.log({ error })
       Toast.show({ type: 'error', text1: error })
     }
   }
@@ -223,7 +221,7 @@ export default function AddProductScreen() {
           </ScrollView>
 
           <View style={styles.footer}>
-            <Button text={submitting ? 'Publishing...' : 'Publish'} onPress={handlePublish} disabled={submitting} />
+            <Button text={submitting ? 'Publishing...' : 'Publish'} debounce textColor={theme.colors.background} onPress={handlePublish} disabled={submitting} />
           </View>
         </KeyboardAvoidingView>
 

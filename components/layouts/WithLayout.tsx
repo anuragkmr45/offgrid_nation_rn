@@ -1,5 +1,6 @@
 // WithLayout.tsx
 
+import { APP_LOGO_BLACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { TAB_EVENTS, TabEventEmitter } from '@/utils/TabEventEmitter'
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
@@ -121,7 +122,7 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
         {/* ===== TOP HEADER ===== */}
         <View style={[styles.topBar, { backgroundColor: headerBgColor }]}>
           <Image
-            source={{ uri: "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png" }}
+            source={{ uri: APP_LOGO_BLACK }}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -161,9 +162,10 @@ export const WithLayout: React.FC<WithLayoutProps> = ({
           style={[
             styles.bottomNav,
             {
-              alignSelf: 'center',
-              width: 306,
-              bottom: insets.bottom + 16,
+              left: (Dimensions.get('window').width - 306) / 2,
+              // alignSelf: 'center',
+              // width: 306,
+              bottom: insets.bottom,
             },
           ]}
         >
@@ -244,11 +246,12 @@ const styles = StyleSheet.create({
 
   // Bottom “glass” nav bar
   bottomNav: {
-    // position: 'absolute',
+    position: 'absolute',
+    width: 306,
     height: 46,
     borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.33)',
     overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.33)',
   },
   bottomNavContent: {
     flex: 1,

@@ -19,6 +19,7 @@ import { useRouter } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 
 export default function MarketplaceScreen() {
   const router = useRouter()
@@ -80,7 +81,7 @@ export default function MarketplaceScreen() {
       }
 
       if (!formatted) {
-        console.warn('Could not fetch location after retries')
+        Toast.show({type:'info', text1: 'Unable to fetch location'})
         return
       }
 

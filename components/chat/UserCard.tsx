@@ -23,7 +23,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onPress }) => (
     <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
     <View style={styles.info}>
       <View style={styles.topRow}>
-        <Text style={styles.username}>@{user.username}</Text>
+        <Text style={styles.username}>{user.username}</Text>
         <Ionicons
           name="chatbubble-ellipses-outline"
           size={20}

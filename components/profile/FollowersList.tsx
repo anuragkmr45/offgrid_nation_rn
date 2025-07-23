@@ -43,7 +43,7 @@ export const FollowersList: React.FC<Props> = ({ data }) => {
 const styles = StyleSheet.create({
   empty: {
     textAlign: 'center', marginTop: 32,
-    color: theme.colors.textSecondary
+    color: theme.colors.background
   },
   row: {
     flexDirection: 'row', alignItems: 'center',

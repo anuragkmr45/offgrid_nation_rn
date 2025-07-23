@@ -1,11 +1,12 @@
 // src/core/api/baseQueryWithLogoutOn401.ts
 import { logoutAndRedirect } from '@/features/auth/slice/authSlice'
 import type { RootState } from '@/store/store'
+import { API_BASE_URL } from '@/utils/env'
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query'
 import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 export const baseQuery = fetchBaseQuery({
-  baseUrl: 'https://api.theoffgridnation.com',
+  baseUrl: API_BASE_URL || 'https://apiv2.theoffgridnation.com',
   prepareHeaders: (headers, { getState }) => {
     const token = (getState() as RootState).auth.accessToken
     if (token) {
@@ -24,7 +25,7 @@ export const baseQueryWithLogoutOn401: BaseQueryFn<
 
   if (result.error?.status === 401) {
     // Just logout; reset other APIs elsewhere
-    api.dispatch(logoutAndRedirect ())
+    api.dispatch(logoutAndRedirect())
 
   }
 

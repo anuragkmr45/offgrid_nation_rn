@@ -8,6 +8,7 @@ import {
   AccountCard
 } from '@/components/search/AccountCard'
 import { SearchTabs } from '@/components/search/SearchTabs'
+import { AVATAR_FALLBACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
 import { useSearchUsers } from '@/features/list/hooks/useList'
@@ -164,17 +165,17 @@ export default function SearchScreen() {
               <FlatList
                 data={users}
                 keyExtractor={(u) => u._id}
-                renderItem={({ item }) => (
-                  <AccountCard
-                    avatarUrl={item.profilePicture}
-                    fullName={item.fullName || item.username}
-                    handle={`@${item.username}`}
-                    isFollowing={item.isFollowing}
-                    onToggleFollow={(next) =>
-                      console.log(item.username, next)
-                    }
-                  />
-                )}
+                renderItem={({ item }) => {
+                  const { profilePicture, fullName, username, isFollowing } = item || {}
+                  return (
+                    <AccountCard
+                      avatarUrl={profilePicture ?? AVATAR_FALLBACK}
+                      fullName={fullName ?? "OffgridUser"}
+                      handle={username ?? ""}
+                      isFollowing={isFollowing || false}
+                    />
+                  )
+                }}
                 ItemSeparatorComponent={() => (
                   <View style={{ height: 8 }} />
                 )}

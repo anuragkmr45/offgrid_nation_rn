@@ -1,8 +1,15 @@
-// src/screens/SendOtp.tsx
-
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
-import { StatusBar, StyleSheet, Text, View } from 'react-native'
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableWithoutFeedback,
+  View
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
 
@@ -20,8 +27,7 @@ const SendOtp: React.FC = () => {
   const [phone, setPhone] = useState('')
   const [countryCode, setCountryCode] = useState<Country['cca2']>('US')
   const [callingCode, setCallingCode] = useState<string[]>(['1'])
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-
+  const [isLoading, setIsLoading] = useState<boolean>(false)
   const { checkUsername, register } = useAuth()
 
   const isValid =
@@ -32,8 +38,7 @@ const SendOtp: React.FC = () => {
     setIsLoading(true)
     try {
       const trimmedUsername = username.trim().toLowerCase()
-      const data = await checkUsername(trimmedUsername).unwrap()
-      const { exists = false } = data || {};
+      const { exists = false } = (await checkUsername(trimmedUsername).unwrap()) || {}
 
       if (exists) {
         const phoneWithCountryCode = `+${callingCode[0]} ${phone}`
@@ -43,7 +48,6 @@ const SendOtp: React.FC = () => {
           type: 'success',
           text1: reg.message || `OTP sent to ${phoneWithCountryCode}`,
         })
-
         setTimeout(() => {
           router.push({
             pathname: '/auth/register/VerifyOtp',
@@ -54,7 +58,7 @@ const SendOtp: React.FC = () => {
         Toast.show({ type: 'error', text1: 'Username not available' })
       }
     } catch (err: any) {
-      const errorMessage = err?.data?.message || 'Fail to send OTP.'
+      const errorMessage = err?.data?.message || 'Failed to send OTP.'
       Toast.show({ type: 'error', text1: errorMessage })
     } finally {
       setIsLoading(false)
@@ -63,57 +67,77 @@ const SendOtp: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor={theme.colors.primary} barStyle={'light-content'} animated />
-
-      {/* Top Section */}
-      <Header
-        title="Registeration"
-        onBack={() => router.back()}
+      <StatusBar
         backgroundColor={theme.colors.primary}
-        titleColor={theme.colors.background}
-        iconColor={theme.colors.background}
-        showShadow
+        barStyle="light-content"
+        animated
       />
-      <View style={styles.topContainer}>
-        <InputField value={username.trim().toLowerCase()} keyboardType={'default'} onChangeText={setUsername} placeholder="Username..." />
 
-        <PhoneInput
-          value={phone}
-          onChangeText={setPhone}
-          countryCode={countryCode}
-          callingCode={callingCode}
-          onSelectCountry={(c: Country) => {
-            setCountryCode(c.cca2)
-            setCallingCode(c.callingCode)
-          }}
-          pickerStyle={styles.countryPicker}
-          inputProps={{ placeholder: 'Phone number', keyboardType: 'phone-pad' }}
-        />
-      </View>
+      {/* this makes the view move out of the way of the keyboard on iOS */}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0}
+      >
+        {/* dismiss keyboard on outer tap */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <View style={styles.flex}>
+            <Header
+              title="Registration"
+              onBack={() => router.back()}
+              backgroundColor={theme.colors.primary}
+              titleColor={theme.colors.background}
+              iconColor={theme.colors.background}
+              showShadow
+            />
 
-      {/* Bottom Section */}
-      <View style={styles.bottomContainer}>
-        <Button
-          onPress={handleNext}
-          text="Next"
-          disabled={!isValid}
-          loading={isLoading}
-          style={[styles.button, !isValid && styles.buttonDisabled]}
-          textColor={theme.colors.primary}
-          debounce
-          debounceDelay={500}
-          loaderStyle={theme.colors.textPrimary}
-        />
+            <View style={styles.topContainer}>
+              <InputField
+                value={username}
+                keyboardType="default"
+                onChangeText={setUsername}
+                placeholder="Username..."
+              />
 
-        <View style={styles.signInFooter}>
-          <Text style={styles.signInText}>
-            Already have an account?{' '}
-            <Text style={styles.signInLink} onPress={() => router.back()}>
-              Sign In
-            </Text>
-          </Text>
-        </View>
-      </View>
+              <PhoneInput
+                value={phone}
+                onChangeText={setPhone}
+                countryCode={countryCode}
+                callingCode={callingCode}
+                onSelectCountry={(c: Country) => {
+                  setCountryCode(c.cca2)
+                  setCallingCode(c.callingCode)
+                }}
+                pickerStyle={styles.countryPicker}
+                inputProps={{ placeholder: 'Phone number', keyboardType: 'phone-pad' }}
+              />
+            </View>
+
+            <View style={styles.bottomContainer}>
+              <Button
+                onPress={handleNext}
+                text="Next"
+                disabled={!isValid}
+                loading={isLoading}
+                style={[styles.button, !isValid && styles.buttonDisabled]}
+                textColor={theme.colors.primary}
+                debounce
+                debounceDelay={500}
+                loaderStyle={theme.colors.textPrimary}
+              />
+
+              <View style={styles.signInFooter}>
+                <Text style={styles.signInText}>
+                  Already have an account?{' '}
+                  <Text style={styles.signInLink} onPress={() => router.back()}>
+                    Sign In
+                  </Text>
+                </Text>
+              </View>
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
@@ -122,17 +146,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.primary,
+  },
+  flex: {
+    flex: 1,
     justifyContent: 'space-between',
   },
   topContainer: {
     paddingHorizontal: 24,
-  },
-  title: {
-    textAlign: 'center',
-    fontSize: theme.fontSizes.headlineSmall,
-    fontWeight: '600',
-    color: theme.colors.background,
-    marginBottom: 32,
   },
   countryPicker: {
     paddingHorizontal: 12,
@@ -141,6 +161,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderRadius: 25,
     height: 50,
+    marginTop: 16,
   },
   bottomContainer: {
     paddingBottom: 24,

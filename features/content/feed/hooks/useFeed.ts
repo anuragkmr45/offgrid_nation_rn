@@ -9,7 +9,6 @@ export function useFeed() {
     isLoading: feedQuery.isLoading,
     isFetching: feedQuery.isFetching,
     refetch: () => {
-      // reset cursor to fetch fresh
       setCursor(undefined);
       feedQuery.refetch();
     },
