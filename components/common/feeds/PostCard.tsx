@@ -2,31 +2,34 @@
 
 import { CommentModal } from '@/components/modals/CommentModal'
 import { ShareModal } from '@/components/modals/ShareModal'
+import { AVATAR_FALLBACK, COMMENT_ICON, DISLIKE_ICON, LIKE_ICON, SHARE_ICON } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
+import { debounce } from '@/utils/debounce'
 import { useRouter } from 'expo-router'
-import React, { useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Dimensions,
   FlatList,
   Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ViewToken,
+  ViewToken
 } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { PostMedia } from './PostMedia'
 
 // Icons
-const likeIcon = { uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/post-like-icon_tk5wtx.png' }
-const dislikeIcon = { uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/post-dislike-icon_wfnpoq.png' }
-const commentIcon = { uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/comment-icon_tpavcd.png' }
-const shareIcon = { uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/share-icon_ij6xgh.png' }
+const likeIcon = { uri: LIKE_ICON }
+const dislikeIcon = { uri: DISLIKE_ICON }
+const commentIcon = { uri: COMMENT_ICON }
+const shareIcon = { uri: SHARE_ICON }
 
-// Fallback
-const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1617196034447-2e532ebb4cc4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=60'
+const urlRegex = /(https?:\/\/[^\s]+)/g
 
 // Types
 export interface MediaItem { id: string; url: string }
@@ -53,6 +56,21 @@ const CARD_HEIGHT = SCREEN_HEIGHT * 0.8
 const MEDIA_WIDTH = width - 32
 const MEDIA_HEIGHT = (MEDIA_WIDTH * 16) / 9
 
+const renderWithLinks = (raw: string) =>
+  raw.split(urlRegex).map((part, idx) => {
+    const isLink = /^https?:\/\//i.test(part)
+    if (isLink) {
+      return (
+        <Text
+          key={idx}
+          style={styles.linkText}
+          onPress={() => Linking.openURL(part)}>
+          {part}
+        </Text>
+      )
+    }
+    return <Text key={idx}>{part}</Text>
+  })
 
 export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, cardHeight, cardWidth }) => {
   const router = useRouter()
@@ -73,19 +91,34 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
   const isCaptionLong = post.caption.length > CAPTION_LIMIT
   const displayedCaption = isCaptionExpanded ? post.caption : post.caption.slice(0, CAPTION_LIMIT)
 
-  const toggleLike = async () => {
+  const hasOnlyLink =
+    post.media.length === 0 &&
+    post.caption.trim().match(urlRegex)?.[0] === post.caption.trim()
+
+  const toggleLike = useCallback(async () => {
     Animated.sequence([
       Animated.timing(scaleAnim, { toValue: 0.8, duration: 100, useNativeDriver: true }),
       Animated.timing(scaleAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
     ]).start()
+    setIsLike(prevLike => {
+      const nextLike = !prevLike
+      setLikeCount(prevCount => prevCount + (nextLike ? 1 : -1))
+      return nextLike
+    })
     try {
-      const response = await likePost({ postId: post.postId }).unwrap()
-      setIsLike(response.isLiked)
-      setLikeCount(response.likesCount)
-    } catch (error) {
+      // setIsLike(prev => !prev);
+      // setLikeCount(prev => prev + (isLike ? -1 : 1));
+      await likePost({ postId: post.postId }).unwrap()
+      // setIsLike(response.isLiked)
+      // setLikeCount(response.likesCount)
+    } catch (error: any) {
       console.error('Failed to toggle like:', error)
+      const errorMessage = error?.data?.message || 'Unable to like this post';
+      Toast.show({ type: "error", text1: errorMessage })
     }
-  }
+  }, [likePost, post.postId, scaleAnim])
+
+  const debouncedToggleLike = useMemo(() => debounce(toggleLike, 500), [toggleLike])
 
   const onViewableItemsChanged = useRef<(
     info: { viewableItems: ViewToken[]; changed: ViewToken[] }
@@ -103,19 +136,25 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
     ? [styles.card, { height: resolvedHeight }]
     : styles.card
 
+  useEffect(() => {
+    return () => {
+      debouncedToggleLike.cancel()
+    }
+  }, [debouncedToggleLike])
+
   return (
     <View style={containerStyle}>
       <TouchableOpacity style={styles.header} onPress={() => router.push(`/root/profile/${post.user.username}`)}>
-        <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+        <Image source={{ uri: post.user.avatar ?? AVATAR_FALLBACK }} style={styles.avatar} />
         <View style={styles.headerText}>
-          <Text style={styles.username}>{post.user.username}</Text>
-          <Text style={styles.timestamp}>{post.timestamp}</Text>
+          <Text style={styles.username}>{post.user.username ?? ""}</Text>
+          <Text style={styles.timestamp}>{post.timestamp ?? ""}</Text>
         </View>
       </TouchableOpacity>
 
-      {post.media.length > 0 ? (
+      {post?.media?.length > 0 ? (
         <FlatList
-          data={post.media}
+          data={post?.media}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
@@ -125,16 +164,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
           renderItem={({ item, index }) => (
             <View style={[styles.mediaContainer, { width: resolvedWidth, height: MEDIA_HEIGHT }]}>
               <PostMedia
-                mediaUrl={item.url}
+                mediaUrl={item.url ?? AVATAR_FALLBACK}
                 isActive={isVisible && index === visibleIndex}
                 style={[styles.media, { width: resolvedWidth, height: MEDIA_HEIGHT }]}
               />
             </View>
-
           )}
           style={styles.carousel}
           contentContainerStyle={{ paddingBottom: 10 }}
         />
+      ) : hasOnlyLink ? (
+        /* ----- LINK-ONLY post (no media, nothing else) ------ */
+        <TouchableOpacity
+          style={styles.linkOnlyContainer}
+          onPress={() => Linking.openURL(post.caption.trim())}>
+          <Text style={styles.linkText}>{post.caption.trim()}</Text>
+        </TouchableOpacity>
       ) : (
         <View style={styles.textOnlyContainer}>
           <Text style={styles.textOnly}>{post.caption}</Text>
@@ -142,7 +187,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
       )}
 
       <View style={styles.footer}>
-        <TouchableOpacity onPress={toggleLike} style={styles.actionButton}>
+        <TouchableOpacity onPress={debouncedToggleLike} style={styles.actionButton}>
           <Animated.Image source={isLike ? likeIcon : dislikeIcon} style={[styles.actionIcon, { transform: [{ scale: scaleAnim }] }]} />
           <Text>{likeCount}</Text>
         </TouchableOpacity>
@@ -158,8 +203,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
       {post.media.length > 0 && (
         <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
           <Text style={styles.caption}>
-            {displayedCaption}
-            {(!isCaptionExpanded && isCaptionLong) ? '...' : ''}
+            {renderWithLinks(displayedCaption)}{/* 🆕 make links clickable */}
+            {!isCaptionExpanded && isCaptionLong ? '...' : ''}
+            {/* {displayedCaption}
+            {(!isCaptionExpanded && isCaptionLong) ? '...' : ''} */}
           </Text>
           {isCaptionLong && (
             <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
@@ -207,13 +254,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
-  carousel: { marginBottom: 12 },
-  mediaContainer: { justifyContent: 'center', alignItems: 'center' },
-  media: {
-    width: '100%',
-    height: '100%',
-    borderRadius: theme.borderRadius,
-  },
   textOnlyContainer: {
     width: '100%',
     padding: 16,
@@ -225,6 +265,26 @@ const styles = StyleSheet.create({
   textOnly: {
     fontSize: theme.fontSizes.bodyLarge,
     color: theme.colors.textPrimary,
+  },
+  linkOnlyContainer: {
+    width: '100%',
+    padding: 16,
+    backgroundColor: '#eef6ff',
+    borderRadius: theme.borderRadius,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  linkText: {
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
+    fontSize: theme.fontSizes.bodyLarge,
+  },
+  carousel: { marginBottom: 12 },
+  mediaContainer: { justifyContent: 'center', alignItems: 'center' },
+  media: {
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.borderRadius,
   },
   footer: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 12 },
   actionButton: { marginRight: 20, flexDirection: 'row' },

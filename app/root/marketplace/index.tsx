@@ -1,5 +1,6 @@
 // app/marketplace/MarketplaceScreen.tsx
 
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { CategorySheet } from '@/components/marketplace/CategorySheet'
 import { MarketplaceFilters } from '@/components/marketplace/MarketplaceFilters'
 import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
@@ -18,6 +19,7 @@ import { useRouter } from 'expo-router'
 import React, { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, StatusBar, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 
 export default function MarketplaceScreen() {
   const router = useRouter()
@@ -79,7 +81,7 @@ export default function MarketplaceScreen() {
       }
 
       if (!formatted) {
-        console.warn('Could not fetch location after retries')
+        Toast.show({type:'info', text1: 'Unable to fetch location'})
         return
       }
 
@@ -119,9 +121,11 @@ export default function MarketplaceScreen() {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <StatusBar backgroundColor={theme.colors.background} animated barStyle="dark-content" />
-        <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={theme.colors.textPrimary} />
-        </View>
+        <ProtectedLayout>
+          <View style={styles.fullScreenLoader}>
+            <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+          </View>
+        </ProtectedLayout>
       </SafeAreaView>
     )
   }
@@ -129,83 +133,86 @@ export default function MarketplaceScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <StatusBar backgroundColor={theme.colors.background} animated barStyle="dark-content" />
-      <MarketplaceHeader
-        onBack={() => router.back()}
-        onProfilePress={() => router.push('/root/profile/ProfileScreen')}
-      />
-      {isLoading ? (
-        <View style={styles.fullScreenLoader}>
-          <ActivityIndicator size="large" color={theme.colors.textPrimary} />
-        </View>
-      ) : productsError ? (
-        <Text style={styles.errorText}>Error loading products.</Text>
-      ) : (
-        <>
-        <View>
-          <MarketplaceFilters
-            onSearchChange={(q) => fetchData(q)}
-            onSellPress={() => setSellSheetVisible(true)}
-            onSortPress={() => setSortSheetVisible(true)}
-            onCategoryPress={() => setCatSheetVisible(true)}
-          />
-        </View>
+      <ProtectedLayout>
+        <MarketplaceHeader
+          onBack={() => router.back()}
+          onProfilePress={() => router.push('/root/profile/ProfileScreen')}
+        />
+        {isLoading ? (
+          <View style={styles.fullScreenLoader}>
+            <ActivityIndicator size="large" color={theme.colors.textPrimary} />
+          </View>
+        ) : productsError ? (
+          <Text style={styles.errorText}>Error loading products.</Text>
+        ) : (
+          <>
+            <View>
+              <MarketplaceFilters
+                onSearchChange={(q) => fetchData(q)}
+                onSellPress={() => setSellSheetVisible(true)}
+                onSortPress={() => setSortSheetVisible(true)}
+                onCategoryPress={() => setCatSheetVisible(true)}
+              />
+            </View>
 
-          <SectionHeader title="Today’s picks" location={readableLocation} />
+            <SectionHeader title="Today’s picks" location={readableLocation} />
 
-          {products.length === 0 ? (
-            <Text style={styles.emptyText}>No products found.</Text>
-          ) : (
-            <ProductGrid
-              products={products?.map((item) => ({
-                id: item._id,
-                title: item.title,
-                price: `$${item.price}`,
-                imageUrl: item.images?.[0] ?? 'https://via.placeholder.com/300x300?text=No+Image',
-              }))}
-              onPress={(productId: string) =>
-                router.push({
-                  pathname: '/root/marketplace/ProductDetails',
-                  params: { productId },
-                })
-              }
+            {products.length === 0 ? (
+              <Text style={styles.emptyText}>No products found.</Text>
+            ) : (
+              <ProductGrid
+                products={products?.map((item) => ({
+                  id: item._id,
+                  title: item.title,
+                  price: `$${item.price}`,
+                  imageUrl: item.images?.[0] ?? 'https://via.placeholder.com/300x300?text=No+Image',
+                }))}
+                onPress={(productId: string) =>
+                  router.push({
+                    pathname: '/root/marketplace/ProductDetails',
+                    params: { productId },
+                  })
+                }
+              />
+            )}
+
+            <SortOptionsSheet
+              visible={isSortSheetVisible}
+              onClose={() => setSortSheetVisible(false)}
+              selectedOption={sortOption}
+              onSelect={(opt) => {
+                setSortOption(opt)
+                refetchProducts()
+              }}
             />
-          )}
 
-          <SortOptionsSheet
-            visible={isSortSheetVisible}
-            onClose={() => setSortSheetVisible(false)}
-            selectedOption={sortOption}
-            onSelect={(opt) => {
-              setSortOption(opt)
-              refetchProducts()
-            }}
-          />
+            <CategorySheet
+              visible={isCatSheetVisible}
+              onClose={() => {
+                setCatSheetVisible(false)
+                setCatQuery('')
+              }}
+              searchQuery={catQuery}
+              onSearchChange={setCatQuery}
+              categories={filteredCategories}
+              isLoading={isCatsLoading}
+              error={catsError}
+              onSelectCategory={(id, title) => {
+                setCatQuery(title)
+                setCatSheetVisible(false)
+                fetchData(undefined, id)
+              }}
+            />
 
-          <CategorySheet
-            visible={isCatSheetVisible}
-            onClose={() => {
-              setCatSheetVisible(false)
-              setCatQuery('')
-            }}
-            searchQuery={catQuery}
-            onSearchChange={setCatQuery}
-            categories={filteredCategories}
-            isLoading={isCatsLoading}
-            error={catsError}
-            onSelectCategory={(id, title) => {
-              setCatQuery(title)
-              setCatSheetVisible(false)
-              fetchData(undefined, id)
-            }}
-          />
+            <SellSheet
+              visible={isSellSheetVisible}
+              onClose={() => setSellSheetVisible(false)}
+              onAddProduct={() => router.push('/root/marketplace/AddProductScreen')}
+            />
+          </>
+        )}
 
-          <SellSheet
-            visible={isSellSheetVisible}
-            onClose={() => setSellSheetVisible(false)}
-            onAddProduct={() => router.push('/root/marketplace/AddProductScreen')}
-          />
-        </>
-      )}
+      </ProtectedLayout>
     </SafeAreaView>
   )
 }

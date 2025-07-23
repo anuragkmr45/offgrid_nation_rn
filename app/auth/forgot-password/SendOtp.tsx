@@ -35,8 +35,7 @@ const SendOtp: React.FC = () => {
   const handleNext = async () => {
     setIsLoading(true)
     try {
-      const phoneWithCountryCode = `+${callingCode[0]} ${phone}`
-      console.log({phoneWithCountryCode});
+      const phoneWithCountryCode = `+${callingCode[0]} ${phone}`;
       await triggerForgotPassword({ mobile: phoneWithCountryCode })
       Toast.show({ type: 'success', text1: 'OTP sent' })
       setTimeout(() => {
@@ -57,6 +56,7 @@ const SendOtp: React.FC = () => {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0}
     >
       <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
       <SafeAreaView style={styles.safeArea}>

@@ -1,16 +1,18 @@
 // components/post/MediaCarousel.tsx
 
+import { POST_MEDIA_HEIGHT, POST_MEDIA_WIDTH } from '@/constants/AppConstants'
+import { theme } from '@/constants/theme'
 import { Ionicons } from '@expo/vector-icons'
 import { ResizeMode, Video } from 'expo-av'
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Dimensions,
-  FlatList,
   Image,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native'
+import { CustomModal } from '../common'
 
 export interface MediaCarouselProps {
   uris: string[]
@@ -21,50 +23,90 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({
   uris,
   onRemove,
 }) => {
-  const width = Dimensions.get('window').width - 32
-  const height = (width * 9) / 16
+  const [modalVisible, setModalVisible] = useState(false)
+  const [selectedUri, setSelectedUri] = useState<string | null>(null)
 
-  const renderItem = ({ item, index }: { item: string; index: number }) => {
-    const lower = item.toLowerCase()
-    const isVideo = /\.(mp4|mov|webm)$/i.test(lower)
-
-    return (
-      <View style={[styles.slide, { width, height }]}>
-        {isVideo ? (
-          <Video
-            source={{ uri: item }}
-            style={styles.media}
-            resizeMode={ResizeMode.COVER}
-            useNativeControls
-          />
-        ) : (
-          <Image source={{ uri: item }} style={styles.media} />
-        )}
-
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => onRemove(index)}
-        >
-          <Ionicons
-            name="close-circle"
-            size={28}
-            color="rgba(0,0,0,0.6)"
-          />
-        </TouchableOpacity>
-      </View>
-    )
-  }
+  const numColumns = 2
+  const margin = 8
+  const screenW = Dimensions.get('window').width
+  const itemSize = (screenW - margin * (numColumns + 1)) / numColumns
 
   return (
-    <FlatList
-      data={uris}
-      horizontal
-      pagingEnabled
-      showsHorizontalScrollIndicator={false}
-      keyExtractor={(_, i) => `${i}`}
-      style={styles.container}
-      renderItem={renderItem}
-    />
+    <View style={styles.gridContainer}>
+      {uris.map((uri, idx) => {
+        const isVideo = /\.(mp4|mov|webm)$/i.test(uri.toLowerCase())
+        return (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => {
+              setSelectedUri(uri)
+              setModalVisible(true)
+            }}
+            key={idx}
+            style={{
+              width: itemSize,
+              height: itemSize,
+              marginLeft: margin,
+              marginTop: margin,
+              borderRadius: 8,
+              overflow: 'hidden',
+              backgroundColor: '#f0f0f0',
+            }}
+          >
+            {isVideo ? (
+              <Video
+                source={{ uri }}
+                style={styles.media}
+                useNativeControls
+                resizeMode={ResizeMode.COVER}
+              />
+            ) : (
+              <Image source={{ uri }} style={styles.media} />
+            )}
+            <TouchableOpacity
+              style={styles.removeButton}
+              onPress={() => onRemove(idx)}
+            >
+              <Ionicons name="close-circle" size={28} color="rgba(0,0,0,0.6)" />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )
+      })}
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        style={{ width: POST_MEDIA_WIDTH, padding: 0,height: POST_MEDIA_HEIGHT+20  }}
+      >
+        {selectedUri && (
+          /\.(mp4|mov|webm)$/i.test(selectedUri) ? (
+            <Video
+              source={{ uri: selectedUri }}
+              style={{
+                width: POST_MEDIA_WIDTH,
+                height: POST_MEDIA_HEIGHT,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: theme.colors.textSecondary,
+              }}
+              useNativeControls
+              resizeMode={ResizeMode.CONTAIN}
+            />
+          ) : (
+            <Image
+              source={{ uri: selectedUri }}
+              style={{
+                width: POST_MEDIA_WIDTH,
+                height: POST_MEDIA_HEIGHT,
+                borderRadius: 8,
+                borderWidth: 1,
+                borderColor: theme.colors.textSecondary,
+              }}
+              resizeMode="contain"
+            />
+          )
+        )}
+      </CustomModal>
+    </View >
   )
 }
 
@@ -74,16 +116,21 @@ const styles = StyleSheet.create({
   },
   slide: {
     marginHorizontal: 16,
-    borderRadius:     8,
-    overflow:         'hidden',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   media: {
-    width:  '100%',
+    width: '100%',
     height: '100%',
   },
   removeButton: {
     position: 'absolute',
-    top:      8,
-    right:    8,
+    top: 8,
+    right: 8,
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingBottom: 8,
   },
 })

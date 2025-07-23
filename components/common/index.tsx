@@ -102,9 +102,10 @@ export const CustomModal: React.FC<ModalProps> = ({ visible, title, children, on
       <View style={[styles.modalContent, style, { backgroundColor: theme.colors.background }]}>
         {title && <Text style={styles.modalTitle}>{title}</Text>}
         <View>{children}</View>
-        <TouchableOpacity onPress={onClose} style={styles.modalClose}>
+        <Button onPress={onClose} style={styles.modalClose} text='Close' textColor={theme.colors.background}  />
+        {/* <TouchableOpacity onPress={onClose} style={styles.modalClose}>
           <Text style={{ color: theme.colors.accent }}>Close</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </BlurView>
   </RNModal>
@@ -223,7 +224,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   modalContent: {
     width: '94%', // ⬅️ Make it almost full width

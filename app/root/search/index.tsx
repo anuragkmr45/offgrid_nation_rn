@@ -2,11 +2,13 @@
 
 import { SearchBar, SelectDropdown } from '@/components/common'
 import { PostCard } from '@/components/common/feeds/PostCard'
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { WithLayout } from '@/components/layouts/WithLayout'
 import {
   AccountCard
 } from '@/components/search/AccountCard'
 import { SearchTabs } from '@/components/search/SearchTabs'
+import { AVATAR_FALLBACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
 import { useSearchUsers } from '@/features/list/hooks/useList'
@@ -107,100 +109,101 @@ export default function SearchScreen() {
       statusBarBgColor={theme.colors.primary}
     >
       <StatusBar backgroundColor={theme.colors.background} animated />
-
-      {selectedTab === 0 ? (
-        <SearchBar
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Search users…"
-          style={styles.search}
-        />
-      ) : (
-        <SelectDropdown
-          options={topicOptions}
-          selectedValues={selectedTopic}
-          onChange={setSelectedTopic}
-          onSelect={handleTopicSelect}
-          multiple={false}
-          searchable={false}
-          placeholder="Select a topic"
-        />
-      )}
-
-
-      {/* Tabs */}
-      <SearchTabs
-        options={['Accounts', 'Topics']}
-        selectedIndex={selectedTab}
-        onSelect={setTab}
-      />
-
-      {/* Content */}
-      <View style={styles.container}>
+      <ProtectedLayout>
         {selectedTab === 0 ? (
-          // ---- ACCOUNTS TAB ----
-          debouncedQuery.length === 0 ? (
-            // 1) no query yet
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>
-                Start typing to search users…
-              </Text>
-            </View>
-          ) : usersLoading ? (
-            // 2) loading
-            <ActivityIndicator
-              size="large"
-              color={theme.colors.primary}
-              style={styles.emptyContainer}
-            />
-          ) : users.length === 0 ? (
-            // 3) no results
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No users found.</Text>
-            </View>
-          ) : (
-            // 4) render list
-            <FlatList
-              data={users}
-              keyExtractor={(u) => u._id}
-              renderItem={({ item }) => (
-                <AccountCard
-                  avatarUrl={item.profilePicture}
-                  fullName={item.fullName || item.username}
-                  handle={`@${item.username}`}
-                  isFollowing={item.isFollowing}
-                  onToggleFollow={(next) =>
-                    console.log(item.username, next)
-                  }
-                />
-              )}
-              ItemSeparatorComponent={() => (
-                <View style={{ height: 8 }} />
-              )}
-              contentContainerStyle={{ paddingVertical: 8 }}
-            />
-          )
+          <SearchBar
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Search users…"
+            style={styles.search}
+          />
         ) : (
-          isSearching ? (
-            <View style={{}}>
-              <ActivityIndicator size="large" color={theme.colors.background} />
-            </View>
-          ) : (
-            <FlatList
-              data={mappedPosts}
-              keyExtractor={(item) => item.postId}
-              renderItem={({ item }) => <PostCard post={item} cardHeight={500} />}
-              contentContainerStyle={{ paddingVertical: 12 }}
-              ListEmptyComponent={
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No posts found for this topic.</Text>
-                </View>
-              }
-            />
-          )
-
+          <SelectDropdown
+            options={topicOptions}
+            selectedValues={selectedTopic}
+            onChange={setSelectedTopic}
+            onSelect={handleTopicSelect}
+            multiple={false}
+            searchable={false}
+            placeholder="Select a topic"
+          />
         )}
-      </View>
+
+
+        {/* Tabs */}
+        <SearchTabs
+          options={['Accounts', 'Topics']}
+          selectedIndex={selectedTab}
+          onSelect={setTab}
+        />
+
+        {/* Content */}
+        <View style={styles.container}>
+          {selectedTab === 0 ? (
+            // ---- ACCOUNTS TAB ----
+            debouncedQuery.length === 0 ? (
+              // 1) no query yet
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>
+                  Start typing to search users…
+                </Text>
+              </View>
+            ) : usersLoading ? (
+              // 2) loading
+              <ActivityIndicator
+                size="large"
+                color={theme.colors.primary}
+                style={styles.emptyContainer}
+              />
+            ) : users.length === 0 ? (
+              // 3) no results
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No users found.</Text>
+              </View>
+            ) : (
+              // 4) render list
+              <FlatList
+                data={users}
+                keyExtractor={(u) => u._id}
+                renderItem={({ item }) => {
+                  const { profilePicture, fullName, username, isFollowing } = item || {}
+                  return (
+                    <AccountCard
+                      avatarUrl={profilePicture ?? AVATAR_FALLBACK}
+                      fullName={fullName ?? "OffgridUser"}
+                      handle={username ?? ""}
+                      isFollowing={isFollowing || false}
+                    />
+                  )
+                }}
+                ItemSeparatorComponent={() => (
+                  <View style={{ height: 8 }} />
+                )}
+                contentContainerStyle={{ paddingVertical: 8 }}
+              />
+            )
+          ) : (
+            isSearching ? (
+              <View style={{}}>
+                <ActivityIndicator size="large" color={theme.colors.background} />
+              </View>
+            ) : (
+              <FlatList
+                data={mappedPosts}
+                keyExtractor={(item) => item.postId}
+                renderItem={({ item }) => <PostCard post={item} cardHeight={500} />}
+                contentContainerStyle={{ paddingVertical: 12 }}
+                ListEmptyComponent={
+                  <View style={styles.emptyContainer}>
+                    <Text style={styles.emptyText}>No posts found for this topic.</Text>
+                  </View>
+                }
+              />
+            )
+
+          )}
+        </View>
+      </ProtectedLayout>
     </WithLayout >
   )
 }

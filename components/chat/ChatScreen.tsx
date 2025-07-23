@@ -1,13 +1,51 @@
 // components/chat/ChatScreen.tsx
+import { AVATAR_FALLBACK } from '@/constants/AppConstants'
 import { useGetConversationsQuery } from '@/features/chat/api/chatApi'
 import { useRouter } from 'expo-router'
 import React, { useCallback, useMemo, useState } from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import Toast from 'react-native-toast-message'
 import { theme } from '../../constants/theme'
 import { Loader, SearchBar } from '../common'
 import { UserSearchModal } from '../common/UserSearchModal'
 import { WithLayout } from '../layouts/WithLayout'
 import { ChatList, ChatListData } from './ChatList'
+
+function isValidConvo(raw: any): raw is {
+  conversationId: string
+  user: {
+    profilePicture: string
+    fullName: string
+    username: string
+    _id: string
+  }
+  lastMessage: {
+    actionType: 'text' | 'media' | 'link'
+    text?: string
+  }
+  updatedAt: string
+  unreadCount: number
+} {
+  if (!raw || typeof raw !== 'object') return false
+  if (typeof raw.conversationId !== 'string') return false
+
+  const u = raw.user
+  if (!u || typeof u.profilePicture !== 'string' ||
+    typeof u.fullName !== 'string' ||
+    typeof u.username !== 'string' ||
+    typeof u._id !== 'string') {
+    return false
+  }
+
+  const lm = raw.lastMessage
+  if (!lm || !['text', 'media', 'link'].includes(lm.actionType)) return false
+  if (lm.actionType === 'text' && typeof lm.text !== 'string') return false
+
+  if (typeof raw.updatedAt !== 'string') return false
+  if (typeof raw.unreadCount !== 'number') return false
+
+  return true
+}
 
 export const ChatScreen: React.FC = () => {
   const [search, setSearch] = useState('')
@@ -17,28 +55,45 @@ export const ChatScreen: React.FC = () => {
   const { data: convos = [], isLoading, error, refetch } = useGetConversationsQuery()
 
   // prepare full list of chats
-  const items: ChatListData[] = useMemo(
-    () =>
-      convos.map(c => ({
-        id: c.conversationId,
-        avatarUrl: c.user.profilePicture,
-        name: c.user.fullName,
-        username: c.user.username,
-        recipientId: c.user._id,
+  const items: ChatListData[] = useMemo(() => {
+    const term = search.trim().toLowerCase()
+    return convos
+      .filter(isValidConvo)
+      .map(({
+        conversationId: id,
+        user: {
+          profilePicture: avatarUrl,
+          fullName: name,
+          username,
+          _id: recipientId,
+        },
+        lastMessage,
+        updatedAt,
+        unreadCount,
+      }) => ({
+        id,
+        avatarUrl,
+        name,
+        username,
+        recipientId,
         lastMessage:
-          c.lastMessage.actionType === 'text'
-            ? c.lastMessage.text || ''
-            : c.lastMessage.actionType === 'media'
+          lastMessage.actionType === 'text'
+            ? lastMessage.text!
+            : lastMessage.actionType === 'media'
               ? '📷 Media'
               : '🔗 Shared post',
-        timestamp: new Date(c.updatedAt).toLocaleTimeString([], {
+        timestamp: new Date(updatedAt).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        unreadCount: c.unreadCount,
-      })),
-    [convos]
-  )
+        unreadCount,
+      }))
+      .filter(item =>
+        !term ||
+        item.name.toLowerCase().includes(term) ||
+        item.username.toLowerCase().includes(term)
+      )
+  }, [convos, search])
 
   // filter by search term
   // const filtered: ChatListData[] = useMemo(
@@ -51,14 +106,20 @@ export const ChatScreen: React.FC = () => {
 
   // navigate into conversation
   const onPress = useCallback((item: ChatListData) => {
-    router.push({
-      pathname: '/root/chat/Conversation',
-      params: {
-        recipientId: item.recipientId,
-        recipientName: item.name || item.username,
-        profilePicture: item.avatarUrl,
-      },
-    })
+    const { recipientId, name, username, avatarUrl } = item || {};
+    
+    if (recipientId.length !== 0) {
+      router.push({
+        pathname: '/root/chat/Conversation',
+        params: {
+          recipientId: recipientId,
+          recipientName: name || username || "",
+          profilePicture: avatarUrl ?? AVATAR_FALLBACK,
+        },
+      })
+    } else {
+      Toast.show({type: 'error', text1: 'Unable to open chat'})
+    }
   }, [router])
 
   return (
@@ -88,13 +149,14 @@ export const ChatScreen: React.FC = () => {
           visible={sheetVisible}
           onClose={() => setSheetVisible(false)}
           onSelect={user => {
-            if (user._id) {
+            const { _id, fullName, username, profilePicture } = user || {}
+            if (_id) {
               router.push({
                 pathname: '/root/chat/Conversation',
                 params: {
-                  recipientId: user._id,
-                  recipientName: user.fullName || user.username,
-                  profilePicture: user.profilePicture,
+                  recipientId: _id,
+                  recipientName: fullName || username,
+                  profilePicture: profilePicture || AVATAR_FALLBACK,
                 },
               })
             }

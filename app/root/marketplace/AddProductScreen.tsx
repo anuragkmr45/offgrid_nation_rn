@@ -2,6 +2,7 @@
 
 import { Button, InputField, SearchBar } from '@/components/common'
 import { BottomSheet } from '@/components/common/BottomSheet'
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { theme } from '@/constants/theme'
 import { useCreateProduct, useListCategories } from '@/features/products/hooks/useProducts'
 import { pickMultipleFromGallery } from '@/utils/imagePicker'
@@ -105,7 +106,6 @@ export default function AddProductScreen() {
 
     try {
       await createProduct(formData).unwrap()
-      console.log(formData);
 
       Toast.show({ type: 'success', text1: 'Product added successfully' })
       setTimeout(() => {
@@ -113,7 +113,6 @@ export default function AddProductScreen() {
       }, 1600);
     } catch (err: any) {
       const error = err?.data?.message || 'Error while publishing product'
-      console.log({ error })
       Toast.show({ type: 'error', text1: error })
     }
   }
@@ -121,144 +120,146 @@ export default function AddProductScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar animated backgroundColor={theme.colors.background} barStyle={'dark-content'} />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Listing</Text>
-        <TouchableOpacity onPress={handlePublish} style={styles.iconButton} disabled={submitting}>
-          <Text style={styles.publishText}>{submitting ? 'Publishing...' : 'Publish'}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.select({ ios: 0, android: 80 })}
-      >
-        <ScrollView contentContainerStyle={styles.content}>
-          {photos.length ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
-              {photos.map((uri, idx) => (
-                <Image key={uri + idx} source={{ uri }} style={styles.photo} />
-              ))}
-              {photos.length < 10 && (
-                <TouchableOpacity onPress={handleAddPhoto} style={styles.addMore}>
-                  <Ionicons name="camera-outline" size={32} color={theme.colors.textSecondary} />
-                </TouchableOpacity>
-              )}
-            </ScrollView>
-          ) : (
-            <TouchableOpacity onPress={handleAddPhoto} style={styles.photoPicker} activeOpacity={0.7}>
-              <Ionicons name="camera-outline" size={32} color={theme.colors.textSecondary} />
-              <Text style={styles.photoPickerText}>Add Photos</Text>
-            </TouchableOpacity>
-          )}
-          <Text style={styles.photoCount}>Photos: {photos.length}/10</Text>
-
-          <InputField placeholder="Title" style={{ borderWidth: 1, borderColor: theme.colors.textSecondary }} value={title} onChangeText={setTitle} />
-          <View style={styles.priceInputContainer}>
-            <Text style={styles.pricePrefix}>$</Text>
-            <InputField
-              placeholder="0.00"
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="numeric"
-              style={styles.priceInput}
-            />
-          </View>
-
-
-          <TouchableOpacity
-            onPress={() => setCatSheetVisible(true)}
-            style={[styles.input, { justifyContent: 'center' }]}
-          >
-            <Text
-              style={{
-                color: category ? theme.colors.textPrimary : theme.colors.textSecondary,
-              }}
-            >
-              {category || 'Category'}
-            </Text>
+      <ProtectedLayout>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.iconButton}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-
-          <Text style={styles.sectionLabel}>Condition</Text>
-          <View style={styles.conditionRow}>
-            {CONDITION_OPTIONS.map(opt => (
-              <TouchableOpacity
-                key={opt.value}
-                onPress={() => setCondition(opt.value)}
-                style={[
-                  styles.conditionButton,
-                  condition === opt.value && styles.conditionSelected,
-                ]}
-                activeOpacity={0.7}
-              >
-                <Text
-                  style={[
-                    styles.conditionText,
-                    condition === opt.value && styles.conditionTextSelected,
-                  ]}
-                >
-                  {opt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text style={styles.sectionLabel}>Description</Text>
-          <TextInput
-            style={styles.textArea}
-            placeholder="Describe your product"
-            placeholderTextColor={theme.colors.textSecondary}
-            multiline
-            numberOfLines={4}
-            value={description}
-            onChangeText={setDescription}
-          />
-
-          <View style={{ height: 180 }} />
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Button text={submitting ? 'Publishing...' : 'Publish'} onPress={handlePublish} disabled={submitting} />
+          <Text style={styles.headerTitle}>New Listing</Text>
+          <TouchableOpacity onPress={handlePublish} style={styles.iconButton} disabled={submitting}>
+            <Text style={styles.publishText}>{submitting ? 'Publishing...' : 'Publish'}</Text>
+          </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
 
-      <BottomSheet
-        visible={isCatSheetVisible}
-        onClose={() => {
-          setCatSheetVisible(false)
-          setCatQuery('')
-        }}
-        height="60%"
-      >
-        <SearchBar value={catQuery} onChangeText={setCatQuery} placeholder="Search categories" />
-        {isCatsLoading ? (
-          <ActivityIndicator style={{ marginTop: 20 }} />
-        ) : catsError ? (
-          <Text style={{ marginTop: 20, textAlign: 'center' }}>Failed to load categories.</Text>
-        ) : (
-          <ScrollView style={{ marginTop: 8 }}>
-            {filteredCategories.map(cat => (
-              <TouchableOpacity
-                key={cat._id}
-                style={sheetStyles.catRow}
-                activeOpacity={0.7}
-                onPress={() => {
-                  setCategory(cat.title)
-                  setCategoryId(cat._id)
-                  setCatSheetVisible(false)
-                  setCatQuery('')
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.select({ ios: 0, android: 80 })}
+        >
+          <ScrollView contentContainerStyle={styles.content}>
+            {photos.length ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
+                {photos.map((uri, idx) => (
+                  <Image key={uri + idx} source={{ uri }} style={styles.photo} />
+                ))}
+                {photos.length < 10 && (
+                  <TouchableOpacity onPress={handleAddPhoto} style={styles.addMore}>
+                    <Ionicons name="camera-outline" size={32} color={theme.colors.textSecondary} />
+                  </TouchableOpacity>
+                )}
+              </ScrollView>
+            ) : (
+              <TouchableOpacity onPress={handleAddPhoto} style={styles.photoPicker} activeOpacity={0.7}>
+                <Ionicons name="camera-outline" size={32} color={theme.colors.textSecondary} />
+                <Text style={styles.photoPickerText}>Add Photos</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.photoCount}>Photos: {photos.length}/10</Text>
+
+            <InputField placeholder="Title" style={{ borderWidth: 1, borderColor: theme.colors.textSecondary }} value={title} onChangeText={setTitle} />
+            <View style={styles.priceInputContainer}>
+              <Text style={styles.pricePrefix}>$</Text>
+              <InputField
+                placeholder="0.00"
+                value={price}
+                onChangeText={setPrice}
+                keyboardType="numeric"
+                style={styles.priceInput}
+              />
+            </View>
+
+
+            <TouchableOpacity
+              onPress={() => setCatSheetVisible(true)}
+              style={[styles.input, { justifyContent: 'center' }]}
+            >
+              <Text
+                style={{
+                  color: category ? theme.colors.textPrimary : theme.colors.textSecondary,
                 }}
               >
-                <Image source={{ uri: cat.imageUrl }} style={sheetStyles.catImage} resizeMode="cover" />
-                <Text style={sheetStyles.catText}>{cat.title}</Text>
-              </TouchableOpacity>
-            ))}
+                {category || 'Category'}
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={styles.sectionLabel}>Condition</Text>
+            <View style={styles.conditionRow}>
+              {CONDITION_OPTIONS.map(opt => (
+                <TouchableOpacity
+                  key={opt.value}
+                  onPress={() => setCondition(opt.value)}
+                  style={[
+                    styles.conditionButton,
+                    condition === opt.value && styles.conditionSelected,
+                  ]}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.conditionText,
+                      condition === opt.value && styles.conditionTextSelected,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.sectionLabel}>Description</Text>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Describe your product"
+              placeholderTextColor={theme.colors.textSecondary}
+              multiline
+              numberOfLines={4}
+              value={description}
+              onChangeText={setDescription}
+            />
+
+            <View style={{ height: 180 }} />
           </ScrollView>
-        )}
-      </BottomSheet>
+
+          <View style={styles.footer}>
+            <Button text={submitting ? 'Publishing...' : 'Publish'} debounce textColor={theme.colors.background} onPress={handlePublish} disabled={submitting} />
+          </View>
+        </KeyboardAvoidingView>
+
+        <BottomSheet
+          visible={isCatSheetVisible}
+          onClose={() => {
+            setCatSheetVisible(false)
+            setCatQuery('')
+          }}
+          height="60%"
+        >
+          <SearchBar value={catQuery} onChangeText={setCatQuery} placeholder="Search categories" />
+          {isCatsLoading ? (
+            <ActivityIndicator style={{ marginTop: 20 }} />
+          ) : catsError ? (
+            <Text style={{ marginTop: 20, textAlign: 'center' }}>Failed to load categories.</Text>
+          ) : (
+            <ScrollView style={{ marginTop: 8 }}>
+              {filteredCategories.map(cat => (
+                <TouchableOpacity
+                  key={cat._id}
+                  style={sheetStyles.catRow}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setCategory(cat.title)
+                    setCategoryId(cat._id)
+                    setCatSheetVisible(false)
+                    setCatQuery('')
+                  }}
+                >
+                  <Image source={{ uri: cat.imageUrl }} style={sheetStyles.catImage} resizeMode="cover" />
+                  <Text style={sheetStyles.catText}>{cat.title}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+        </BottomSheet>
+      </ProtectedLayout>
     </SafeAreaView>
   )
 }

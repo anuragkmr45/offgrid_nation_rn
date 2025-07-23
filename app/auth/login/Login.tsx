@@ -1,12 +1,13 @@
 import { Button, InputField } from '@/components/common';
+import { APP_LOGO_WHITE } from '@/constants/AppConstants';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAppleSignIn } from '@/utils/appleSignIn';
 import { useGoogleSignIn } from '@/utils/googleLogin';
-import { useAppleSignIn } from '@/utils/useAppleSignIn';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Image,
   KeyboardAvoidingView,
@@ -25,10 +26,10 @@ export default function LoginScreen() {
     username?: string;
     password?: string;
   }>()
-  const { request: gRequest, userData:googleUserData, promptAsync: googleSignIn } = useGoogleSignIn();
-  const {userData: appleUserData, signIn: appleSingin} = useAppleSignIn()
+  const { promptAsync: googleSignIn, isLoading: googleAuthLoading } = useGoogleSignIn();
+  const { signIn: appleSingin, isLoading: appleAuthLoading } = useAppleSignIn()
 
-  const { login, isLoginLoading, socialLogin } = useAuth()
+  const { login, isLoginLoading } = useAuth()
   const [identifier, setIdentifier] = useState(usernameParam || '');
   const [password, setPassword] = useState(pwdParam || '');
   const [isShowPass, setIsShowPass] = useState(false);
@@ -54,19 +55,6 @@ export default function LoginScreen() {
     }
   };
 
-  useEffect(() => {
-     const user = googleUserData ?? appleUserData;
-    if (user) {
-      const { uid ="", name ="", email="" } = user || {};
-      socialLogin({
-        firebaseUid: uid,
-        email: email,
-        fullName: name,
-      })
-
-    }
-  }, [googleUserData, appleUserData]);
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -76,13 +64,13 @@ export default function LoginScreen() {
       <View style={{ width: '100%', flex: 1 }}>
         <View style={styles.logoContainer}>
           <Image
-            source={{ uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901306/fr-bg-white_hea7pb.png' }}
+            source={{ uri: APP_LOGO_WHITE }}
             style={styles.logo}
           />
         </View>
         <View style={styles.formContainer}>
           <InputField
-            value={identifier.trim().toLowerCase()}
+            value={identifier}
             onChangeText={setIdentifier}
             placeholder="Username, Phone number or email"
             keyboardType="default"
@@ -93,7 +81,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               placeholder="Password"
               secureTextEntry={!isShowPass}
-              style={{ paddingRight: 40 }}           // make room for the icon
+              style={{ paddingRight: 40, color: theme.colors.textPrimary }}           // make room for the icon
             />
             <TouchableOpacity
               style={styles.eyeButton}
@@ -131,14 +119,19 @@ export default function LoginScreen() {
             text="Continue with Google"
             onPress={() => googleSignIn()}
             style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
+            disabled={googleAuthLoading}
+            loading={googleAuthLoading}
           // override text color
           />
           <Button
             icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/apple-icon_quyjuw.png"
             text="Continue with Apple"
-            onPress={() => { appleSingin}}
+            onPress={appleSingin}
+            // onPress={() => { }}
             style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
             textColor={theme.colors.background}
+            disabled={appleAuthLoading}
+            loading={appleAuthLoading}
           />
           <View style={styles.signUpContainer}>
             <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -195,7 +188,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   forgotText: {
-    color: theme.colors.textPrimary,
+    color: theme.colors.background,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -235,11 +228,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 })
-function loginWithGoogle(jwt: string) {
-  throw new Error('Function not implemented.')
-}
-
-function saveSession(authKey: void) {
-  throw new Error('Function not implemented.')
-}
-

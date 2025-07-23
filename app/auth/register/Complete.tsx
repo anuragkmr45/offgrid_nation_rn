@@ -6,7 +6,7 @@ import { validateConfirmPassword, validatePassword } from '@/utils/validation/si
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -19,7 +19,7 @@ const Complete: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false)
 
     const { completeRegistrationFlow } = useAuth();
-    const {username, mobile } = useLocalSearchParams<{ username:string, mobile: string }>()
+    const { username, mobile } = useLocalSearchParams<{ username: string, mobile: string }>()
     const passwordError = validatePassword(password);
     const confirmError = validateConfirmPassword(confirm, password);
     const isValid = passwordError === null && confirmError === null;
@@ -50,8 +50,8 @@ const Complete: React.FC = () => {
     return (
         <KeyboardAvoidingView
             style={styles.container}
-        // behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : StatusBar.currentHeight || 0}
         >
             <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
             <SafeAreaView style={styles.safeArea}>
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     },
     signInLink: {
         fontWeight: "600",
-        color:theme.colors.background
+        color: theme.colors.background
     },
 });
 

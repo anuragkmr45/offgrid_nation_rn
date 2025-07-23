@@ -1,8 +1,9 @@
 // app/marketplace/[productId].tsx
 
 import { Button } from '@/components/common'
+import Header from '@/components/common/Header'
 import { MediaCarousel } from '@/components/common/MediaCarousel'
-import { MarketplaceHeader } from '@/components/marketplace/MarketplaceHeader'
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { ProductDetailsInfo } from '@/components/marketplace/ProductDetailsInfo'
 import { theme } from '@/constants/theme'
 import { User } from '@/features/auth/types'
@@ -18,17 +19,19 @@ import {
   Text,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
 import { useSelector } from 'react-redux'
 
 interface Owner {
   _id: string
+  fullName: string
   username: string
   profilePicture: string
 }
 interface Category {
   id: string
+  imageUrl: string
   title: string
 }
 export interface ProductDetails {
@@ -42,11 +45,14 @@ export interface ProductDetails {
   clickCount: number
   location: { coordinates: [number, number] }
   images: string[]
+  createdAt: string
+  isSold: boolean
 }
 
 export default function ProductDetailsScreen() {
   const { productId = "" } = useLocalSearchParams<{ productId: string }>()
   const router = useRouter()
+  const insets = useSafeAreaInsets()
   const token = useSelector((state: RootState) => state.auth.accessToken);
   const [sendMessage, { isLoading: sending, error: sendError }] = useSendMessageMutation()
   const currentUser = useSelector((state: RootState) => state.auth.user) as User | null
@@ -58,7 +64,7 @@ export default function ProductDetailsScreen() {
   useEffect(() => {
     if (!productId) return
     setLoading(true)
-    fetch(`https://api.theoffgridnation.com/products/${productId}`, {
+    fetch(`https://apiv2.theoffgridnation.com/products/${productId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -84,20 +90,11 @@ export default function ProductDetailsScreen() {
         text: `HII!, i am instreade in ${product.title}`,
       }
       await sendMessage(payload).unwrap()
-      
+
       Toast.show({
         type: "success",
         text1: "Enquiry made successfully!!"
       })
-      // Optionally, now navigate into the conversation:
-      // router.push({
-      //   pathname: '/root/chat/Conversation',
-      //   params: {
-      //     recipientId: product.owner.userId,
-      //     recipientName: product.owner.username,
-      //     profilePicture: product.owner.profilePicture,
-      //   },
-      // })
     } catch (err) {
       Toast.show({
         type: "success",
@@ -109,7 +106,9 @@ export default function ProductDetailsScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <ProtectedLayout>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </ProtectedLayout>
       </SafeAreaView>
     )
   }
@@ -117,33 +116,37 @@ export default function ProductDetailsScreen() {
     return (
       <SafeAreaView style={styles.center}>
         <StatusBar barStyle="dark-content" animated />
-        <Text style={styles.errorText}>Failed to load product details.</Text>
+        <ProtectedLayout>
+          <Text style={styles.errorText}>Failed to load product details.</Text>
+        </ProtectedLayout>
       </SafeAreaView>
     )
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" animated backgroundColor={theme.colors.background} />
-      <MarketplaceHeader title={product.title.toUpperCase()} onBack={() => { router.back() }} />
-      {/* Carousel + Info */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <MediaCarousel mediaUrls={product.images} />
+      <StatusBar barStyle="light-content" animated backgroundColor={theme.colors.primary} />
+      <ProtectedLayout>
+        <Header title={product.title.toUpperCase()} onBack={() => { router.back() }} backgroundColor={theme.colors.primary} titleColor={theme.colors.background} iconColor={theme.colors.background} />
+        {/* Carousel + Info */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <MediaCarousel mediaUrls={product.images} />
 
-        <View style={styles.infoWrapper}>
-          <ProductDetailsInfo product={product} />
-        </View>
-      </ScrollView>
-      {product?.owner?._id !== currentUser?._id && (
-        <View style={styles.footer}>
-          <Button
-            text={"ENQUIRY"}
-            onPress={handleChat}
-            style={styles.chatButton}
-            textColor={theme.colors.background}
-          />
-        </View>
-      )}
+          <View style={styles.infoWrapper}>
+            <ProductDetailsInfo product={product} />
+          </View>
+        </ScrollView>
+        {product?.owner?._id !== currentUser?._id && (
+          <View style={[styles.footer, { bottom: insets.bottom + 6 }]}>
+            <Button
+              text={"ENQUIRY"}
+              onPress={handleChat}
+              style={styles.chatButton}
+              textColor={theme.colors.background}
+            />
+          </View>
+        )}
+      </ProtectedLayout>
     </SafeAreaView>
   )
 }
@@ -161,7 +164,6 @@ const styles = StyleSheet.create({
   },
   footer: {
     position: 'absolute',
-    bottom: 0,
     left: 0,
     right: 0,
     padding: 16,

@@ -12,7 +12,8 @@ interface Props {
   following: any[]
   posts: any[]
   onUserPress: (username: string) => void
-  onPostPress: (id: string) => void
+  username: string
+  avatarUrl: string
 }
 
 export const ProfileTabs: React.FC<Props> = ({
@@ -23,7 +24,8 @@ export const ProfileTabs: React.FC<Props> = ({
   following,
   posts,
   onUserPress,
-  onPostPress,
+  username,
+  avatarUrl
 }) => {
   const [activeTab, setActiveTab] = useState<'following' | 'posts' | 'followers'>('following')
 
@@ -32,7 +34,7 @@ export const ProfileTabs: React.FC<Props> = ({
       case 'following':
         return <FollowersList data={following} />
       case 'posts':
-        return <PostsGrid data={posts} onPostPress={onPostPress} />
+        return <PostsGrid data={posts} username={username} avatarUrl={avatarUrl}  />
       case 'followers':
         return <FollowersList data={followers} />
       default:
@@ -44,17 +46,17 @@ export const ProfileTabs: React.FC<Props> = ({
     <View style={{ flex: 1 }}>
       <View style={styles.tabBar}>
         <TabButton
-          title={`Following (${following.length})`}
+          title={`Following (${followingCount})`}
           active={activeTab === 'following'}
           onPress={() => setActiveTab('following')}
         />
         <TabButton
-          title={`Posts (${posts.length})`}
+          title={`Posts (${postCount})`}
           active={activeTab === 'posts'}
           onPress={() => setActiveTab('posts')}
         />
         <TabButton
-          title={`Followers (${followers.length})`}
+          title={`Followers (${followerCount})`}
           active={activeTab === 'followers'}
           onPress={() => setActiveTab('followers')}
         />

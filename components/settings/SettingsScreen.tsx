@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import Toast from 'react-native-toast-message'
 import { SettingItem } from './SettingItem'
 
 export const SettingsScreen: React.FC = () => {
@@ -37,7 +38,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'shield-outline' as const,
       title: 'Privacy',
       subtitle: 'Blocked accounts, Account privacy',
-      onPress: () => console.log('Go to Privacy'),
+      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
     },
     {
       key: 'weather_details',
@@ -58,14 +59,14 @@ export const SettingsScreen: React.FC = () => {
       icon: 'globe-outline' as const,
       title: 'App Language',
       subtitle: `English (device's language)`,
-      onPress: () => console.log('Go to Language'),
+      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
     },
     {
       key: 'help',
       icon: 'help-circle-outline' as const,
       title: 'Help',
       subtitle: 'Help centre / contact us',
-      onPress: () => console.log('Go to Help'),
+      onPress: () => { router.push('/root/settings/HelpCenterScreen') },
     },
     {
       key: 'invite',
@@ -91,81 +92,81 @@ export const SettingsScreen: React.FC = () => {
   )
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <>
       <StatusBar
         backgroundColor={theme.colors.background}
         barStyle="dark-content"
         animated
       />
-
-      {/* HEADER */}
-      <View style={styles.header}>
-        <Ionicons
-          name="arrow-back"
-          size={24}
-          color={theme.colors.textPrimary}
-          onPress={() => router.back()}
-        />
-        <Text style={styles.headerTitle}>Settings</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      {/* SEARCH */}
-      <SearchBar
-        value={query}
-        onChangeText={setQuery}
-        placeholder="Search"
-        style={styles.searchBar}
-      />
-
-      {/* ITEMS */}
-      <ScrollView contentContainerStyle={styles.list}>
-        {filtered.map(item => (
-          <SettingItem
-            key={item.key}
-            iconName={item.icon}
-            title={item.title}
-            subtitle={item.subtitle}
-            onPress={item.onPress}
+      <SafeAreaView style={styles.safe}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={theme.colors.textPrimary}
+            onPress={() => router.back()}
           />
-        ))}
-      </ScrollView>
+          <Text style={styles.headerTitle}>Settings</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-      {/* LOGOUT CONFIRMATION MODAL */}
-      <Modal
-        visible={showLogoutModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowLogoutModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Log out?</Text>
-            <Text style={styles.modalMessage}>
-              Are you sure you want to log out?
-            </Text>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowLogoutModal(false)}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.logoutButton]}
-                onPress={() => {
-                  setShowLogoutModal(false)
-                  logout()
-                  router.replace('/auth/login/Login')
-                }}
-              >
-                <Text style={styles.logoutText}>Log out</Text>
-              </TouchableOpacity>
+        {/* SEARCH */}
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Search"
+          style={styles.searchBar}
+        />
+
+        {/* ITEMS */}
+        <ScrollView contentContainerStyle={styles.list}>
+          {filtered.map(item => (
+            <SettingItem
+              key={item.key}
+              iconName={item.icon}
+              title={item.title}
+              subtitle={item.subtitle}
+              onPress={item.onPress}
+            />
+          ))}
+        </ScrollView>
+
+        {/* LOGOUT CONFIRMATION MODAL */}
+        <Modal
+          visible={showLogoutModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowLogoutModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Log out?</Text>
+              <Text style={styles.modalMessage}>
+                Are you sure you want to log out?
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowLogoutModal(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.logoutButton]}
+                  onPress={() => {
+                    setShowLogoutModal(false)
+                    logout()
+                  }}
+                >
+                  <Text style={styles.logoutText}>Log out</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </>
   )
 }
 

@@ -1,4 +1,6 @@
 // src/features/auth/hooks/useAuth.ts
+import { persistor } from '@/store/store'
+import { useRouter } from 'expo-router'
 import { useCallback } from 'react'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import {
@@ -28,6 +30,7 @@ import type {
 
 export function useAuth() {
   const dispatch = useAppDispatch()
+  const router = useRouter()
   const user = useAppSelector((state) => state.auth.user)
 
   // Lazy query for username availability
@@ -120,9 +123,11 @@ export function useAuth() {
     [verifyChangeMobile]
   )
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async() => {
     dispatch(logoutAction())
     dispatch(authApi.util.resetApiState())
+    await persistor.purge()
+    router.replace('/auth/login/Login')
   }, [dispatch])
 
   return {

@@ -2,7 +2,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { User } from '../types';
 
-interface AuthState { user: User|null; accessToken: string|null; }
+interface AuthState { user: User | null; accessToken: string | null; }
 const initialState: AuthState = { user: null, accessToken: null }
 
 const authSlice = createSlice({
@@ -17,7 +17,11 @@ const authSlice = createSlice({
       state.user = null
       state.accessToken = null
     },
+    logoutAndRedirect(state) {
+      state.user = null
+      state.accessToken = null
+    },
   },
 })
-export const { setCredentials, logout } = authSlice.actions
+export const { setCredentials, logout, logoutAndRedirect  } = authSlice.actions
 export default authSlice.reducer

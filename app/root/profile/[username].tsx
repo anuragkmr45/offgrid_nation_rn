@@ -1,3 +1,4 @@
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { ProfileScreen } from '@/components/profile/ProfileScreen'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
@@ -20,11 +21,10 @@ export default function UserProfileRoute() {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
-        <Text>Loading profile...</Text>
+        <Text>Fetching {username} profile...</Text>
       </View>
     )
   }
-console.log({user});
 
   if (!user) {
     return (
@@ -35,7 +35,7 @@ console.log({user});
   }
 
   return (
-    <>
+    <ProtectedLayout>
       <StatusBar animated backgroundColor={theme.colors.primary} barStyle={'light-content'} />
       <ProfileScreen
         loading={false}
@@ -47,9 +47,8 @@ console.log({user});
         onAvatarEdit={() => { }}
         onFieldEdit={() => { }}
         onUserPress={(u) => router.push(`/root/profile/${u}`)}
-        onPostPress={() => {}}
       />
-    </>
+    </ProtectedLayout>
   )
 }
 

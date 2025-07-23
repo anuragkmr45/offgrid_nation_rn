@@ -42,8 +42,6 @@ const ResetNewPassword: React.FC = () => {
     const trimedPassword = password.trim();
 
     try {
-      console.log({ mobile: mobile, otp: trimedPassword });
-
       await triggerResetPassword({ mobile: mobile, newPassword: trimedPassword });
       // Toast.show({
       //   type: "success",

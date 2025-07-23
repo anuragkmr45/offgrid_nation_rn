@@ -1,6 +1,7 @@
 // components/premium/PremiumPostWidget.tsx
 
 import { CommentModal } from '@/components/modals/CommentModal'
+import { APP_LOGO_WHITE } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
 import { timeAgo } from '@/utils/timeAgo'
@@ -75,7 +76,7 @@ export const PremiumPostWidget: React.FC<Props> = ({ post, onProfileTap }) => {
       {/* Header */}
       <TouchableOpacity onPress={onProfileTap} style={styles.header}>
         {/* replace with dynamic avatar if available */}
-        <Image source={{ uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901306/fr-bg-white_hea7pb.png' }} style={styles.avatar} />
+        <Image source={{ uri: APP_LOGO_WHITE }} style={styles.avatar} />
         <View>
           <Text style={styles.username}>OFFGRID NATION</Text>
           <Text style={styles.timestamp}>{timeAgo(post.createdAt)}</Text>

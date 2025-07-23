@@ -77,3 +77,20 @@ Edit
 When prompted with an actual API specification, always precisely follow these structured steps above and output the complete React Native + TypeScript + Redux Toolkit Query integration codebase snippets.
 
 Ensure all instructions and examples align strictly with current best practices and scalability conventions you've mastered at global technology leaders.
+
+==============================================================================================================
+
+keyboard layout prompt
+You’re a senior React Native engineer. I’m giving you a screen component (SendOtp.tsx) and I need you to enhance it so that:
+
+1. On iOS it uses a KeyboardAvoidingView (with appropriate behavior and keyboardVerticalOffset) to shift the UI when the keyboard appears.
+2. On Android it relies on windowSoftInputMode="adjustResize" in AndroidManifest.xml.
+3. Tapping outside the inputs dismisses the keyboard.
+4. **Do not** change any visual styling, component hierarchy, props, or business logic—only add the keyboard-avoidance boilerplate around your existing code.
+5. Follow industry-grade practices: wrap only what needs wrapping, preserve flex layouts, import only what’s necessary, keep the code clean and readable.
+
+**Output**  
+- The full, updated **SendOtp.tsx** file.  
+- The one-line change snippet for **android/app/src/main/AndroidManifest.xml**.
+
+Do not include any additional explanation—just the two complete code blocks.

@@ -1,31 +1,50 @@
-import { theme } from '@/constants/theme';
-import { useAppSelector } from '@/store/hooks';
-import { useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import { APP_LOGO_WHITE } from '@/constants/AppConstants'
+import { theme } from '@/constants/theme'
+import { useAppSelector } from '@/store/hooks'
+import { persistor } from '@/store/store'
+import { useRouter } from 'expo-router'
+import React, { useEffect, useState } from 'react'
 import {
+  ActivityIndicator,
   Image,
   SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
   View
-} from 'react-native';
+} from 'react-native'
 
 export default function SplashScreen() {
-  const router = useRouter();
-  const user = useAppSelector((state) => state.auth.user);
+  const router = useRouter()
+  const user = useAppSelector((state) => state.auth.user)
+  const [rehydrated, setRehydrated] = useState(persistor.getState().bootstrapped)
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (user) {
-        router.replace('/root/feed');
-      } else {
-        router.replace('/auth/login/Login');
-      }
-    }, 1800);
+    if (!rehydrated) {
+      const interval = setInterval(() => {
+        const ready = persistor.getState().bootstrapped
+        if (ready) {
+          setRehydrated(true)
+          clearInterval(interval)
+        }
+      }, 50)
+      return () => clearInterval(interval)
+    }
+  }, [rehydrated])
 
-    return () => clearTimeout(timeout);
-  }, [user]);
+  useEffect(() => {
+    if (rehydrated) {
+      const timeout = setTimeout(() => {
+        if (user && user._id) {
+          router.replace('/root/feed')
+        } else {
+          router.replace('/auth/login/Login')
+        }
+      }, 1800)
+
+      return () => clearTimeout(timeout)
+    }
+  }, [rehydrated, user])
 
   return (
     <SafeAreaView style={styles.container}>
@@ -38,14 +57,24 @@ export default function SplashScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Welcome to</Text>
         <Image
-          source={{ uri: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901306/fr-bg-white_hea7pb.png' }}
+          source={{
+            uri: APP_LOGO_WHITE
+          }}
           style={styles.logo}
           resizeMode="contain"
         />
         <Text style={styles.subtitle}>Connect, Explore, and Thrive</Text>
+
+        {!rehydrated && (
+          <ActivityIndicator
+            size="large"
+            color="#fff"
+            style={{ marginTop: 20 }}
+          />
+        )}
       </View>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -75,4 +104,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-});
+})

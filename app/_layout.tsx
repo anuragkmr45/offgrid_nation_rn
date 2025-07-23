@@ -10,6 +10,7 @@ import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { persistor, store } from '../store/store';
 
+import { LogoutListener } from '@/components/common/LogoutListener';
 import { useAppSelector } from '@/store/hooks';
 import { PusherService } from '@/utils/PusherService';
 
@@ -43,7 +44,6 @@ function NotificationListener() {
         }
         if (finalStatus !== 'granted') return;
         const expoToken = (await Notifications.getExpoPushTokenAsync()).data;
-        console.log('Expo push token:', expoToken);
         // TODO: send expoToken to backend if you need remote pushes
       } catch (err: any) {
         console.warn('[Push] registration failed:', err.message);
@@ -117,6 +117,7 @@ export default function RootLayout() {
           <NotificationListener />
           <Slot />
           <Toast />
+          <LogoutListener />
         </SafeAreaProvider>
       </PersistGate>
     </Provider>

@@ -1,5 +1,6 @@
 // app/add-post/index.tsx
 
+import ProtectedLayout from '@/components/layouts/ProtectedLayout'
 import { WithLayout } from '@/components/layouts/WithLayout'
 import { MediaCarousel } from '@/components/post/MediaCarousel'
 import { PostComposer } from '@/components/post/PostComposer'
@@ -26,12 +27,17 @@ import Toast from 'react-native-toast-message'
 export default function AddPostRoute() {
   const [media, setMedia] = useState<string[]>([])
   const [location, setLocation] = useState<string | null>(null)
+  const [link, setLink] = useState<string>('')
   const router = useRouter()
 
   // RTK-Query mutation hook
   const [createPost, { isLoading, error }] = useCreatePostMutation()
 
   const handleCamera = async () => {
+    if (media.length >= 5) {
+      Toast.show({ type: 'info', text1: 'You can only upload up to 5 items.' });
+      return;
+    }
     const uri = await pickFromCamera(MediaTypeOptions.All)
     if (uri) setMedia(m => [...m, uri])
   }
@@ -86,6 +92,7 @@ export default function AddPostRoute() {
       Toast.show({ type: 'success', text1: 'Your post was uploaded.' })
       setMedia([])
       setLocation(null)
+      setLink('')  
       router.replace('/root/feed')
     } catch (err: any) {
       const errMsg = err?.data?.message || 'Failed to post. Please try again.'
@@ -100,35 +107,39 @@ export default function AddPostRoute() {
   return (
     <WithLayout headerBgColor={theme.colors.primary}>
       <StatusBar backgroundColor={theme.colors.primary} animated barStyle={'dark-content'} />
-      <View style={styles.safe}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {error ? (
-            <Text style={styles.errorText}>
-              {typeof error === 'string' ? error : 'An error occurred.'}
-            </Text>
-          ) : null}
+      <ProtectedLayout>
+        <View style={styles.safe}>
+          <ScrollView contentContainerStyle={styles.scroll}>
+            {error ? (
+              <Text style={styles.errorText}>
+                {typeof error === 'string' ? error : 'An error occurred.'}
+              </Text>
+            ) : null}
 
-          <PostComposer
-            onPost={handlePost}
-            onCameraTap={handleCamera}
-            onGalleryTap={handleGallery}
-            // onLocationTap={handleLocation}
-            mediaUris={media}
-            location={location}
-            isPosting={isLoading}
-          />
+            <PostComposer
+              onPost={handlePost}
+              onCameraTap={handleCamera}
+              onGalleryTap={handleGallery}
+              // onLocationTap={handleLocation}
+              mediaUris={media}
+              location={location}
+              isPosting={isLoading}
+              linkValue={link} 
+              onLinkChange={setLink}
+            />
 
-          {media.length > 0 && (
-            <MediaCarousel uris={media} onRemove={handleRemove} />
-          )}
+            {media.length > 0 && (
+              <MediaCarousel uris={media} onRemove={handleRemove} />
+            )}
 
-          {isLoading && (
-            <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-            </View>
-          )}
-        </ScrollView>
-      </View>
+            {isLoading && (
+              <View style={styles.loadingOverlay}>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </ProtectedLayout>
     </WithLayout>
   )
 }
