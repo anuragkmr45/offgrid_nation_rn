@@ -13,11 +13,12 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Linking,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  ViewToken,
+  ViewToken
 } from 'react-native'
 import Toast from 'react-native-toast-message'
 import { PostMedia } from './PostMedia'
@@ -27,6 +28,8 @@ const likeIcon = { uri: LIKE_ICON }
 const dislikeIcon = { uri: DISLIKE_ICON }
 const commentIcon = { uri: COMMENT_ICON }
 const shareIcon = { uri: SHARE_ICON }
+
+const urlRegex = /(https?:\/\/[^\s]+)/g
 
 // Types
 export interface MediaItem { id: string; url: string }
@@ -53,6 +56,21 @@ const CARD_HEIGHT = SCREEN_HEIGHT * 0.8
 const MEDIA_WIDTH = width - 32
 const MEDIA_HEIGHT = (MEDIA_WIDTH * 16) / 9
 
+const renderWithLinks = (raw: string) =>
+  raw.split(urlRegex).map((part, idx) => {
+    const isLink = /^https?:\/\//i.test(part)
+    if (isLink) {
+      return (
+        <Text
+          key={idx}
+          style={styles.linkText}
+          onPress={() => Linking.openURL(part)}>
+          {part}
+        </Text>
+      )
+    }
+    return <Text key={idx}>{part}</Text>
+  })
 
 export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, cardHeight, cardWidth }) => {
   const router = useRouter()
@@ -72,6 +90,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
   const CAPTION_LIMIT = 42
   const isCaptionLong = post.caption.length > CAPTION_LIMIT
   const displayedCaption = isCaptionExpanded ? post.caption : post.caption.slice(0, CAPTION_LIMIT)
+
+  const hasOnlyLink =
+    post.media.length === 0 &&
+    post.caption.trim().match(urlRegex)?.[0] === post.caption.trim()
 
   const toggleLike = useCallback(async () => {
     Animated.sequence([
@@ -95,8 +117,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
       Toast.show({ type: "error", text1: errorMessage })
     }
   }, [likePost, post.postId, scaleAnim])
-  
-const debouncedToggleLike = useMemo(() => debounce(toggleLike, 500), [toggleLike])
+
+  const debouncedToggleLike = useMemo(() => debounce(toggleLike, 500), [toggleLike])
 
   const onViewableItemsChanged = useRef<(
     info: { viewableItems: ViewToken[]; changed: ViewToken[] }
@@ -151,6 +173,13 @@ const debouncedToggleLike = useMemo(() => debounce(toggleLike, 500), [toggleLike
           style={styles.carousel}
           contentContainerStyle={{ paddingBottom: 10 }}
         />
+      ) : hasOnlyLink ? (
+        /* ----- LINK-ONLY post (no media, nothing else) ------ */
+        <TouchableOpacity
+          style={styles.linkOnlyContainer}
+          onPress={() => Linking.openURL(post.caption.trim())}>
+          <Text style={styles.linkText}>{post.caption.trim()}</Text>
+        </TouchableOpacity>
       ) : (
         <View style={styles.textOnlyContainer}>
           <Text style={styles.textOnly}>{post.caption}</Text>
@@ -174,8 +203,10 @@ const debouncedToggleLike = useMemo(() => debounce(toggleLike, 500), [toggleLike
       {post.media.length > 0 && (
         <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
           <Text style={styles.caption}>
-            {displayedCaption}
-            {(!isCaptionExpanded && isCaptionLong) ? '...' : ''}
+            {renderWithLinks(displayedCaption)}{/* 🆕 make links clickable */}
+            {!isCaptionExpanded && isCaptionLong ? '...' : ''}
+            {/* {displayedCaption}
+            {(!isCaptionExpanded && isCaptionLong) ? '...' : ''} */}
           </Text>
           {isCaptionLong && (
             <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
@@ -223,13 +254,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
-  carousel: { marginBottom: 12 },
-  mediaContainer: { justifyContent: 'center', alignItems: 'center' },
-  media: {
-    width: '100%',
-    height: '100%',
-    borderRadius: theme.borderRadius,
-  },
   textOnlyContainer: {
     width: '100%',
     padding: 16,
@@ -241,6 +265,26 @@ const styles = StyleSheet.create({
   textOnly: {
     fontSize: theme.fontSizes.bodyLarge,
     color: theme.colors.textPrimary,
+  },
+  linkOnlyContainer: {
+    width: '100%',
+    padding: 16,
+    backgroundColor: '#eef6ff',
+    borderRadius: theme.borderRadius,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  linkText: {
+    color: theme.colors.primary,
+    textDecorationLine: 'underline',
+    fontSize: theme.fontSizes.bodyLarge,
+  },
+  carousel: { marginBottom: 12 },
+  mediaContainer: { justifyContent: 'center', alignItems: 'center' },
+  media: {
+    width: '100%',
+    height: '100%',
+    borderRadius: theme.borderRadius,
   },
   footer: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 12 },
   actionButton: { marginRight: 20, flexDirection: 'row' },

@@ -63,7 +63,6 @@ export default function MyProfileRoute() {
         onAvatarEdit={() => router.push('/root/profile/edit')}
         onFieldEdit={(field) => router.push(`/root/profile/edit?field=${field}`)}
         onUserPress={(u) => router.push(`/root/profile/${u}`)}
-        onPostPress={(id) => { }}
       />
     </ProtectedLayout>
   )

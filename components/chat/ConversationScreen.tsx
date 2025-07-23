@@ -35,6 +35,8 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, 
   const [historicalMessages, setHistoricalMessages] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
 
   const [triggerGetMessagesByRecipient] = chatApi.endpoints.getMessagesByRecipient.useLazyQuery();
 
@@ -114,11 +116,12 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, 
         <FlatList
           data={combinedMessages}
           inverted
+          onEndReachedThreshold={0.02}
           keyExtractor={(m) => m._id}
           renderItem={({ item }) => {
             const { sender, sentAt, actionType, postPayload, text } = item || {}
-
-            const outgoing = sender === userId;
+            const senderId = typeof sender === 'string' ? sender : sender?._id;
+            const outgoing = senderId === userId;
             const timestamp = new Date(sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             if (actionType === 'post') {
@@ -129,6 +132,7 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, 
           contentContainerStyle={styles.messages}
           onEndReached={async () => {
             if (combinedMessages.length === 0) return;
+            if (loadingMore || !hasMore) return;
             const oldest = combinedMessages[combinedMessages.length - 1];
             if (!oldest?.sentAt) return;
 
@@ -138,11 +142,19 @@ export const ConversationScreen: React.FC<ConversationScreenProps> = ({ chatId, 
               setLoadingMore(true);
               const result = await triggerGetMessagesByRecipient({
                 recipientId: chatId,
-                limit: 20,
+                limit: PAGE_SIZE,
                 cursor: nextCursor,
               }).unwrap();
               setHistoricalMessages(prev => [...prev, ...result]);
               setCursor(nextCursor);
+              if (result.length) {
+                setHistoricalMessages(prev => [...prev, ...result]);
+              }
+
+              // if fewer than a full page arrived → no more data
+              if (result.length < PAGE_SIZE) {
+                setHasMore(false);
+              }
             } catch (error: any) {
               Toast.show({ type: 'error', text1: 'Failed to load more messages' });
             } finally {

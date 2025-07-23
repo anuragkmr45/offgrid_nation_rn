@@ -1,11 +1,6 @@
 // src/utils/PusherService.ts
-import Constants from "expo-constants";
 import Pusher from "pusher-js";
-
-const { PUSHER_KEY, PUSHER_CLUSTER } = (Constants.expoConfig?.extra ?? {}) as {
-  PUSHER_KEY: string;
-  PUSHER_CLUSTER: string;
-};
+import { PUSHER_CLUSTER, PUSHER_KEY } from "./env";
 
 export class PusherService {
   private static instance: PusherService;

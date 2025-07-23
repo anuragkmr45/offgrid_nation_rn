@@ -1,11 +1,9 @@
 import { AVATAR_FALLBACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
-import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
   Image,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -58,51 +56,53 @@ export const ProfileHeader: React.FC<Props> = ({
       <View style={styles.container}>
         <View style={styles.left}>
           {/* Full name */}
-          <TouchableOpacity disabled={!isEditable} onPress={() => onFieldEdit('fullName')}>
-            <View style={styles.row}>
-              <Text style={styles.fullName}>{fullName}</Text>
-              {isEditable && (
-                <Ionicons
-                  name={Platform.OS === 'ios' ? 'pencil' : 'pencil-outline'}
-                  size={16} color={theme.colors.textPrimary}
-                  style={styles.editIcon}
-                />
-              )}
-            </View>
-          </TouchableOpacity>
+          {/* <TouchableOpacity disabled={!isEditable} onPress={() => onFieldEdit('fullName')}> */}
+          <View style={styles.row}>
+            <Text style={styles.fullName}>{fullName}</Text>
+            {/* {isEditable && (
+              <Ionicons
+                name={Platform.OS === 'ios' ? 'pencil' : 'pencil-outline'}
+                size={16} color={theme.colors.textPrimary}
+                style={styles.editIcon}
+              />
+            )} */}
+          </View>
+          {/* </TouchableOpacity> */}
           {/* Username */}
-          <TouchableOpacity disabled={!isEditable} onPress={() => onFieldEdit('username')}>
-            <View style={styles.row}>
-              <Text style={styles.username}>{username}</Text>
-              {/* {isEditable && (
+          {/* <TouchableOpacity disabled={!isEditable} onPress={() => onFieldEdit('username')}> */}
+          <View style={styles.row}>
+            <Text style={styles.username}>{username}</Text>
+            {/* {isEditable && (
               <Ionicons
                 name={Platform.OS === 'ios' ? 'pencil' : 'pencil-outline'}
                 size={14} color={theme.colors.textPrimary}
                 style={styles.editIcon}
               />
             )} */}
-            </View>
-          </TouchableOpacity>
+          </View>
+          {/* </TouchableOpacity> */}
           {/* Bio */}
-          {bio ? (
-            <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}>
+          {bio && (
+            <>
+              {/* <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}> */}
               <Text style={styles.bio}>{displayedBio}</Text>
               {bio.length > 50 && (
                 <Text style={styles.readMore}>
                   {showFullBio ? 'Read less' : 'Read more'}
                 </Text>
               )}
-            </TouchableOpacity>
-          ) : null}
+              {/* </TouchableOpacity> */}
+            </>
+          )}
         </View>
 
         {/* Avatar + edit badge */}
-        <TouchableOpacity disabled={!isEditable} onPress={onAvatarEdit} onLongPress={() => setAvatarModalVisible(true)} delayLongPress={300}>
+        <TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
           <Image
             source={{ uri: avatarUrl || AVATAR_FALLBACK }}
             style={styles.avatar}
           />
-          {isEditable && (
+          {/* {isEditable && (
             <View style={styles.cameraBadge}>
               <Ionicons
                 name={Platform.OS === 'ios' ? 'camera' : 'camera-outline'}
@@ -110,23 +110,25 @@ export const ProfileHeader: React.FC<Props> = ({
                 color={theme.colors.background}
               />
             </View>
-          )}
+          )} */}
         </TouchableOpacity>
       </View>
-      {!isEditable && <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingHorizontal: 16 }}>
+      {!isEditable ? <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingHorizontal: 16 }}>
         <FollowUnfollowButton handle={username} isFollowing={isFollowing || false} buttonStyle={{ width: '45%', height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} />
         <Button onPress={handleMsg} text='Message' textColor={theme.colors.background} debounce icon={''} style={{ borderWidth: 1, borderColor: theme.colors.background, width: '45%', borderRadius: 10 }} />
-      </View>}
+      </View> :
+        <Button disabled={!isEditable} onPress={() => onFieldEdit('fullName')} text='Edit Profile' textColor={theme.colors.background} debounce icon={''} style={{ borderWidth: 1, borderColor: theme.colors.background, width: '85%', borderRadius: 10, alignSelf: 'center' }} />
+      }
 
       <CustomModal
         visible={avatarModalVisible}
         onClose={() => setAvatarModalVisible(false)}
-        style={{ padding: 0, width: 200 }} // tweak width as you like
+        style={{ padding: 0, width: 300, height: 400, }} // tweak width as you like
       >
         {/* show a larger avatar */}
         <Image
           source={{ uri: avatarUrl || AVATAR_FALLBACK }}
-          style={{ width: 180, height: 180, borderRadius: 90, alignSelf: 'center' }}
+          style={{ width: 280, height: 350, borderRadius: 0, alignSelf: 'center' }}
         />
 
         {/* Edit button inside the modal */}

@@ -6,24 +6,34 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "store"
+      "distribution": "internal",
+      "channel": "dev",
+      "env": {
+        "ENVFILE": ".env.development"
+      }
     },
     "preview": {
+      "extends": "production",
+      "channel": "qa",
       "distribution": "store",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "ENVFILE": ".env.preview"
+      }
     },
     "production": {
+      "channel": "production",
       "distribution": "store",
       "environment": "production",
       "autoIncrement": true,
       "android": {
-        "buildType": "apk",
+        "buildType": "app-bundle",
         "autoIncrement": true
       },
-      "env": {
-        "APP_USERNAME": "APP_USERNAME",
-        "APP_PASSWORD": "APP_PASSWORD"
-      }
+      "ios": {
+        "simulator": false
+      },
+      "env": {"ENVFILE": ".env.production"}
     }
   },
   "submit": {

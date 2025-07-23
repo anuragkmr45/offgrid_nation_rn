@@ -40,3 +40,7 @@ yarn-error.*
 app-example
 
 android/
+
+.env.development
+.env.preview
+.env.production

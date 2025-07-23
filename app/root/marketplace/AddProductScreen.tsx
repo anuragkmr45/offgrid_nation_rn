@@ -221,7 +221,7 @@ export default function AddProductScreen() {
           </ScrollView>
 
           <View style={styles.footer}>
-            <Button text={submitting ? 'Publishing...' : 'Publish'} onPress={handlePublish} disabled={submitting} />
+            <Button text={submitting ? 'Publishing...' : 'Publish'} debounce textColor={theme.colors.background} onPress={handlePublish} disabled={submitting} />
           </View>
         </KeyboardAvoidingView>
 

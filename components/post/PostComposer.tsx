@@ -22,6 +22,8 @@ export interface PostComposerProps {
   mediaUris: string[]
   location?: string | null
   isPosting: boolean
+  linkValue: string
+  onLinkChange: (v: string) => void
 }
 
 export const PostComposer: React.FC<PostComposerProps> = ({
@@ -32,26 +34,35 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   mediaUris,
   location,
   isPosting,
+  linkValue, onLinkChange,
 }) => {
   const [text, setText] = useState('')
   const [charCount, setCharCount] = useState(0)
+  const [linkInput, setLinkInput] = useState(linkValue)
   const maxChars = 400
 
   useEffect(() => {
     setCharCount(text.length)
   }, [text])
 
+  useEffect(() => setLinkInput(linkValue), [linkValue])
+
   const handlePost = () => {
-    const trimmed = text.trim()
-    if (!trimmed) {
-      Alert.alert('Cannot post empty text.')
+    const txt = text.trim()
+    const lnk = linkInput.trim()
+    if (!txt && !lnk) {
+      Alert.alert('Add some text or a link before posting.')
       return
     }
-    if (trimmed.length > maxChars) {
-      Alert.alert('Post too long.')
+    if (lnk && !/^https?:\/\//i.test(lnk)) {
+      Alert.alert('Please enter a valid URL (http:// or https://).')
       return
     }
-    onPost(trimmed)
+    const finalText = lnk
+      ? (txt ? `${txt}\n${lnk}` : lnk)                   // 🆕 merge link into text
+      : txt
+
+    onPost(finalText)
   }
 
   const debouncedTextChange = debounce((t: string) => setText(t), 100)
@@ -67,6 +78,17 @@ export const PostComposer: React.FC<PostComposerProps> = ({
         editable={!isPosting}
         onChangeText={debouncedTextChange}
       />
+
+      {/* <TextInput
+        placeholder="Add a link (optional)"
+        placeholderTextColor={theme.colors.textSecondary}
+        style={styles.linkInput}
+        keyboardType="url"
+        autoCapitalize="none"
+        editable={!isPosting}
+        value={linkInput}
+        onChangeText={setLinkInput}
+      /> */}
 
       <View style={styles.bottomRow}>
         <Text style={styles.counter}>
@@ -143,6 +165,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     fontSize: theme.fontSizes.bodyLarge,
     textAlignVertical: 'top',
+  },
+  linkInput: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.textSecondary,
+    borderRadius: theme.borderRadius,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    color: theme.colors.textPrimary,
+    fontSize: theme.fontSizes.bodyMedium,
   },
   bottomRow: {
     marginTop: 'auto',

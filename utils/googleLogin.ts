@@ -13,15 +13,14 @@ import {
 import { useState } from 'react';
 import Toast from 'react-native-toast-message';
 import { auth } from '../firebaseConfig';
+import { IOS_CLIENT_ID, OAUTH_WEB_CLIENT_ID } from './env';
 
 /* ──────────────────────────────────────────────────
    ⚙️  Configure Google Sign-In
    ────────────────────────────────────────────────── */
 GoogleSignin.configure({
-  webClientId:
-    '758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com',
-  iosClientId:
-    '758180883916-0uavc2mn583050i6hp91ukcc4o87f2t2.apps.googleusercontent.com',
+  webClientId: OAUTH_WEB_CLIENT_ID,
+  iosClientId: IOS_CLIENT_ID,
   offlineAccess: false,
   scopes: ['profile', 'email'],
 });
@@ -73,6 +72,8 @@ export function useGoogleSignIn() {
         credential,
       );
       const { uid = "", displayName = "", email = "" } = fbUser || {}
+      console.log({ uid, displayName, email });
+
       setUser({
         uid: uid,
         name: displayName,

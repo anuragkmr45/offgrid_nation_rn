@@ -3,6 +3,7 @@
 import { Dimensions } from 'react-native'
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window')
 
+export const APP_NAME: string = "Offgrid Nation"
 export const APP_LOGO_BLACK: string = "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png"
 export const APP_LOGO_WHITE: string = "https://res.cloudinary.com/dkwptotbs/image/upload/v1749901306/fr-bg-white_hea7pb.png"
 export const AVATAR_FALLBACK: string = "https://res.cloudinary.com/dtxm0dakw/image/upload/v1744723246/r3hsrs6dnpr53idcjtc5.png"

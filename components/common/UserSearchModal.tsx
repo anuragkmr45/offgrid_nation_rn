@@ -1,9 +1,9 @@
 // components/common/UserSearchModal.tsx
-import { useSearchUsersQuery } from '@/features/chat/api/chatApi'
+import { useChat } from '@/features/chat/hooks/useChat'
 import { debounce } from '@/utils/debounce'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { StyleSheet, View } from 'react-native'
-import { SearchBar } from '.'
+import { StyleSheet, Text, View } from 'react-native'
+import { Loader, SearchBar } from '.'
 import { theme } from '../../constants/theme'
 import { ChatUser, UserCard } from '../chat/UserCard'
 import { BottomSheet } from './BottomSheet'
@@ -24,13 +24,9 @@ export const UserSearchModal: React.FC<UserSearchModalProps> = ({
   height = '60%',
 }) => {
   const [input, setInput] = useState('')
-  const [search, setSearch] = useState('')
 
-  // debounce updating the actual `search` term
-  const debounced = useMemo(
-    () => debounce((val: string) => setSearch(val), 300),
-    []
-  )
+  const { users, userSearchLoading, userSearchError, setSearchTerm } = useChat()
+  const debounced = useMemo(() => debounce((val: string) => setSearchTerm(val.trim()), 300), [setSearchTerm])
 
   useEffect(() => {
     return () => {
@@ -43,10 +39,6 @@ export const UserSearchModal: React.FC<UserSearchModalProps> = ({
     debounced(val.trim())
   }, [debounced])
 
-  const { data: users = [] } = useSearchUsersQuery(search, {
-    skip: search.length === 0,
-  })
-
   return (
     <BottomSheet visible={visible} onClose={onClose} height={height}>
       <SearchBar
@@ -56,11 +48,18 @@ export const UserSearchModal: React.FC<UserSearchModalProps> = ({
         style={styles.search}
       />
 
-      <View style={styles.list}>
-        {users.map(u => (
-          <UserCard key={u._id} user={u} onPress={onSelect} />
-        ))}
-      </View>
+      {userSearchError ? (
+        <Text style={styles.errorText}>Something went wrong — pull to retry</Text>
+      ) : userSearchLoading ? (
+        <Loader />
+      ) : (
+        <View style={styles.list}>
+          {users.map(u => (
+            <UserCard key={u._id} user={u} onPress={onSelect} />
+          ))}
+        </View>
+      )
+      }
     </BottomSheet>
   )
 }
@@ -74,5 +73,9 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingHorizontal: 12,
+  },
+  errorText: {
+    color: 'crimson',
+    fontSize: 14,
   },
 })
