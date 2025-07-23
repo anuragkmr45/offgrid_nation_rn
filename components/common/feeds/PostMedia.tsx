@@ -1,6 +1,5 @@
-// components/common/PostMedia.tsx
-
 import { isVideo } from '@/utils/mediaHelpers'
+import { useAutoMediaPlayback } from '@/utils/useAutoMediaPlayback'
 import { ResizeMode, Video } from 'expo-av'
 import React from 'react'
 import {
@@ -24,16 +23,19 @@ export const PostMedia: React.FC<PostMediaProps> = ({
   style,
   resizeMode = ResizeMode.COVER,
 }) => {
+  const { mediaRef } = useAutoMediaPlayback(mediaUrl, isActive)
+
   if (isVideo(mediaUrl)) {
     return (
       <Video
+        ref={mediaRef}
         source={{ uri: mediaUrl }}
         style={[styles.media, style as StyleProp<ViewStyle>]}
         resizeMode={resizeMode}
         useNativeControls={false}
-        shouldPlay={isActive}
-        isMuted={!isActive}
         isLooping
+        isMuted={!isActive}
+        shouldPlay={false} // controlled by hook
       />
     )
   }

@@ -1,146 +1,15 @@
-// import { theme } from '@/constants/theme'
-// import React, { useState } from 'react'
-// import {
-//   Dimensions,
-//   FlatList,
-//   StyleSheet,
-//   Text,
-//   TouchableOpacity,
-//   View,
-// } from 'react-native'
-// import { PostMedia } from '../common/feeds/PostMedia'
-// import { PostPreviewModal } from '../modals/PostPreviewModal'
-
-// interface Post {
-//   id: string
-//   media: string[]
-//   content: string
-// }
-
-// interface Props {
-//   data: Post[]
-//   onPostPress: (id: string) => void
-// }
-
-// export const PostsGrid: React.FC<Props> = ({ data, onPostPress }) => {
-//   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
-//   const [modalVisible, setModalVisible] = useState(false)
-
-//   if (data.length === 0) {
-//     return (
-//       <View style={{ flex: 1, backgroundColor: theme.colors.primary }}>
-//         <Text style={styles.empty}>No posts yet.</Text>
-//       </View>
-//     )
-//   }
-
-//   const numCols = 2
-//   const size = (Dimensions.get('window').width - 48) / numCols
-
-//   const openModal = (post: Post) => {
-//     setSelectedPost(post)
-//     setModalVisible(true)
-//   }
-
-//   const closeModal = () => {
-//     setModalVisible(false)
-//     setSelectedPost(null)
-//   }
-
-//   return (
-//     <View style={{ flex: 1, backgroundColor: theme.colors.primary }}>
-//       <FlatList
-//         data={data}
-//         keyExtractor={(item, index) => item.id?.toString() || `fallback-key-${index}`}
-//         numColumns={numCols}
-//         contentContainerStyle={styles.grid}
-//         renderItem={({ item }) => {
-//           const hasMedia = item.media?.length > 0 && typeof item.media[0] === 'string'
-
-//           return (
-//             <TouchableOpacity
-//               style={styles.card}
-//               onPress={() => openModal(item)}
-//               activeOpacity={0.8}
-//             >
-//               {hasMedia ? (
-//                 <PostMedia
-//                   mediaUrl={item.media[0]}
-//                   isActive={false}
-//                   style={[styles.image, { width: size, height: size }]}
-//                 />
-//               ) : (
-//                 <View
-//                   style={[
-//                     styles.textOnlyPlaceholder,
-//                     { width: size, height: size },
-//                   ]}
-//                 >
-//                   <Text style={styles.caption}>
-//                     {item.content || 'No content'}
-//                   </Text>
-//                 </View>
-//               )}
-//             </TouchableOpacity>
-//           )
-//         }}
-
-//       />
-//       <PostPreviewModal
-//         visible={modalVisible}
-//         onClose={closeModal}
-//         post={selectedPost}
-//       />
-//     </View>
-//   )
-// }
-
-// const styles = StyleSheet.create({
-//   empty: {
-//     textAlign: 'center',
-//     marginTop: 32,
-//     color: theme.colors.background,
-//   },
-//   grid: {
-//     paddingHorizontal: 16,
-//   },
-//   card: {
-//     margin: 8,
-//     flexDirection: 'column',
-//     alignItems: 'flex-start',
-//   },
-//   image: {
-//     borderRadius: theme.borderRadius,
-//     resizeMode: 'cover',
-//   },
-//   caption: {
-//     marginTop: 6,
-//     color: theme.colors.background,
-//     fontSize: 14,
-//     flexWrap: 'wrap',
-//     fontWeight: '500',
-//   },
-//   textOnlyPlaceholder: {
-//     borderRadius: theme.borderRadius,
-//     backgroundColor: theme.colors.textSecondary,
-//     justifyContent: 'center',
-//     alignItems: 'center',
-//     padding: 8,
-//   },
-// })
-
 // components/post/PostsGrid.tsx
 
-import { PostCard, PostType } from '@/components/common/feeds/PostCard'
-import { theme } from '@/constants/theme'
-import React from 'react'
+import { PostCard, PostType } from '@/components/common/feeds/PostCard';
+import { theme } from '@/constants/theme';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
   StyleSheet,
   View,
-  ViewStyle
-} from 'react-native'
+  ViewStyle, ViewToken
+} from 'react-native';
 
 interface Post {
   _id: string
@@ -172,8 +41,19 @@ export const PostsGrid: React.FC<Props> = ({
   username,
   avatarUrl
 }) => {
+  const [visibleIds, setVisibleIds] = useState<string[]>([])
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const ids = viewableItems.map((v) => v.item._id)
+    setVisibleIds(ids)
+  }).current
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current
+
   const renderItem = ({ item }: { item: Post }) => {
-    
+    const isVisible = visibleIds.includes(item._id);
     // shape it into your PostType for PostCard
     const post: PostType = {
       postId: item._id,
@@ -190,7 +70,7 @@ export const PostsGrid: React.FC<Props> = ({
     }
 
     return (
-        <PostCard post={post} />
+      <PostCard post={post} isVisible={isVisible} />
     )
   }
 
@@ -210,7 +90,8 @@ export const PostsGrid: React.FC<Props> = ({
             <ActivityIndicator color={theme.colors.primary} />
           </View>
         ) : null
-      }
+      } onViewableItemsChanged={onViewableItemsChanged}
+      viewabilityConfig={viewabilityConfig}
     />
   )
 }
