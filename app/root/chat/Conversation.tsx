@@ -15,7 +15,6 @@ export default function ChatPage() {
     recipientName?: string;
     profilePicture?: string;
   }>();
-  console.log({ recipientId, recipientName, profilePicture });
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>

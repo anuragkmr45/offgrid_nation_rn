@@ -2,6 +2,8 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from 'expo-crypto';
 import { getAuth, OAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth';
 import { useState } from 'react';
+import { Platform } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 export function useAppleSignIn() {
     const [userData, setUserData] = useState<{
@@ -12,6 +14,11 @@ export function useAppleSignIn() {
     const [isLoading, setIsLoading] = useState(false);
 
     const signIn = async () => {
+        if (Platform.OS !== 'ios' || !(await AppleAuthentication.isAvailableAsync())) {
+            Toast.show({ type: 'info', text1: "'Apple Sign-In is not available on this device" })
+            return;
+        }
+
         setIsLoading(true)
         try {
             // 1. Generate nonces
@@ -47,14 +54,14 @@ export function useAppleSignIn() {
                 name: displayName || fullName?.familyName || '',
                 email: emailFromUserCred || email || '',
             });
-        } catch (err) {
-            if ((err as any).code === 'ERR_REQUEST_CANCELED') {
+        } catch (err: any) {
+            if (err.code === 'ERR_REQUEST_CANCELED') {
                 return
             } else {
                 console.error('Apple sign-in error:', err);
             }
         } finally {
-            setIsLoading(true)
+            setIsLoading(false)
         }
     };
 

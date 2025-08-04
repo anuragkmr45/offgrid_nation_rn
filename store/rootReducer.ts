@@ -5,6 +5,7 @@ import { chatApi } from '@/features/chat/api/chatApi'
 import { commentApi } from '@/features/content/comment/api/commentApi'
 import { feedApi } from '@/features/content/feed/api/feedApi'
 import { postApi } from '@/features/content/post/api/postApi'
+import { appLinksApi } from '@/features/general/api/appLinksApi'
 import { listApi } from '@/features/list/api/listApi'
 import { notificationsApi } from '@/features/notifications/api/notificationsApi'
 import { productsApi } from '@/features/products/api/productsApi'
@@ -26,6 +27,7 @@ export const rootReducer = combineReducers({
   [feedApi.reducerPath]: feedApi.reducer,
   [productsApi.reducerPath]: productsApi.reducer,
   [chatApi.reducerPath]: chatApi.reducer,
+  [appLinksApi.reducerPath]: appLinksApi.reducer,
 })
 
 export type RootState = ReturnType<typeof rootReducer>

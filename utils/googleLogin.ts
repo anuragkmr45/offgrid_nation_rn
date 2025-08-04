@@ -72,7 +72,6 @@ export function useGoogleSignIn() {
         credential,
       );
       const { uid = "", displayName = "", email = "" } = fbUser || {}
-      console.log({ uid, displayName, email });
 
       setUser({
         uid: uid,

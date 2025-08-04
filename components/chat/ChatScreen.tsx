@@ -19,8 +19,8 @@ function isValidConvo(raw: any): raw is {
     username: string
     _id: string
   }
-  lastMessage: {
-    actionType: 'text' | 'media' | 'link'
+  lastMessage?: {
+    actionType?: string
     text?: string
   }
   updatedAt: string
@@ -37,15 +37,15 @@ function isValidConvo(raw: any): raw is {
     return false
   }
 
-  const lm = raw.lastMessage
-  if (!lm || !['text', 'media', 'link'].includes(lm.actionType)) return false
-  if (lm.actionType === 'text' && typeof lm.text !== 'string') return false
+  // `lastMessage` is optional now
+  if (raw.lastMessage && typeof raw.lastMessage !== 'object') return false
 
   if (typeof raw.updatedAt !== 'string') return false
   if (typeof raw.unreadCount !== 'number') return false
 
   return true
 }
+
 
 export const ChatScreen: React.FC = () => {
   const [search, setSearch] = useState('')
@@ -76,12 +76,16 @@ export const ChatScreen: React.FC = () => {
         name,
         username,
         recipientId,
-        lastMessage:
-          lastMessage.actionType === 'text'
+        lastMessage: !lastMessage
+          ? 'No messages yet'
+          : lastMessage.actionType === 'text'
             ? lastMessage.text!
             : lastMessage.actionType === 'media'
               ? '📷 Media'
-              : '🔗 Shared post',
+              : lastMessage.actionType === 'post'
+                ? '🔗 Shared post'
+                : '📎 New content',
+
         timestamp: new Date(updatedAt).toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
@@ -107,7 +111,7 @@ export const ChatScreen: React.FC = () => {
   // navigate into conversation
   const onPress = useCallback((item: ChatListData) => {
     const { recipientId, name, username, avatarUrl } = item || {};
-    
+
     if (recipientId.length !== 0) {
       router.push({
         pathname: '/root/chat/Conversation',
@@ -118,7 +122,7 @@ export const ChatScreen: React.FC = () => {
         },
       })
     } else {
-      Toast.show({type: 'error', text1: 'Unable to open chat'})
+      Toast.show({ type: 'error', text1: 'Unable to open chat' })
     }
   }, [router])
 

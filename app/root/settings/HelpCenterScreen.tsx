@@ -85,7 +85,6 @@ const HelpCenterScreen: React.FC = () => {
                 user
             }
             // TODO: call your API with payload + auth token
-            console.log('Submitting help ticket:', payload)
             // const res = fetch('')
             timerRef.current = setTimeout(() => {
                 setIsloading(true)

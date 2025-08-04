@@ -4,6 +4,7 @@ import { chatApi } from '@/features/chat/api/chatApi'
 import { commentApi } from '@/features/content/comment/api/commentApi'
 import { feedApi } from '@/features/content/feed/api/feedApi'
 import { postApi } from '@/features/content/post/api/postApi'
+import { appLinksApi } from '@/features/general/api/appLinksApi'
 import { listApi } from '@/features/list/api/listApi'
 import { notificationsApi } from '@/features/notifications/api/notificationsApi'
 import { productsApi } from '@/features/products/api/productsApi'
@@ -40,7 +41,8 @@ export const store = configureStore({
       .concat(commentApi.middleware)
       .concat(feedApi.middleware)
       .concat(productsApi.middleware)
-      .concat(chatApi.middleware),
+      .concat(chatApi.middleware)
+      .concat(appLinksApi.middleware),
   devTools: process.env.NODE_ENV !== 'production',
 })
 

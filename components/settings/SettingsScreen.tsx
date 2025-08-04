@@ -3,6 +3,7 @@
 import { SearchBar } from '@/components/common'
 import { theme } from '@/constants/theme'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useShareApp } from '@/features/general/hooks/useShareApp '
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useMemo, useState } from 'react'
@@ -13,7 +14,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
@@ -24,6 +25,7 @@ export const SettingsScreen: React.FC = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const router = useRouter()
   const { logout } = useAuth()
+  const { share: handleShareApp, isFetching: shareLoading } = useShareApp();
 
   const allItems = useMemo(() => [
     {
@@ -38,7 +40,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'shield-outline' as const,
       title: 'Privacy',
       subtitle: 'Blocked accounts, Account privacy',
-      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
+      onPress: () => { Toast.show({ type: "info", text1: "COMMING SOON" }) },
     },
     {
       key: 'weather_details',
@@ -59,7 +61,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'globe-outline' as const,
       title: 'App Language',
       subtitle: `English (device's language)`,
-      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
+      onPress: () => { Toast.show({ type: "info", text1: "COMMING SOON" }) },
     },
     {
       key: 'help',
@@ -72,7 +74,7 @@ export const SettingsScreen: React.FC = () => {
       key: 'invite',
       icon: 'people-outline' as const,
       title: 'Invite Friends',
-      onPress: () => console.log('Invite Friends'),
+      onPress: handleShareApp,
     },
     {
       key: 'logout',

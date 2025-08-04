@@ -52,7 +52,7 @@ export const ProfileHeader: React.FC<Props> = ({
   }
 
   return (
-    <View>
+    <View style={{marginBottom:10}}>
       <View style={styles.container}>
         <View style={styles.left}>
           {/* Full name */}
@@ -84,14 +84,14 @@ export const ProfileHeader: React.FC<Props> = ({
           {/* Bio */}
           {bio && (
             <>
-              {/* <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}> */}
-              <Text style={styles.bio}>{displayedBio}</Text>
-              {bio.length > 50 && (
-                <Text style={styles.readMore}>
-                  {showFullBio ? 'Read less' : 'Read more'}
-                </Text>
-              )}
-              {/* </TouchableOpacity> */}
+              <TouchableOpacity onPress={() => setShowFullBio(!showFullBio)}>
+                <Text style={styles.bio}>{displayedBio}</Text>
+                {bio.length > 50 && (
+                  <Text style={styles.readMore}>
+                    {showFullBio ? 'Read less' : 'Read more'}
+                  </Text>
+                )}
+              </TouchableOpacity>
             </>
           )}
         </View>
@@ -117,7 +117,7 @@ export const ProfileHeader: React.FC<Props> = ({
         <FollowUnfollowButton handle={username} isFollowing={isFollowing || false} buttonStyle={{ width: '45%', height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 10 }} />
         <Button onPress={handleMsg} text='Message' textColor={theme.colors.background} debounce icon={''} style={{ borderWidth: 1, borderColor: theme.colors.background, width: '45%', borderRadius: 10 }} />
       </View> :
-        <Button disabled={!isEditable} onPress={() => onFieldEdit('fullName')} text='Edit Profile' textColor={theme.colors.background} debounce icon={''} style={{ borderWidth: 1, borderColor: theme.colors.background, width: '85%', borderRadius: 10, alignSelf: 'center' }} />
+        <Button disabled={!isEditable} onPress={() => onFieldEdit('fullName')} text='Edit Profile' textColor={theme.colors.background} debounce icon={''} style={{ borderWidth: 1, borderColor: theme.colors.background, width: '85%', height: 40, borderRadius: 10, alignSelf: 'center' }} />
       }
 
       <CustomModal
