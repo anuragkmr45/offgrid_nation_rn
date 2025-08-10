@@ -42,26 +42,34 @@ export default function LoginScreen() {
   const passwordError = validateLoginPassword(password)
   const isValid = !identifierError && !passwordError
 
-  const ensurePolicyAccepted = () => {
-    if (!isPrivacyChecked) {
-      Toast.show({
-        type: 'success',
-        text1: 'Accept Privacy policy',
-      });
-      return false;
-    }
-    return true;
-  };
-
   const handleLogin = async () => {
-    if (!ensurePolicyAccepted()) return;
     try {
-      await login({ loginId: identifier.trim().toLowerCase(), password: password.trim() });
-      Toast.show({
-        type: 'success',
-        text1: 'Login Successful 🎉',
-      });
-      router.replace('/root/feed');
+      if (isPrivacyChecked === false) {
+        Toast.show({
+          type: 'info',
+          text1: 'Need to accept Privacy policy.',
+        });
+        return;
+      } else if (isPrivacyChecked === true && isValid === true) {
+        await login({ loginId: identifier.trim().toLowerCase(), password: password.trim() });
+        Toast.show({
+          type: 'success',
+          text1: 'Login Successful 🎉',
+        });
+        router.replace('/root/feed');
+      } else if (isValid === false) {
+        Toast.show({
+          type: 'error',
+          text1: 'Empty username or password',
+        });
+      }
+      else {
+        Toast.show({
+          type: 'error',
+          text1: 'Something went wrong !! try again later.',
+        });
+        return;
+      }
     } catch (err: any) {
       const errorMessage = err?.data?.message || 'Login failed, please try again.';
       Toast.show({
@@ -131,8 +139,8 @@ export default function LoginScreen() {
             text="Log In"
             onPress={handleLogin}
             loading={isLoginLoading}
-            disabled={!isPrivacyChecked || !isValid}
-            style={styles.loginButton}
+            // disabled={!isPrivacyChecked || !isValid}
+            style={[styles.loginButton, { opacity: !isPrivacyChecked || isValid ? 0.8 : 1, },]}
             textColor={theme.colors.primary}
           />
           <View style={styles.dividerContainer}>
@@ -145,11 +153,23 @@ export default function LoginScreen() {
             icon={GOOGLE_ICON}
             text="Continue with Google"
             onPress={() => {
-              if (!ensurePolicyAccepted()) return;
+              if (!isPrivacyChecked || googleAuthLoading) {
+                Toast.show({
+                  type: 'info',
+                  text1: 'Need to accept Privacy policy.',
+                });
+                return;
+              }
               googleSignIn();
             }}
-            style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
-            disabled={!isPrivacyChecked || googleAuthLoading}
+            style={[
+              styles.socialButton,
+              {
+                opacity: !isPrivacyChecked || googleAuthLoading ? 0.8 : 1,
+                backgroundColor: theme.colors.background,
+              },
+            ]}
+            // disabled={!isPrivacyChecked || googleAuthLoading}
             loading={googleAuthLoading}
           // override text color
           />
@@ -157,13 +177,24 @@ export default function LoginScreen() {
             icon={APPLE_ICON}
             text="Continue with Apple"
             onPress={() => {
-              if (!ensurePolicyAccepted()) return;
+              if (!isPrivacyChecked || appleAuthLoading) {
+                Toast.show({
+                  type: 'info',
+                  text1: 'Need to accept Privacy policy.',
+                });
+                return;
+              }
               appleSingin();
             }}
-            // onPress={() => { }}
-            style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
+            style={[
+              styles.socialButton,
+              {
+                opacity: !isPrivacyChecked || appleAuthLoading ? 0.8 : 1,
+                backgroundColor: theme.colors.textPrimary,
+              },
+            ]}
             textColor={theme.colors.background}
-            disabled={!isPrivacyChecked || appleAuthLoading}
+            // disabled={!isPrivacyChecked || appleAuthLoading}
             loading={appleAuthLoading}
           />
           <View style={styles.signUpContainer}>

@@ -23,8 +23,12 @@ export default {
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription: "We need your location to show nearby listings.",
-        NSLocationAlwaysAndWhenInUseUsageDescription: "We use your location even when the app is in the background.",
+        // NSLocationAlwaysAndWhenInUseUsageDescription: "We use your location even when the app is in the background.",
         UIBackgroundModes: ["location"],
+        NSCameraUsageDescription: "We need camera access to capture photos and videos for your post.",
+        NSPhotoLibraryUsageDescription: "We need access to your photos and videos to let you pick media.",
+        NSPhotoLibraryAddUsageDescription: "We save edited or compressed media back to your library (optional).",
+        NSMicrophoneUsageDescription: "We need microphone access to record audio when capturing video.",
       },
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST ?? "./GoogleService-Info.plist"
     },
@@ -46,6 +50,15 @@ export default {
       'expo-router',
       "@react-native-google-signin/google-signin",
       [
+        "expo-image-picker",
+        {
+          // (Optional) customize the permission texts shown by iOS
+          photosPermission: "Allow access to your photos and videos.",
+          cameraPermission: "Allow camera access to capture photos and videos.",
+          microphonePermission: "Allow microphone access when recording video.",
+        },
+      ],
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": `Allow Offgrid Nation to use your location.`
@@ -55,8 +68,8 @@ export default {
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "react-native",
-          "organization": "offgridnation"
+          "project": process.env.SENTRY_PROJECT,
+          "organization": process.env.SENTRY_ORG
         }
       ]
     ],

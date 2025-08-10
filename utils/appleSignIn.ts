@@ -1,6 +1,7 @@
+import { auth } from '@/firebaseConfig';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { CryptoDigestAlgorithm, digestStringAsync, randomUUID } from 'expo-crypto';
-import { getAuth, OAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth';
+import { OAuthProvider, signInWithCredential, UserCredential } from 'firebase/auth';
 import { useState } from 'react';
 import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
@@ -44,7 +45,6 @@ export function useAppleSignIn() {
                 rawNonce: rawNonce,
             });
 
-            const auth = getAuth();
             const userCred: UserCredential = await signInWithCredential(auth, firebaseCred);
 
             // 4. Extract and store user data
