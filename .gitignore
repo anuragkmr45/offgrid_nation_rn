@@ -44,3 +44,4 @@ android/
 .env.development
 .env.preview
 .env.production
+.env.local

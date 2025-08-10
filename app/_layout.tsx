@@ -13,6 +13,23 @@ import { persistor, store } from '../store/store';
 import { LogoutListener } from '@/components/common/LogoutListener';
 import { useAppSelector } from '@/store/hooks';
 import { PusherService } from '@/utils/PusherService';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://adf2d785eece60a027c09b78b1acd29c@o4509582488305664.ingest.us.sentry.io/4509815215030272',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // 1️⃣ Handle foreground notifications
 Notifications.setNotificationHandler({
@@ -102,24 +119,26 @@ function NotificationListener() {
   return null;
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   return (
-    <Provider store={store}>
-      <PersistGate
-        loading={
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" />
-          </View>
-        }
-        persistor={persistor}
-      >
-        <SafeAreaProvider>
-          <NotificationListener />
-          <Slot />
-          <Toast />
-          <LogoutListener />
-        </SafeAreaProvider>
-      </PersistGate>
-    </Provider>
+    <Sentry.ErrorBoundary>
+      <Provider store={store}>
+        <PersistGate
+          loading={
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" />
+            </View>
+          }
+          persistor={persistor}
+        >
+          <SafeAreaProvider>
+            <NotificationListener />
+            <Slot />
+            <Toast />
+            <LogoutListener />
+          </SafeAreaProvider>
+        </PersistGate>
+      </Provider>
+    </Sentry.ErrorBoundary>
   );
-}
+});

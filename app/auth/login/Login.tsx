@@ -7,6 +7,7 @@ import { useAppleSignIn } from '@/utils/appleSignIn';
 import { useGoogleSignIn } from '@/utils/googleLogin';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
+import { captureException } from '@sentry/react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -130,15 +131,15 @@ export default function LoginScreen() {
               <TouchableOpacity onPress={() => { setPrivacyModal(true) }}><Text style={{ color: theme.colors.background }}> Terms & Conditions</Text></TouchableOpacity>
             </>
           </Checkbox>
-
-          <Button
+          <Button text='Try!' onPress={() => { captureException(new Error('First error')) }} />
+          {/* <Button
             text="Log In"
             onPress={handleLogin}
             loading={isLoginLoading}
             disabled={!isPrivacyChecked || !isValid}
             style={styles.loginButton}
             textColor={theme.colors.primary}
-          />
+          /> */}
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>OR</Text>
@@ -171,7 +172,7 @@ export default function LoginScreen() {
             loading={appleAuthLoading}
           />
           <View style={styles.signUpContainer}>
-            <Text style={styles.signUpText}>Don't have an account? </Text>
+            <Text style={styles.signUpText}>Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/auth/register/SendOtp')}>
               <Text style={styles.signUpLink}> Sign Up</Text>
             </TouchableOpacity>

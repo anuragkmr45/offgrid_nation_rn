@@ -50,6 +50,14 @@ export default {
         {
           "locationAlwaysAndWhenInUsePermission": `Allow Offgrid Nation to use your location.`
         }
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "react-native",
+          "organization": "offgridnation"
+        }
       ]
     ],
     experiments: { typedRoutes: true },
@@ -62,6 +70,7 @@ export default {
       androidReleaseClientId: process.env.ANDROID_RELEASE_CLIENT_ID,
       username: process.env.APP_USERNAME,
       password: process.env.APP_PASSWORD,
+      EXPO_PUBLIC_SENTRY_DSN: process.env.EXPO_PUBLIC_SENTRY_DSN,
       googleClientId: "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com",
       "eas": {
         "projectId": "7b24be75-fffd-444e-8bb5-fb53d221c8ff"
