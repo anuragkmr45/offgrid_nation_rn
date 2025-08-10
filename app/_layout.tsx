@@ -1,6 +1,6 @@
 // app/_layout.tsx
 import * as Notifications from 'expo-notifications';
-import { Slot, useRouter } from 'expo-router';
+import { Slot, useNavigationContainerRef, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -12,23 +12,36 @@ import { persistor, store } from '../store/store';
 
 import { LogoutListener } from '@/components/common/LogoutListener';
 import { useAppSelector } from '@/store/hooks';
+import { SENTRY_DSN } from '@/utils/env';
 import { PusherService } from '@/utils/PusherService';
 import * as Sentry from '@sentry/react-native';
+import { isRunningInExpoGo } from 'expo';
+
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  // nice on real builds; skip in Expo Go
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+});
 
 Sentry.init({
-  dsn: 'https://adf2d785eece60a027c09b78b1acd29c@o4509582488305664.ingest.us.sentry.io/4509815215030272',
+  dsn: SENTRY_DSN,
+  environment: process.env.EXPO_PUBLIC_ENV ?? (__DEV__ ? 'development' : 'production'),
+  sendDefaultPii: false,
 
-  // Adds more context data to events (IP address, cookies, user, etc.)
-  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
-  sendDefaultPii: true,
+  // Performance sampling (tune as you like)
+  tracesSampleRate: __DEV__ ? 0.0 : 0.2,
 
-  // Configure Session Replay
-  replaysSessionSampleRate: 0.1,
-  replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+  // Add all your integrations here
+  integrations: [
+    navigationIntegration,
+    Sentry.mobileReplayIntegration(),
+    Sentry.feedbackIntegration(),
+  ],
 
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
+  // Better frame metrics on device builds (not in Expo Go)
+  enableNativeFramesTracking: !isRunningInExpoGo(),
+
+  // Optional: avoid sending events in dev
+  enabled: !__DEV__,
 });
 
 // 1️⃣ Handle foreground notifications
@@ -120,6 +133,12 @@ function NotificationListener() {
 }
 
 export default Sentry.wrap(function RootLayout() {
+  const ref = useNavigationContainerRef();
+  useEffect(() => {
+    if (ref) {
+      navigationIntegration.registerNavigationContainer(ref);
+    }
+  }, [ref]);
   return (
     <Sentry.ErrorBoundary>
       <Provider store={store}>

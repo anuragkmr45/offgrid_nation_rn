@@ -7,7 +7,6 @@ import { useAppleSignIn } from '@/utils/appleSignIn';
 import { useGoogleSignIn } from '@/utils/googleLogin';
 import { validateLoginPassword, validateLoginUsername } from '@/utils/validation/loginValidation';
 import { Ionicons } from '@expo/vector-icons';
-import { captureException } from '@sentry/react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -53,10 +52,6 @@ export default function LoginScreen() {
     }
     return true;
   };
-
-  const handleSocialAuth = async () => {
-
-  }
 
   const handleLogin = async () => {
     if (!ensurePolicyAccepted()) return;
@@ -131,15 +126,15 @@ export default function LoginScreen() {
               <TouchableOpacity onPress={() => { setPrivacyModal(true) }}><Text style={{ color: theme.colors.background }}> Terms & Conditions</Text></TouchableOpacity>
             </>
           </Checkbox>
-          <Button text='Try!' onPress={() => { captureException(new Error('First error')) }} />
-          {/* <Button
+          {/* <Button text='Try!' onPress={() => { captureException(new Error('First error')) }} /> */}
+          <Button
             text="Log In"
             onPress={handleLogin}
             loading={isLoginLoading}
             disabled={!isPrivacyChecked || !isValid}
             style={styles.loginButton}
             textColor={theme.colors.primary}
-          /> */}
+          />
           <View style={styles.dividerContainer}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>OR</Text>
