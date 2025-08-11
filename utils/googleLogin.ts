@@ -2,6 +2,7 @@
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   GoogleSignin,
+  isSuccessResponse,
   statusCodes
 } from '@react-native-google-signin/google-signin';
 import { useRouter } from 'expo-router';
@@ -43,13 +44,19 @@ export function useGoogleSignIn() {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
 
       const alreadySignedIn = GoogleSignin.getCurrentUser();
-      if (alreadySignedIn) {
-        await GoogleSignin.signOut();
-      }
+      if (alreadySignedIn) await GoogleSignin.signOut()
 
-      await GoogleSignin.signIn(); // GoogleUser
-      const { idToken } = await GoogleSignin.getTokens();
-      if (idToken) await firebaseSignIn(idToken);
+      // await GoogleSignin.signIn(); // GoogleUser
+      // const { idToken } = await GoogleSignin.getTokens();
+      const res = await GoogleSignin.signIn(); // { type, data }
+      if (isSuccessResponse(res)) {
+        let { idToken } = res.data || {};
+        if (!idToken) ({ idToken } = await GoogleSignin.getTokens());
+        if (idToken) await firebaseSignIn(idToken);
+      }
+      // const idToken = res?.data?.idToken ?? (await GoogleSignin.getTokens()).idToken;
+
+      // if (idToken) await firebaseSignIn(idToken);
     } catch (err: any) {
       if (err.code === statusCodes.SIGN_IN_CANCELLED) return;            // user cancelled
       if (err.code === statusCodes.IN_PROGRESS) return;                  // already running

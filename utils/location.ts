@@ -30,7 +30,7 @@ async function promptToEnableGPS(): Promise<void> {
   if (Platform.OS === 'android') {
     try {
       // Native “Turn on location” dialog (high-accuracy mode) – Android only
-      await Location.enableNetworkProviderAsync(); // shows system sheet :contentReference[oaicite:0]{index=0}
+      await Location.enableNetworkProviderAsync();
     } catch {
       // Fallback: open Settings
       Alert.alert(
@@ -44,11 +44,13 @@ async function promptToEnableGPS(): Promise<void> {
     }
   } else {
     // iOS offers no programmatic GPS prompt; we can only explain & open Settings
-    // Apple disallows switching Location Services via code :contentReference[oaicite:1]{index=1}
     Alert.alert(
       'Enable Location Services',
       'Please enable Location Services from Settings ▸ Privacy ▸ Location Services.',
-      [{ text: 'OK' }],
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Settings', onPress: () => Linking.openSettings() },
+      ],
     );
   }
 }
@@ -60,7 +62,7 @@ async function promptToEnableGPS(): Promise<void> {
 export async function getCurrentPosition(): Promise<Location.LocationObject | null> {
   /* 1️⃣  Services enabled? */
   const servicesOn = await Location.hasServicesEnabledAsync();
-  if (!servicesOn) { // :contentReference[oaicite:2]{index=2}
+  if (!servicesOn) {
     await promptToEnableGPS();        // user sees native or custom dialog
     return null;                      // call again later if needed
   }
@@ -78,13 +80,17 @@ export async function getCurrentPosition(): Promise<Location.LocationObject | nu
   }
   if (status !== Location.PermissionStatus.GRANTED) return null;
 
-  const last = await Location.getLastKnownPositionAsync();
+  const last = await Location.getLastKnownPositionAsync({
+    maxAge: 5 * 60_000,       // <= 5min old
+    requiredAccuracy: 100,    // meters
+  });
   if (last) return last;
-  
+
   /* 3️⃣  Fetch location */
   try {
     return await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
+      accuracy: Platform.OS === 'ios' ? Location.Accuracy.Highest : Location.Accuracy.High,
+      mayShowUserSettingsDialog: true,
     });
   } catch {
     return null; // network off, indoor, etc.
@@ -105,6 +111,11 @@ export async function getReadableLocation(
   longitude: number,
 ): Promise<string | null> {
   try {
+    const perm = await Location.getForegroundPermissionsAsync();
+    if (perm.status !== Location.PermissionStatus.GRANTED) {
+      const res = await Location.requestForegroundPermissionsAsync();
+      if (res.status !== Location.PermissionStatus.GRANTED) return null;
+    }
     const [place] = await Location.reverseGeocodeAsync({ latitude, longitude });
     const city = place.city ?? place.subregion ?? '';
     const country = place.country ?? '';

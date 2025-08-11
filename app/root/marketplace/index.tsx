@@ -67,7 +67,7 @@ export default function MarketplaceScreen() {
 
   const fetchData = async (query?: string, categoryId?: string) => {
     try {
-      const granted = await requestLocationPermission()
+      const granted: boolean = await requestLocationPermission()
       if (!granted) return
 
       let formatted: string | null = null

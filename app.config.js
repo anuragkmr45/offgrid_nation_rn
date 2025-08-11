@@ -1,7 +1,6 @@
 // app.config.js
 import 'dotenv/config';
 
-
 export default {
   expo: {
     updates: {
@@ -13,6 +12,8 @@ export default {
     name: 'Offgrid Nation',
     slug: 'offgrid-nation',
     scheme: 'offgridnation',
+    description: "",
+    owner: "com.anuragkmr45",
     version: '1.0.0',
     orientation: 'portrait',
     icon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
@@ -24,13 +25,14 @@ export default {
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription: "We need your location to show nearby listings.",
         // NSLocationAlwaysAndWhenInUseUsageDescription: "We use your location even when the app is in the background.",
-        UIBackgroundModes: ["location"],
+        // UIBackgroundModes: ["location"],
         NSCameraUsageDescription: "We need camera access to capture photos and videos for your post.",
         NSPhotoLibraryUsageDescription: "We need access to your photos and videos to let you pick media.",
         NSPhotoLibraryAddUsageDescription: "We save edited or compressed media back to your library (optional).",
         NSMicrophoneUsageDescription: "We need microphone access to record audio when capturing video.",
       },
-      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST ?? "./GoogleService-Info.plist"
+      googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST ?? "./GoogleService-Info.plist",
+      usesAppleSignIn: true
     },
     android: {
       package: "com.anuragkmr45.offgridnation",
@@ -49,19 +51,23 @@ export default {
     plugins: [
       'expo-router',
       "@react-native-google-signin/google-signin",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {
           // (Optional) customize the permission texts shown by iOS
-          photosPermission: "Allow access to your photos and videos.",
-          cameraPermission: "Allow camera access to capture photos and videos.",
-          microphonePermission: "Allow microphone access when recording video.",
+          photosPermission: 'Allow Offgrid Nation acess to your photos and videos.',
+          cameraPermission: 'Allow Offgrid Nation camera access to capture photos and videos.',
+          microphonePermission: 'Allow Offgrid Nation microphone access when recording video.',
         },
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": `Allow Offgrid Nation to use your location.`
+          // "locationAlwaysAndWhenInUsePermission": `Allow Offgrid Nation to use your location.`
+          locationAlwaysAndWhenInUsePermission: 'Allow Offgrid Nation to use your location.',
+          locationWhenInUsePermission: 'Allow Offgrid Nation to access your location while using the app.',
+          isIosBackgroundLocationEnabled: false
         }
       ],
       [

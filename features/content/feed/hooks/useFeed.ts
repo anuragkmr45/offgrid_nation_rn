@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useGetFeedQuery } from '../api/feedApi';
 export function useFeed() {
   const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const feedQuery = useGetFeedQuery({ limit: 20, cursor });
+  const feedQuery = useGetFeedQuery({ limit: 6, cursor });
   return {
     posts: feedQuery.data?.posts ?? [],
     isLoading: feedQuery.isLoading,
