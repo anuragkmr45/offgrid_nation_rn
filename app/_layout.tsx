@@ -2,7 +2,7 @@
 import * as Notifications from 'expo-notifications';
 import { Slot, useNavigationContainerRef, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -153,7 +153,16 @@ export default Sentry.wrap(function RootLayout() {
           <SafeAreaProvider>
             <NotificationListener />
             <Slot />
-            <Toast />
+            <Toast
+              position="top"
+              topOffset={
+                Platform.select({
+                  android: (StatusBar.currentHeight ?? 0) + 8,
+                  ios: 54,
+                  default: 24,
+                }) as number
+              }
+            /> 
             <LogoutListener />
           </SafeAreaProvider>
         </PersistGate>

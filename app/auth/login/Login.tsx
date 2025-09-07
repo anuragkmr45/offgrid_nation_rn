@@ -1,5 +1,5 @@
 import { Button, Checkbox, InputField } from '@/components/common';
-import { BottomSheet } from '@/components/common/BottomSheet';
+import { PrivacyPolicySheet } from '@/components/common/PrivacyPolicySheet';
 import { APP_LOGO_WHITE, APPLE_ICON, GOOGLE_ICON } from '@/constants/AppConstants';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -13,12 +13,11 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -134,7 +133,7 @@ export default function LoginScreen() {
               <TouchableOpacity onPress={() => { setPrivacyModal(true) }}><Text style={{ color: theme.colors.background }}> Terms & Conditions</Text></TouchableOpacity>
             </>
           </Checkbox>
-          {/* <Button text='Try!' onPress={() => { captureException(new Error('First error')) }} /> */}
+
           <Button
             text="Log In"
             onPress={handleLogin}
@@ -205,90 +204,7 @@ export default function LoginScreen() {
           </View>
         </View>
       </View>
-      <BottomSheet
-        visible={isPrivacyModal}
-        onClose={() => setPrivacyModal(false)}
-        height="90%"
-      >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 24 }}
-        >
-          <Text style={{ color: theme.colors.textPrimary, lineHeight: 20 }}>
-            {`Thank you for choosing to be part of our community at Offgrid Nation. This Privacy Policy explains how the mobile application “offgrid nation” collects, uses, and shares information when you install and use it on an Android device.
-
-1. WHAT DATA WE COLLECT
-• Camera: photos or video frames you capture when you take a profile photo, product image, or create a post.
-• Storage / Gallery: images or videos you select from your device for listings, posts, or your profile picture.
-• Precise location (GPS latitude/longitude): fetched when you open the marketplace feed so we can show nearby products.
-• Push-notification token: a Firebase Cloud Messaging (FCM) device token created on first launch so we can send real-time chat and order notifications.
-• Account details: e-mail address, display name, optional bio.
-• User-generated content: items you list for sale, post descriptions, prices, photos.
-• Payment token (via Stripe): an encrypted identifier used to process in-app purchases; we never see your full card number.
-• Verification codes (via Twilio): one-time SMS codes if you choose phone verification.
-• Usage and crash logs: anonymised diagnostic data (device model, OS version, feature usage) collected automatically to improve stability.
-We do NOT collect your contact list, microphone audio, SMS content, or biometric identifiers.
-
-2. WHY WE COLLECT THIS DATA
-• To process payments securely and prevent fraud (Stripe).
-• To improve the app: diagnose crashes and understand which screens are most useful.
-• To personalise your experience: showing marketplace listings relevant to your location.
-• To operate core features: posting items, updating profiles, messaging, and completing purchases.
-
-3. WHO WE SHARE DATA WITH
-• Firebase (Google LLC): cloud messaging, analytics, and crash reports.
-• Pusher: delivers real-time encrypted chat messages.
-• Stripe: processes in-app payments; receives only encrypted payment tokens.
-• Twilio: sends SMS verification codes.
-• Cloud storage (AWS S3 / Firebase Storage): hosts the images and other files you upload so they can be viewed by other users.
-• Other users: see the content (photos, listings, display name, location tag) you intentionally post.
-No advertiser or data broker receives your data.
-
-4. HOW LONG WE KEEP YOUR DATA
-• Marketplace posts and images – until you delete the post or request account deletion.
-• Profile information – until you change it or request account deletion.
-• Location look-ups and notification tokens – only while your account is active.
-• Payment records (Stripe) – 7 years (required for bookkeeping).
-• Crash and usage logs – up to 24 months, then aggregated or deleted.
-
-5. YOUR CHOICES AND CONTROLS
-• Runtime permissions – Android will ask the first time we need Camera, Location, or Storage access. You may decline; the related feature will be disabled. You can change this later in System Settings → Apps → offgrid nation → Permissions.
-• Opt-out of analytics – toggle “Help us improve” in Settings.
-• Delete or export your data – e-mail us at hello@theoffgridnation.com and we will respond within 7 days.
-
-6. CHILDREN’S PRIVACY
-The app is not directed to children under 13, and we do not knowingly collect personal data from them. If you believe a child has provided us data, contact us and we will delete it promptly.
-
-7. SECURITY MEASURES
-• End-to-end encryption for private chats.
-• TLS/HTTPS on every network request.
-• AES-256 encryption for images stored on our servers.
-• Strong hashing and salting for passwords.
-• Role-based access controls for staff.
-No system is 100 % secure; please notify us immediately if you suspect unauthorised use.
-
-8. INTERNATIONAL TRANSFERS
-Our servers are located in the United States. By using the app, you consent to the transfer, storage, and processing of your information in the U.S. and any other country where we operate.
-
-9. CHANGES TO THIS POLICY
-We may update this Privacy Policy periodically. We will notify you via an in-app banner or push notification, and the new terms become effective when posted here.
-
-10. CONTACT US
-Eric / Offgrid Nation
-E-mail: hello@theoffgridnation.com
-Registered office: 131 Continental Dr, Suite 305, Newark, DE 19713, USA
-
-Offgrid Nation isn’t just a name — it’s a way of life. Built to support explorers, thinkers, and freedom seekers.
-Got feedback or ideas? Drop us a line anytime!
-
-Follow us on social media and join a growing nation of independent minds.
-Facebook  ·  X/Twitter  ·  LinkedIn  ·  Instagram  ·  YouTube  ·  Reddit
-
-© Offgridnation 2025. All Rights Reserved.`}
-          </Text>
-        </ScrollView>
-      </BottomSheet>
-
+      <PrivacyPolicySheet isPrivacyModal={isPrivacyModal} onClose={() => setPrivacyModal(false)} />
     </KeyboardAvoidingView>
   )
 }

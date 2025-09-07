@@ -11,7 +11,7 @@ import { usePremium } from '@/features/subscription/hooks/usePremium'
 import { TAB_EVENTS, TabEventEmitter } from '@/utils/TabEventEmitter'
 import { useFocusEffect, useRouter } from 'expo-router'
 import React, { useCallback, useEffect, useRef } from 'react'
-import { FlatList, StatusBar, View } from 'react-native'
+import { FlatList, Platform, StatusBar, View } from 'react-native'
 import Toast from 'react-native-toast-message'
 
 export default function PremiumScreen() {
@@ -79,9 +79,16 @@ export default function PremiumScreen() {
         <ProtectedLayout>
           <PremiumSubscribeOverlay
             onPayTap={async () => {
-              const url = await initiatePayment()
+              const url = await initiatePayment();
 
-              router.push({ pathname: '/root/premium/webview', params: { url } })
+              if (Platform.OS === "android" ) {
+                if (url) {
+                  router.push({ pathname: '/root/premium/webview', params: { url } });
+                }
+              } else {
+                // iOS: native purchase already attempted; just refresh UI
+                refetchPremiumFeed();
+              }
             }}
             isLoading={checkoutLoading}
           />

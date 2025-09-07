@@ -16,15 +16,19 @@ export const feedApi = createApi({
       }),
       serializeQueryArgs: ({ endpointName }) => endpointName,
       merge: (currentCache, newData) => {
-        if (!currentCache.posts.length) {
-          currentCache.posts = newData.posts
-        } else {
-          const seen = new Set(currentCache.posts.map(p => p._id))
-          currentCache.posts.push(
-            ...newData.posts.filter(p => !seen.has(p._id)),
-          )
+        const indexById = new Map<string, number>();
+        currentCache.posts.forEach((p, i) => indexById.set(p._id, i));
+
+        for (const np of newData.posts) {
+          const idx = indexById.get(np._id);
+          if (idx != null) {
+            currentCache.posts[idx] = { ...currentCache.posts[idx], ...np }; // replace in place
+          } else {
+            indexById.set(np._id, currentCache.posts.length);
+            currentCache.posts.push(np); // keep infinite scroll behavior
+          }
         }
-        currentCache.nextCursor = newData.nextCursor
+        currentCache.nextCursor = newData.nextCursor;
       },
       forceRefetch({ currentArg, previousArg }) {
         return currentArg?.cursor !== previousArg?.cursor

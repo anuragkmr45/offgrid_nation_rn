@@ -1,10 +1,11 @@
 // src/features/post/hooks/usePost.ts
 import { skipToken } from '@reduxjs/toolkit/query';
 import {
-    useCreatePostMutation,
-    useLazySearchPostsQuery,
-    useLikePostMutation,
-    useListPostsByUsernameQuery,
+  useCreatePostMutation,
+  useLazySearchPostsQuery,
+  useLikePostMutation,
+  useListPostsByUsernameQuery,
+  useReportPostOrCommentMutation,
 } from '../api/postApi';
 
 export function usePost(username?: string) {
@@ -15,7 +16,7 @@ export function usePost(username?: string) {
   );
 
   const [likePost] = useLikePostMutation();
-
+  const [reportPostOrComment, reportStatus] = useReportPostOrCommentMutation();
   // Lazy search hook
   const [triggerSearch, searchResult] = useLazySearchPostsQuery();
 
@@ -32,6 +33,10 @@ export function usePost(username?: string) {
 
     // Like
     likePost,
+    
+    // Report
+    reportPostOrComment,
+    reportStatus,
 
     // Search
     search: (q: string, cursor?: string) =>

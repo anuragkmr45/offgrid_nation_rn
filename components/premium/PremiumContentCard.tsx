@@ -1,17 +1,22 @@
+// components/premium/PremiumContentCard.tsx
 import { Button } from '@/components/common'
 import { theme } from '@/constants/theme'
+import { getCustomerInfo } from '@/utils/purchases'
 import { LinearGradient } from 'expo-linear-gradient'
 import React from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { Linking, Platform, StyleSheet, Text, View } from 'react-native'
 
 export interface PremiumContentCardProps {
   onPayTap: () => void
   isLoading: boolean
+  /** iOS only: pass the restore handler from usePremium() */
+  restore?: () => void
 }
 
 export const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
   onPayTap,
   isLoading,
+  restore,
 }) => (
   <LinearGradient
     colors={['#FE8235', '#F93B63']}
@@ -54,6 +59,26 @@ export const PremiumContentCard: React.FC<PremiumContentCardProps> = ({
       style={styles.button}
       textColor={theme.colors.textPrimary}
     />
+
+    {Platform.OS === 'ios' && (
+      <>
+        {restore && (
+          <Button
+            text="Restore Purchases"
+            onPress={restore}
+            style={{ marginTop: 10 }}
+          />
+        )}
+        <Button
+          text="Manage Subscription"
+          onPress={async () => {
+            const info = await getCustomerInfo()
+            if (info.managementURL) Linking.openURL(info.managementURL)
+          }}
+          style={{ marginTop: 10 }}
+        />
+      </>
+    )}
   </LinearGradient>
 )
 

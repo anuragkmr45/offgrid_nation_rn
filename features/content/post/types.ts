@@ -23,13 +23,11 @@ export interface CreatePostRequest {
 export type CreatePostResponse = Post;
 
 export interface ListPostsByUsernameResponse {
-  posts: Array<
-    Post & {
+  posts: (Post & {
       likesCount: number;
       isLiked: boolean;
       isFollowing: boolean;
-    }
-  >;
+    })[];
   nextCursor?: string;
 }
 
@@ -40,13 +38,22 @@ export interface LikePostResponse {
 }
 
 export interface SearchPostsResponse {
-  posts: Array<
-    Pick<Post, '_id' | 'media' | 'content' | 'location' | 'commentsCount' | 'createdAt' | 'updatedAt'> & {
+  posts: (Pick<Post, '_id' | 'media' | 'content' | 'location' | 'commentsCount' | 'createdAt' | 'updatedAt'> & {
       userId: { _id: string; username: string; fullName: string; profilePicture: string };
       likesCount: number;
       isLiked: boolean;
       isFollowing: boolean;
-    }
-  >;
+    })[];
   nextCursor?: string;
+}
+
+export interface CreateReportRequest {
+  postId: string;
+  /** optional; send empty string "" if reporting a post only */
+  commentId?: string;
+  reason: string; // e.g. "Sexual content"
+}
+
+export interface CreateReportResponse {
+  message: string; // server acknowledgement
 }

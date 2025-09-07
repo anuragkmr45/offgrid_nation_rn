@@ -133,7 +133,7 @@ export default function ProductDetailsScreen() {
           <MediaCarousel mediaUrls={product.images} />
 
           <View style={styles.infoWrapper}>
-            <ProductDetailsInfo product={product} />
+            <ProductDetailsInfo product={product} isSelf={product?.owner?._id !== currentUser?._id} />
           </View>
         </ScrollView>
         {product?.owner?._id !== currentUser?._id && (

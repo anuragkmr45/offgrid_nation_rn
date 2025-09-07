@@ -13,3 +13,4 @@ export const FIREBASE_STORAGE_BUCKET = process.env.EXPO_PUBLIC_FIREBASE_STORAGE!
 export const FIREBASE_SENDER_ID = process.env.EXPO_PUBLIC_FIREBASE_SENDER_ID!;
 export const FIREBASE_APP_ID = process.env.EXPO_PUBLIC_FIREBASE_APP_ID!;
 export const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN!;
+export const RC_IOS_PUBLIC_KEY = process.env.EXPO_PUBLIC_RC_IOS_KEY!;

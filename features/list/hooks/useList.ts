@@ -1,8 +1,9 @@
 // src/features/list/hooks/useList.ts
 import {
-    useGetFollowersQuery,
-    useGetFollowingQuery,
-    useSearchUsersQuery,
+  useGetBlockedQuery,
+  useGetFollowersQuery,
+  useGetFollowingQuery,
+  useSearchUsersQuery,
 } from '../api/listApi';
 
 export const useFollowers = (username: string) => {
@@ -49,6 +50,18 @@ export const useSearchUsers = (query: string) => {
 
   return {
     users: data?.users ?? [],
+    isLoading,
+    error,
+    refetch,
+  };
+};
+
+export const useBlocked = () => {
+  const { data, error, isLoading, refetch } = useGetBlockedQuery();
+
+  return {
+    blocked: data?.blocked ?? [],
+    count: data?.count ?? 0,
     isLoading,
     error,
     refetch,

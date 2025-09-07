@@ -1,7 +1,7 @@
 // src/features/profile/api/profileApi.ts
 import { baseQueryWithLogoutOn401 } from '@/core/api/baseQueryWithLogoutOn401';
 import { createApi } from '@reduxjs/toolkit/query/react';
-import type { UpdateProfilePayload, UserProfile } from '../types';
+import type { DeleteAccountPathParams, DeleteAccountResponse, UpdateProfilePayload, UserProfile } from '../types';
 
 export const profileApi = createApi({
   reducerPath: 'profileApi',
@@ -37,6 +37,13 @@ export const profileApi = createApi({
       }),
       invalidatesTags: ['Profile'],
     }),
+    deleteAccount: build.mutation<DeleteAccountResponse, DeleteAccountPathParams>({
+      query: ({ id }) => ({
+        url: `/user/delete/${encodeURIComponent(id)}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['Profile'],
+    }),
   }),
 })
 
@@ -45,4 +52,5 @@ export const {
   useGetUserProfileQuery,
   useUpdateProfileMutation,
   useUploadProfilePictureMutation,
+  useDeleteAccountMutation,
 } = profileApi

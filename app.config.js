@@ -4,32 +4,28 @@ import 'dotenv/config';
 export default {
   expo: {
     updates: {
-      url: 'https://u.expo.dev/7b24be75-fffd-444e-8bb5-fb53d221c8ff',  // ← same projectId as in extra.eas
+      url: 'https://u.expo.dev/7b24be75-fffd-444e-8bb5-fb53d221c8ff',
     },
     runtimeVersion: {
-      policy: 'appVersion',  // ties native build to expo.version (good default)
+      policy: 'appVersion',
     },
     name: 'Offgrid Nation',
     slug: 'offgrid-nation',
     scheme: 'offgridnation',
-    description: "",
-    owner: "com.anuragkmr45",
+    description: "A smart community-driven app that blends social networking, real-time alerts, and a peer-powered marketplace - all in one",
+    owner: "anuragkmr_45",
     version: '1.0.0',
     orientation: 'portrait',
-    icon: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
+    icon: './assets/icons/fr-bg-black_rwqtim.png',
     userInterfaceStyle: 'automatic',
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.anuragkmr45.offgridnation",
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
-        NSLocationWhenInUseUsageDescription: "We need your location to show nearby listings.",
-        // NSLocationAlwaysAndWhenInUseUsageDescription: "We use your location even when the app is in the background.",
-        // UIBackgroundModes: ["location"],
-        NSCameraUsageDescription: "We need camera access to capture photos and videos for your post.",
-        NSPhotoLibraryUsageDescription: "We need access to your photos and videos to let you pick media.",
-        NSPhotoLibraryAddUsageDescription: "We save edited or compressed media back to your library (optional).",
-        NSMicrophoneUsageDescription: "We need microphone access to record audio when capturing video.",
+        NSCameraUsageDescription: "Take photos and videos for posts and marketplace listings (e.g., your solar setup or gear for sale).",
+        NSPhotoLibraryUsageDescription: "Select photos and videos to attach to posts and listings (e.g., pictures of items you are selling).",
+        NSLocationWhenInUseUsageDescription: "Show nearby listings and meetups and tag posts with your location (e.g., find swap spots within 10 km).",
       },
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST ?? "./GoogleService-Info.plist",
       usesAppleSignIn: true
@@ -38,7 +34,7 @@ export default {
       package: "com.anuragkmr45.offgridnation",
       edgeToEdgeEnabled: true,
       adaptiveIcon: {
-        foregroundImage: 'https://res.cloudinary.com/dkwptotbs/image/upload/v1749901385/fr-bg-black_rwqtim.png',
+        foregroundImage: './assets/icons/fr-bg-black_rwqtim.png',
         backgroundColor: '#ffffff',
       },
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
@@ -50,16 +46,17 @@ export default {
     },
     plugins: [
       'expo-router',
-      "@react-native-google-signin/google-signin",
       "expo-apple-authentication",
+      ["@react-native-google-signin/google-signin", {
+        iosUrlScheme: "com.googleusercontent.apps.758180883916-inav2m4auqj9kt84sqc3jb3apkj8io40"
+      }],
       [
         "expo-image-picker",
         {
-          // (Optional) customize the permission texts shown by iOS
-          photosPermission: 'Allow Offgrid Nation acess to your photos and videos.',
-          cameraPermission: 'Allow Offgrid Nation camera access to capture photos and videos.',
-          microphonePermission: 'Allow Offgrid Nation microphone access when recording video.',
-        },
+          photosPermission: "Allow Offgrid Nation to select photos and videos to attach to posts and listings.",
+          cameraPermission: "Allow Offgrid Nation to take photos and videos for posts and marketplace listings.",
+          microphonePermission: "Allow Offgrid Nation to record audio while capturing video."
+        }
       ],
       [
         "expo-location",

@@ -20,3 +20,9 @@ export interface UpdateProfilePayload {
   fullName?: string
   bio?: string
 }
+
+export interface DeleteAccountPathParams {
+  id: string
+}
+
+export type DeleteAccountResponse = void

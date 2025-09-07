@@ -10,8 +10,8 @@ import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native'
 import { AccountCard } from '../search/AccountCard'
 
-export const ProductDetailsInfo: React.FC<{ product: ProductDetails }> = ({
-  product,
+export const ProductDetailsInfo: React.FC<{ product: ProductDetails, isSelf: boolean }> = ({
+  product, isSelf
 }) => {
   const [readableLocation, setReadableLocation] = useState<string | undefined>()
   const [locLoading, setLocLoading] = useState(true)
@@ -139,8 +139,14 @@ export const ProductDetailsInfo: React.FC<{ product: ProductDetails }> = ({
           </View>
         </View>
       </View>
-      <Text style={styles.sectionTitle}>Seller Details</Text>
-      <AccountCard avatarUrl={profilePicture ?? AVATAR_FALLBACK} fullName={fullName} handle={username} />
+      {
+        isSelf && (
+          <>
+            <Text style={styles.sectionTitle}>Seller Details</Text>
+            <AccountCard avatarUrl={profilePicture ?? AVATAR_FALLBACK} fullName={fullName} handle={username} />
+          </>
+        )
+      }
     </>
   )
 }
