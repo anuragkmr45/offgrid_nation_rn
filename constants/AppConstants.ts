@@ -17,3 +17,5 @@ export const SHARE_ICON: string = "https://res.cloudinary.com/dkwptotbs/image/up
 export const POST_CARD_HEIGHT   = SCREEN_HEIGHT * 0.8
 export const POST_MEDIA_WIDTH   = SCREEN_WIDTH  - 32
 export const POST_MEDIA_HEIGHT  = (POST_MEDIA_WIDTH * 16) / 9
+export const ENTITLEMENT_ID = "Pro";
+export const RC_PACKAGE_ID = "$rc_monthly";

@@ -3,7 +3,8 @@ import { baseQueryWithLogoutOn401 } from '@/core/api/baseQueryWithLogoutOn401';
 import { createApi } from '@reduxjs/toolkit/query/react';
 import {
   CreateCheckoutSessionResponse,
-  PremiumFeedResponse
+  PremiumFeedResponse,
+  SyncIosIapSuccess
 } from '../types';
 
 export type SyncIosIapPayload = {
@@ -49,9 +50,9 @@ export const premiumApi = createApi({
       providesTags: ['PremiumFeed'],
     }),
 
-    syncIosIap: build.mutation<{ ok: true }, SyncIosIapPayload>({
+    syncIosIap: build.mutation<SyncIosIapSuccess, SyncIosIapPayload>({
       query: (body) => ({
-        url: '/subscriptions/ios/sync',
+        url: '/user/payments/ios/sync',
         method: 'POST',
         body,
       }),

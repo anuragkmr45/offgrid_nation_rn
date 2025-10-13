@@ -12,10 +12,11 @@ import { persistor, store } from '../store/store';
 
 import { LogoutListener } from '@/components/common/LogoutListener';
 import { useAppSelector } from '@/store/hooks';
-import { SENTRY_DSN } from '@/utils/env';
+import { RC_IOS_PUBLIC_KEY, SENTRY_DSN } from '@/utils/env';
 import { PusherService } from '@/utils/PusherService';
 import * as Sentry from '@sentry/react-native';
 import { isRunningInExpoGo } from 'expo';
+import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
 
 const navigationIntegration = Sentry.reactNavigationIntegration({
   // nice on real builds; skip in Expo Go
@@ -54,6 +55,44 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+function RevenueCatBootstrap() {
+  const userId = useAppSelector(s => s.auth?.user?._id);
+
+  // Configure once, early
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    // (optional while debugging)
+    Purchases.setLogLevel?.(LOG_LEVEL?.VERBOSE ?? 3);
+    Purchases.configure({ apiKey: RC_IOS_PUBLIC_KEY });
+  }, []);
+
+  // Keep RC identity in sync with your auth
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    (async () => {
+      try {
+        if (userId) await Purchases.logIn(String(userId));
+        else await Purchases.logOut(); // if you support logout/switch user
+      } catch { }
+    })();
+  }, [userId]);
+
+  // One global listener (avoid re-adding in feature hooks)
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    const listener = (info: CustomerInfo) => {
+      // You can dispatch to Redux or trigger your backend sync here if desired
+    };
+    Purchases.addCustomerInfoUpdateListener(listener);
+    return () => {
+      // remove on unmount to avoid leaks/duplicates
+      Purchases.removeCustomerInfoUpdateListener?.(listener);
+    };
+  }, []);
+
+  return null;
+}
 
 // 🔔 Move all notification + Pusher logic into this child component
 function NotificationListener() {
@@ -152,6 +191,7 @@ export default Sentry.wrap(function RootLayout() {
         >
           <SafeAreaProvider>
             <NotificationListener />
+            <RevenueCatBootstrap />
             <Slot />
             <Toast
               position="top"
@@ -162,7 +202,7 @@ export default Sentry.wrap(function RootLayout() {
                   default: 24,
                 }) as number
               }
-            /> 
+            />
             <LogoutListener />
           </SafeAreaProvider>
         </PersistGate>

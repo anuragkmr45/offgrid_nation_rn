@@ -58,6 +58,7 @@ export const usePremium = (): UsePremiumResult => {
     try {
       const info = await getCustomerInfo()
       const snap = snapshotEntitlements(info)
+      if (!snap.activeEntitlements?.length) return;
       await syncIosIap({ platform: 'ios', ...snap }).unwrap()
     } catch {
       // swallow; UI still gates optimistically
@@ -67,26 +68,26 @@ export const usePremium = (): UsePremiumResult => {
   // --- Init RevenueCat on iOS ---
   useEffect(() => {
     if (Platform.OS !== 'ios') return
-    configurePurchases(userId).catch(() => {})
+    configurePurchases(userId).catch(() => { })
   }, [userId])
 
   // --- On first mount (iOS): read current entitlement and set local flag quickly ---
   useEffect(() => {
     if (Platform.OS !== 'ios') return
-    ;(async () => {
-      try {
-        const info = await getCustomerInfo()
-        if (isPro(info)) setIosProLocal(true)
-      } catch {}
-    })()
+      ; (async () => {
+        try {
+          const info = await getCustomerInfo()
+          if (isPro(info)) setIosProLocal(true)
+        } catch { }
+      })()
   }, [])
 
   // --- Also perform a one-time backend sync on mount (keeps server in lockstep) ---
   useEffect(() => {
     if (Platform.OS !== 'ios') return
-    ;(async () => {
-      await syncIapWithBackend()
-    })()
+      ; (async () => {
+        await syncIapWithBackend()
+      })()
   }, [syncIapWithBackend])
 
   // --- Listen for entitlement changes (register once) ---
@@ -105,7 +106,7 @@ export const usePremium = (): UsePremiumResult => {
     listenerAddedRef.current = true
     // No cleanup needed because we only ever add once for app session,
     // and we guard via listenerAddedRef.
-     
+
   }, [syncIapWithBackend, refetchPremiumFeed])
 
   // --- Android Stripe or iOS RevenueCat purchase ---
@@ -121,8 +122,8 @@ export const usePremium = (): UsePremiumResult => {
     } else {
       try {
         const info = await purchaseDefaultPackage()
-        setIosProLocal(true)
         if (isPro(info)) {
+          setIosProLocal(true)
           await syncIapWithBackend()
           Toast.show({ type: 'success', text1: 'Premium unlocked 🎉' })
           await refetchPremiumFeed()
@@ -165,11 +166,11 @@ export const usePremium = (): UsePremiumResult => {
   return {
     premiumFeed: premiumFeed
       ? {
-          ...premiumFeed,
-          // Effective flag for iOS while backend hasn’t updated yet
-          isPremium:
-            premiumFeed.isPremium || (Platform.OS === 'ios' && iosProLocal),
-        }
+        ...premiumFeed,
+        // Effective flag for iOS while backend hasn’t updated yet
+        isPremium:
+          premiumFeed.isPremium || (Platform.OS === 'ios' && iosProLocal),
+      }
       : premiumFeed,
     premiumFeedLoading,
     premiumFeedFetching,

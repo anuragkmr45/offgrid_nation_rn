@@ -1,4 +1,5 @@
 // utils/purchases.ts
+import { ENTITLEMENT_ID } from "@/constants/AppConstants";
 import { RC_IOS_PUBLIC_KEY } from "@/utils/env";
 import { Platform } from "react-native";
 import Purchases, {
@@ -107,7 +108,7 @@ export async function restorePurchases(): Promise<CustomerInfo> {
 
 /** Check if "pro" entitlement is active */
 export function isPro(info: CustomerInfo) {
-  return !!info.entitlements?.active?.["pro"];
+  return !!info.entitlements?.active?.[ENTITLEMENT_ID];
 }
 
 /** Subscribe to RC customer info updates */
