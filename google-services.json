@@ -23,6 +23,22 @@
           }
         },
         {
+          "client_id": "758180883916-7m5chb9c1qrj0oeees3s535denrrschr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anuragkmr45.offgridnation",
+            "certificate_hash": "f5f46eb3f16a0b47c2c0c10f3e9c931a4f77249f"
+          }
+        },
+        {
+          "client_id": "758180883916-dv8gnmnrcf0r7bb2v79s2aia1ior9o3r.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anuragkmr45.offgridnation",
+            "certificate_hash": "bb82f29f0b03ff32f6ebc8f0646b3f1865a64052"
+          }
+        },
+        {
           "client_id": "758180883916-m361lt4ju30lm48pss3lk6ja78g8bsm2.apps.googleusercontent.com",
           "client_type": 3
         }

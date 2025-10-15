@@ -7,8 +7,9 @@ import { fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 
 export const baseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL || 'https://apiv2.theoffgridnation.com',
-  prepareHeaders: (headers, { getState }) => {
-    const token = (getState() as RootState).auth.accessToken
+  prepareHeaders: (headers, { getState }) => {    
+    const state = getState() as RootState
+    const token = state?.auth?.accessToken 
     if (token) {
       headers.set('authorization', `Bearer ${token}`)
     }

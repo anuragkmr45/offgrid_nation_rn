@@ -1,11 +1,13 @@
 // components/common/PostCard.tsx
 
+import { BottomSheet } from '@/components/common/BottomSheet'
 import { CommentModal } from '@/components/modals/CommentModal'
 import { ShareModal } from '@/components/modals/ShareModal'
 import { AVATAR_FALLBACK, COMMENT_ICON, DISLIKE_ICON, LIKE_ICON, SHARE_ICON } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
 import { debounce } from '@/utils/debounce'
+import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -16,6 +18,7 @@ import {
   Linking,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
   ViewToken
@@ -75,7 +78,7 @@ const renderWithLinks = (raw: string) =>
 
 export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, cardHeight, cardWidth }) => {
   const router = useRouter()
-  const { likePost } = usePost()
+  const { likePost, reportPostOrComment, reportStatus } = usePost()
 
   const resolvedHeight = cardHeight ?? CARD_HEIGHT
   const resolvedWidth = cardWidth ?? MEDIA_WIDTH
@@ -92,6 +95,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
   const isCaptionLong = post.caption.length > CAPTION_LIMIT
   const displayedCaption = isCaptionExpanded ? post.caption : post.caption.slice(0, CAPTION_LIMIT)
 
+  // Report sheet
+  const [reportSheetVisible, setReportSheetVisible] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+
+  useEffect(() => { setIsLike(post.isLiked) }, [post.isLiked])
+  useEffect(() => { setLikeCount(post.likesCount) }, [post.likesCount])
+
   const hasOnlyLink =
     post.media.length === 0 &&
     post.caption.trim().match(urlRegex)?.[0] === post.caption.trim()
@@ -107,14 +117,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
       return nextLike
     })
     try {
-      // setIsLike(prev => !prev);
-      // setLikeCount(prev => prev + (isLike ? -1 : 1));
       await likePost({ postId: post.postId }).unwrap()
-      // setIsLike(response.isLiked)
-      // setLikeCount(response.likesCount)
     } catch (error: any) {
-      console.error('Failed to toggle like:', error)
-      const errorMessage = error?.data?.message || 'Unable to like this post';
+      const errorMessage = error?.data?.message || 'Unable to like this post'
       Toast.show({ type: "error", text1: errorMessage })
     }
   }, [likePost, post.postId, scaleAnim])
@@ -143,15 +148,46 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
     }
   }, [debouncedToggleLike])
 
+  const openReportSheet = () => setReportSheetVisible(true)
+  const closeReportSheet = () => setReportSheetVisible(false)
+
+  const  submitReport = async () => {
+    const reason = reportReason.trim()
+    if (!reason) {
+      Toast.show({ type: 'info', text1: 'Please describe the issue' })
+      return
+    }
+    try {
+      await reportPostOrComment({ postId: post.postId, commentId: '', reason }).unwrap()
+      Toast.show({ type: 'success', text1: 'Thanks for your report' })
+      setReportReason('')
+      closeReportSheet()
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: e?.data?.message || 'Failed to submit report' })
+    }
+  }
+
   return (
     <View style={containerStyle}>
-      <TouchableOpacity style={styles.header} onPress={() => router.push(`/root/profile/${post.user.username}`)}>
-        <Image source={{ uri: post.user.avatar ?? AVATAR_FALLBACK }} style={styles.avatar} />
-        <View style={styles.headerText}>
-          <Text style={styles.username}>{post.user.username ?? ""}</Text>
-          <Text style={styles.timestamp}>{post.timestamp ?? ""}</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row", justifyContent: 'space-between' }}>
+        <TouchableOpacity style={styles.header} onPress={() => router.push(`/root/profile/${post.user.username}`)}>
+          <Image source={{ uri: post.user.avatar ?? AVATAR_FALLBACK }} style={styles.avatar} />
+          <View style={styles.headerText}>
+            <Text style={styles.username}>{post.user.username ?? ""}</Text>
+            <Text style={styles.timestamp}>{post.timestamp ?? ""}</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* 3-dot icon that opens Report Bottom Sheet directly */}
+        <TouchableOpacity
+          style={[styles.header, styles.headerRight]}
+          onPress={openReportSheet}
+          accessibilityLabel="Report post"
+        >
+          <Ionicons name="flag-outline" size={20} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
+
+      </View>
 
       {post?.media?.length > 0 ? (
         <FlatList
@@ -180,7 +216,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
             source={{ uri: post.caption.trim().match(urlRegex)?.[0] ?? '' }}
             style={{
               width: resolvedWidth,
-              height: MEDIA_HEIGHT/1.4,
+              height: MEDIA_HEIGHT / 1.4,
               marginHorizontal: 16,
               borderRadius: theme.borderRadius,
               overflow: 'hidden',
@@ -202,12 +238,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
             )}
           </View>
         </View>
-        /* ----- LINK-ONLY post (no media, nothing else) ------ */
-        // <TouchableOpacity
-        //   style={styles.linkOnlyContainer}
-        //   onPress={() => Linking.openURL(post.caption.trim())}>
-        //   <Text style={styles.linkText}>{post.caption.trim()}</Text>
-        // </TouchableOpacity>
       ) : (
         <View style={styles.textOnlyContainer}>
           <Text style={styles.textOnly}>{post.caption}</Text>
@@ -231,10 +261,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
       {post.media.length > 0 && (
         <View style={{ paddingHorizontal: 16, paddingBottom: 16 }}>
           <Text style={styles.caption}>
-            {renderWithLinks(displayedCaption)}{/* 🆕 make links clickable */}
+            {renderWithLinks(displayedCaption)}
             {!isCaptionExpanded && isCaptionLong ? '...' : ''}
-            {/* {displayedCaption}
-            {(!isCaptionExpanded && isCaptionLong) ? '...' : ''} */}
           </Text>
           {isCaptionLong && (
             <TouchableOpacity onPress={() => setIsCaptionExpanded(prev => !prev)}>
@@ -245,6 +273,40 @@ export const PostCard: React.FC<PostCardProps> = ({ post, isVisible = true, card
           )}
         </View>
       )}
+
+      {/* Report Bottom Sheet */}
+      <BottomSheet visible={reportSheetVisible} onClose={closeReportSheet} height="45%">
+        <View style={{ paddingTop: 6, paddingBottom: 12 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: theme.colors.textPrimary }}>Report post</Text>
+          <Text style={{ marginTop: 6, color: theme.colors.textSecondary }}>
+            Tell us what’s wrong. Example: “Sexual content”, “Spam”, “Hate speech”, etc.
+          </Text>
+        </View>
+
+        <TextInput
+          value={reportReason}
+          onChangeText={setReportReason}
+          placeholder="Describe the issue…"
+          placeholderTextColor={theme.colors.textSecondary}
+          style={styles.reportInput}
+          multiline
+          textAlignVertical="top"
+        />
+
+        <View style={styles.sheetButtons}>
+          <TouchableOpacity style={[styles.sheetBtn, styles.cancelBtn]} onPress={closeReportSheet}>
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.sheetBtn, styles.submitBtn]}
+            onPress={submitReport}
+            disabled={reportStatus.isLoading}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.submitText}>{reportStatus.isLoading ? 'Submitting…' : 'Submit'}</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheet>
 
       <CommentModal postId={post.postId} visible={isCommentVisible} onClose={() => setCommentVisible(false)} />
       <ShareModal visible={isShareVisible} onClose={() => setShareVisible(false)} mediaUrl={post.media[0]?.url || ''} content={post.caption} postId={post.postId} />
@@ -265,6 +327,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+  headerRight: { paddingVertical: 16, paddingHorizontal: 12 },
   avatar: {
     width: 40,
     height: 40,
@@ -329,5 +392,43 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: theme.colors.primary,
     marginTop: 4,
+  },
+
+  // Report sheet styles
+  reportInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.textSecondary,
+    borderRadius: 10,
+    padding: 12,
+    minHeight: 100,
+    backgroundColor: theme.colors.background,
+    color: theme.colors.textPrimary,
+  },
+  sheetButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  sheetBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtn: {
+    backgroundColor: theme.colors.textSecondary + '22',
+  },
+  cancelText: {
+    color: theme.colors.textSecondary,
+    fontWeight: '700',
+  },
+  submitBtn: {
+    backgroundColor: theme.colors.primary,
+  },
+  submitText: {
+    color: theme.colors.background,
+    fontWeight: '700',
   },
 })

@@ -21,3 +21,11 @@ export interface PremiumFeedResponse {
 export interface APIError {
   error: string;
 }
+
+export interface SyncIosIapSuccess {
+  message: string;
+  paymentId: string;
+  iosPaymentId: string;
+  isPremium: boolean;
+  premiumExpiresAt: string; // ISO timestamp
+}

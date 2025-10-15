@@ -1,5 +1,6 @@
-import { Button, InputField } from '@/components/common';
-import { APP_LOGO_WHITE } from '@/constants/AppConstants';
+import { Button, Checkbox, InputField } from '@/components/common';
+import { PrivacyPolicySheet } from '@/components/common/PrivacyPolicySheet';
+import { APP_LOGO_WHITE, APPLE_ICON, GOOGLE_ICON } from '@/constants/AppConstants';
 import { theme } from '@/constants/theme';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useAppleSignIn } from '@/utils/appleSignIn';
@@ -16,7 +17,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -28,11 +29,13 @@ export default function LoginScreen() {
   }>()
   const { promptAsync: googleSignIn, isLoading: googleAuthLoading } = useGoogleSignIn();
   const { signIn: appleSingin, isLoading: appleAuthLoading } = useAppleSignIn()
-
   const { login, isLoginLoading } = useAuth()
+
+  const [isPrivacyModal, setPrivacyModal] = useState(false);
   const [identifier, setIdentifier] = useState(usernameParam || '');
   const [password, setPassword] = useState(pwdParam || '');
   const [isShowPass, setIsShowPass] = useState(false);
+  const [isPrivacyChecked, setIsPrivacyChecked] = useState(false);
 
   const identifierError = validateLoginUsername(identifier)
   const passwordError = validateLoginPassword(password)
@@ -40,12 +43,32 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     try {
-      await login({ loginId: identifier.trim().toLowerCase(), password: password.trim() });
-      Toast.show({
-        type: 'success',
-        text1: 'Login Successful 🎉',
-      });
-      router.replace('/root/feed');
+      if (isPrivacyChecked === false) {
+        Toast.show({
+          type: 'info',
+          text1: 'Need to accept Privacy policy.',
+        });
+        return;
+      } else if (isPrivacyChecked === true && isValid === true) {
+        await login({ loginId: identifier.trim().toLowerCase(), password: password.trim() });
+        Toast.show({
+          type: 'success',
+          text1: 'Login Successful 🎉',
+        });
+        router.replace('/root/feed');
+      } else if (isValid === false) {
+        Toast.show({
+          type: 'error',
+          text1: 'Empty username or password',
+        });
+      }
+      else {
+        Toast.show({
+          type: 'error',
+          text1: 'Something went wrong !! try again later.',
+        });
+        return;
+      }
     } catch (err: any) {
       const errorMessage = err?.data?.message || 'Login failed, please try again.';
       Toast.show({
@@ -100,12 +123,23 @@ export default function LoginScreen() {
           >
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
+          <Checkbox
+            checked={isPrivacyChecked}
+            onToggle={() => setIsPrivacyChecked(!isPrivacyChecked)}
+            color={theme.colors.textPrimary}                    // bright orange
+          >
+            <>
+              <Text style={{ color: theme.colors.textPrimary, fontWeight: 600 }}>I accept the </Text>
+              <TouchableOpacity onPress={() => { setPrivacyModal(true) }}><Text style={{ color: theme.colors.background }}> Terms & Conditions</Text></TouchableOpacity>
+            </>
+          </Checkbox>
+
           <Button
             text="Log In"
             onPress={handleLogin}
             loading={isLoginLoading}
-            disabled={!isValid}
-            style={styles.loginButton}
+            // disabled={!isPrivacyChecked || !isValid}
+            style={[styles.loginButton, { opacity: !isPrivacyChecked || isValid ? 0.8 : 1, },]}
             textColor={theme.colors.primary}
           />
           <View style={styles.dividerContainer}>
@@ -115,32 +149,62 @@ export default function LoginScreen() {
           </View>
           {/* Social login buttons */}
           <Button
-            icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/google-icon_sxmrhm.png"
+            icon={GOOGLE_ICON}
             text="Continue with Google"
-            onPress={() => googleSignIn()}
-            style={[styles.socialButton, { backgroundColor: theme.colors.background }]}
-            disabled={googleAuthLoading}
+            onPress={() => {
+              if (!isPrivacyChecked || googleAuthLoading) {
+                Toast.show({
+                  type: 'info',
+                  text1: 'Need to accept Privacy policy.',
+                });
+                return;
+              }
+              googleSignIn();
+            }}
+            style={[
+              styles.socialButton,
+              {
+                opacity: !isPrivacyChecked || googleAuthLoading ? 0.8 : 1,
+                backgroundColor: theme.colors.background,
+              },
+            ]}
+            // disabled={!isPrivacyChecked || googleAuthLoading}
             loading={googleAuthLoading}
           // override text color
           />
           <Button
-            icon="https://res.cloudinary.com/dkwptotbs/image/upload/v1750237689/apple-icon_quyjuw.png"
+            icon={APPLE_ICON}
             text="Continue with Apple"
-            onPress={appleSingin}
-            // onPress={() => { }}
-            style={[styles.socialButton, { backgroundColor: theme.colors.textPrimary }]}
+            onPress={() => {
+              if (!isPrivacyChecked || appleAuthLoading) {
+                Toast.show({
+                  type: 'info',
+                  text1: 'Need to accept Privacy policy.',
+                });
+                return;
+              }
+              appleSingin();
+            }}
+            style={[
+              styles.socialButton,
+              {
+                opacity: !isPrivacyChecked || appleAuthLoading ? 0.8 : 1,
+                backgroundColor: theme.colors.textPrimary,
+              },
+            ]}
             textColor={theme.colors.background}
-            disabled={appleAuthLoading}
+            // disabled={!isPrivacyChecked || appleAuthLoading}
             loading={appleAuthLoading}
           />
           <View style={styles.signUpContainer}>
-            <Text style={styles.signUpText}>Don't have an account? </Text>
+            <Text style={styles.signUpText}>Don&apos;t have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/auth/register/SendOtp')}>
               <Text style={styles.signUpLink}> Sign Up</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
+      <PrivacyPolicySheet isPrivacyModal={isPrivacyModal} onClose={() => setPrivacyModal(false)} />
     </KeyboardAvoidingView>
   )
 }
@@ -165,7 +229,7 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     marginTop: 70,
-    marginBottom: 20,
+    marginBottom: 10,
     justifyContent: 'center',
     alignItems: 'center',
   },

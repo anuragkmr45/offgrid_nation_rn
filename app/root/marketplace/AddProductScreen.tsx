@@ -8,6 +8,7 @@ import { useCreateProduct, useListCategories } from '@/features/products/hooks/u
 import { pickMultipleFromGallery } from '@/utils/imagePicker'
 import { getCurrentPosition } from '@/utils/location'
 import { Ionicons } from '@expo/vector-icons'
+import * as ImagePicker from 'expo-image-picker'
 import { useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
@@ -34,12 +35,22 @@ const CONDITION_OPTIONS = [
   { label: 'Others', value: 'Other' },
 ]
 
+// helpers at top-level are fine
+const guessExt = (uri: string) => {
+  const m = uri.toLowerCase().match(/\.(heic|heif|png|jpe?g|webp|gif|mp4|mov)$/);
+  return m ? m[1] : 'jpg';
+};
+
 const getMimeType = (uri: string) => {
-  if (uri.endsWith('.png')) return 'image/png'
-  if (uri.endsWith('.jpg') || uri.endsWith('.jpeg')) return 'image/jpeg'
-  if (uri.endsWith('.heic')) return 'image/heic'
-  return 'image/jpeg'
-}
+  const ext = guessExt(uri);
+  if (ext === 'png') return 'image/png';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'heic' || ext === 'heif') return 'image/heic';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'gif') return 'image/gif';
+  return 'image/jpeg';
+};
+
 
 export default function AddProductScreen() {
   const router = useRouter()
@@ -67,55 +78,57 @@ export default function AddProductScreen() {
   )
 
   const handleAddPhoto = async () => {
-    const uris = await pickMultipleFromGallery()
+    const remaining = Math.max(10 - photos.length, 0);
+    if (remaining === 0) return;
+
+    const uris = await pickMultipleFromGallery(ImagePicker.MediaTypeOptions.All, remaining);
     if (uris.length) {
-      setPhotos(prev => {
-        const combined = [...prev, ...uris]
-        return combined.slice(0, 10)
-      })
+      setPhotos(prev => [...prev, ...uris].slice(0, 10));
     }
-  }
+  };
 
   const handlePublish = async () => {
     if (!title || !price || !condition || !category) {
-      Alert.alert('Missing fields', 'Please fill all required fields.')
-      return
+      Alert.alert('Missing fields', 'Please fill all required fields.');
+      return;
     }
 
-    const loc = await getCurrentPosition()
+    const loc = await getCurrentPosition();
     if (!loc) {
-      Alert.alert('Location Error', 'Unable to fetch location.')
-      return
+      Alert.alert('Location Error', 'Unable to fetch location.');
+      return;
     }
 
-    const formData = new FormData()
+    const formData = new FormData();
+
+    // ✅ photos is defined here, and so is formData
     photos.forEach((uri, idx) => {
+      const ext = guessExt(uri);
       formData.append('pictures', {
         uri,
-        name: `photo_${idx}.jpg`,
-        type: getMimeType(uri),
-      } as unknown as Blob)
-    })
-    formData.append('title', title)
-    formData.append('price', price.replace(/[^0-9.]/g, '')) // strip $₹ etc
-    formData.append('condition', condition)
-    formData.append('description', description)
-    formData.append('category', categoryId) // send _id if required
-    formData.append('lng', loc.coords.longitude.toString())
-    formData.append('lat', loc.coords.latitude.toString())
+        name: `photo_${idx}.${ext}`,     // keep extension (handles HEIC/PNG/JPEG, etc.)
+        type: getMimeType(uri),          // correct MIME per extension
+      } as any);
+    });
+
+    formData.append('title', title);
+    formData.append('price', price.replace(/[^0-9.]/g, ''));
+    formData.append('condition', condition as string);
+    formData.append('description', description);
+    formData.append('category', categoryId);
+    formData.append('lng', String(loc.coords.longitude));
+    formData.append('lat', String(loc.coords.latitude));
 
     try {
-      await createProduct(formData).unwrap()
-
-      Toast.show({ type: 'success', text1: 'Product added successfully' })
-      setTimeout(() => {
-        router.back()
-      }, 1600);
+      await createProduct(formData).unwrap();
+      Toast.show({ type: 'success', text1: 'Product added successfully' });
+      setTimeout(() => router.back(), 1600);
     } catch (err: any) {
-      const error = err?.data?.message || 'Error while publishing product'
-      Toast.show({ type: 'error', text1: error })
+      const error = err?.data?.message || 'Error while publishing product';
+      Toast.show({ type: 'error', text1: error });
     }
-  }
+  };
+
 
   return (
     <SafeAreaView style={styles.container}>

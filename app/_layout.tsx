@@ -1,8 +1,8 @@
 // app/_layout.tsx
 import * as Notifications from 'expo-notifications';
-import { Slot, useRouter } from 'expo-router';
+import { Slot, useNavigationContainerRef, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, Platform, StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
@@ -12,7 +12,38 @@ import { persistor, store } from '../store/store';
 
 import { LogoutListener } from '@/components/common/LogoutListener';
 import { useAppSelector } from '@/store/hooks';
+import { RC_IOS_PUBLIC_KEY, SENTRY_DSN } from '@/utils/env';
 import { PusherService } from '@/utils/PusherService';
+import * as Sentry from '@sentry/react-native';
+import { isRunningInExpoGo } from 'expo';
+import Purchases, { CustomerInfo, LOG_LEVEL } from 'react-native-purchases';
+
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  // nice on real builds; skip in Expo Go
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+});
+
+Sentry.init({
+  dsn: SENTRY_DSN,
+  environment: process.env.EXPO_PUBLIC_ENV ?? (__DEV__ ? 'development' : 'production'),
+  sendDefaultPii: false,
+
+  // Performance sampling (tune as you like)
+  tracesSampleRate: __DEV__ ? 0.0 : 0.2,
+
+  // Add all your integrations here
+  integrations: [
+    navigationIntegration,
+    Sentry.mobileReplayIntegration(),
+    Sentry.feedbackIntegration(),
+  ],
+
+  // Better frame metrics on device builds (not in Expo Go)
+  enableNativeFramesTracking: !isRunningInExpoGo(),
+
+  // Optional: avoid sending events in dev
+  enabled: !__DEV__,
+});
 
 // 1️⃣ Handle foreground notifications
 Notifications.setNotificationHandler({
@@ -24,6 +55,44 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+
+function RevenueCatBootstrap() {
+  const userId = useAppSelector(s => s.auth?.user?._id);
+
+  // Configure once, early
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    // (optional while debugging)
+    Purchases.setLogLevel?.(LOG_LEVEL?.VERBOSE ?? 3);
+    Purchases.configure({ apiKey: RC_IOS_PUBLIC_KEY });
+  }, []);
+
+  // Keep RC identity in sync with your auth
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    (async () => {
+      try {
+        if (userId) await Purchases.logIn(String(userId));
+        else await Purchases.logOut(); // if you support logout/switch user
+      } catch { }
+    })();
+  }, [userId]);
+
+  // One global listener (avoid re-adding in feature hooks)
+  useEffect(() => {
+    if (Platform.OS !== "ios") return;
+    const listener = (info: CustomerInfo) => {
+      // You can dispatch to Redux or trigger your backend sync here if desired
+    };
+    Purchases.addCustomerInfoUpdateListener(listener);
+    return () => {
+      // remove on unmount to avoid leaks/duplicates
+      Purchases.removeCustomerInfoUpdateListener?.(listener);
+    };
+  }, []);
+
+  return null;
+}
 
 // 🔔 Move all notification + Pusher logic into this child component
 function NotificationListener() {
@@ -102,24 +171,42 @@ function NotificationListener() {
   return null;
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
+  const ref = useNavigationContainerRef();
+  useEffect(() => {
+    if (ref) {
+      navigationIntegration.registerNavigationContainer(ref);
+    }
+  }, [ref]);
   return (
-    <Provider store={store}>
-      <PersistGate
-        loading={
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" />
-          </View>
-        }
-        persistor={persistor}
-      >
-        <SafeAreaProvider>
-          <NotificationListener />
-          <Slot />
-          <Toast />
-          <LogoutListener />
-        </SafeAreaProvider>
-      </PersistGate>
-    </Provider>
+    <Sentry.ErrorBoundary>
+      <Provider store={store}>
+        <PersistGate
+          loading={
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" />
+            </View>
+          }
+          persistor={persistor}
+        >
+          <SafeAreaProvider>
+            <NotificationListener />
+            <RevenueCatBootstrap />
+            <Slot />
+            <Toast
+              position="top"
+              topOffset={
+                Platform.select({
+                  android: (StatusBar.currentHeight ?? 0) + 8,
+                  ios: 54,
+                  default: 24,
+                }) as number
+              }
+            />
+            <LogoutListener />
+          </SafeAreaProvider>
+        </PersistGate>
+      </Provider>
+    </Sentry.ErrorBoundary>
   );
-}
+});

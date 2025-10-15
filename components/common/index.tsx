@@ -1,7 +1,8 @@
-import { debounce } from '@/utils/debounce'
-import { Video } from 'expo-av'
-import { BlurView } from 'expo-blur'
-import React, { useEffect, useMemo } from 'react'
+import { debounce } from '@/utils/debounce';
+import { Ionicons } from '@expo/vector-icons';
+import { Video } from 'expo-av';
+import { BlurView } from 'expo-blur';
+import React, { useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -12,10 +13,11 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TextStyle,
   TouchableOpacity,
-  View
-} from 'react-native'
-import { theme } from '../../constants/theme'
+  View, ViewStyle
+} from 'react-native';
+import { theme } from '../../constants/theme';
 // 1. Button
 export interface ButtonProps {
   onPress: () => void
@@ -102,7 +104,7 @@ export const CustomModal: React.FC<ModalProps> = ({ visible, title, children, on
       <View style={[styles.modalContent, style, { backgroundColor: theme.colors.background }]}>
         {title && <Text style={styles.modalTitle}>{title}</Text>}
         <View>{children}</View>
-        <Button onPress={onClose} style={styles.modalClose} text='Close' textColor={theme.colors.background}  />
+        <Button onPress={onClose} style={styles.modalClose} text='Close' textColor={theme.colors.background} />
         {/* <TouchableOpacity onPress={onClose} style={styles.modalClose}>
           <Text style={{ color: theme.colors.accent }}>Close</Text>
         </TouchableOpacity> */}
@@ -202,7 +204,56 @@ export const MediaCarousel: React.FC<MediaCarouselProps> = ({ mediaUrls }) => {
   )
 }
 
-export { default as SelectDropdown } from './SelectDropdown'
+/* props */
+export interface CheckboxProps {
+  checked: boolean;
+  onToggle: () => void;
+  /** Accent colour when checked (falls back to theme.primary) */
+  color?: string;
+  /** Container override */
+  style?: ViewStyle;
+  /** Optional extra style for the children wrapper */
+  labelStyle?: TextStyle;
+  /** Anything you place between <Checkbox> … </Checkbox> */
+  children?: React.ReactNode;
+}
+
+/* component */
+export const Checkbox: React.FC<CheckboxProps> = ({
+  checked,
+  onToggle,
+  color,
+  style,
+  labelStyle,
+  children,
+}) => {
+  const accent = color ?? theme.colors.primary;
+  return (
+    <TouchableOpacity
+      onPress={onToggle}
+      activeOpacity={0.8}
+      style={[styles.checkboxContainer, style]}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+    >
+      <View
+        style={[
+          styles.checkboxBox,
+          { borderColor: accent },
+          checked && { backgroundColor: accent },
+        ]}
+      >
+        {checked && (
+          <Ionicons name="checkmark" size={16} color={theme.colors.background} />
+        )}
+      </View>
+
+      {/* Render whatever is supplied as children */}
+      {children && children}
+    </TouchableOpacity>)
+};
+
+export { default as SelectDropdown } from './SelectDropdown';
 
 const styles = StyleSheet.create({
   button: {
@@ -261,5 +312,19 @@ const styles = StyleSheet.create({
   carouselItem: { width, justifyContent: 'center', alignItems: 'center' },
   image: { width: width - 32, height: 280, borderRadius: 8 },
   video: { width: width - 32, height: 280, borderRadius: 8 },
-
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 8,
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    marginRight: 10
+  },
 })

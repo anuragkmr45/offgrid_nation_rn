@@ -1,4 +1,14 @@
 // src/features/auth/hooks/useAuth.ts
+import { chatApi } from '@/features/chat/api/chatApi'
+import { commentApi } from '@/features/content/comment/api/commentApi'
+import { feedApi } from '@/features/content/feed/api/feedApi'
+import { postApi } from '@/features/content/post/api/postApi'
+import { listApi } from '@/features/list/api/listApi'
+import { notificationsApi } from '@/features/notifications/api/notificationsApi'
+import { productsApi } from '@/features/products/api/productsApi'
+import { profileApi } from '@/features/profile/api/profileApi'
+import { socialApi } from '@/features/social/api/socialApi'
+import { premiumApi } from '@/features/subscription/api/premiumApi'
 import { persistor } from '@/store/store'
 import { useRouter } from 'expo-router'
 import { useCallback } from 'react'
@@ -123,9 +133,19 @@ export function useAuth() {
     [verifyChangeMobile]
   )
 
-  const logout = useCallback(async() => {
+  const logout = useCallback(async () => {
     dispatch(logoutAction())
     dispatch(authApi.util.resetApiState())
+    dispatch(profileApi.util.resetApiState())
+    dispatch(socialApi.util.resetApiState())
+    dispatch(listApi.util.resetApiState())
+    dispatch(premiumApi.util.resetApiState())
+    dispatch(notificationsApi.util.resetApiState())
+    dispatch(postApi.util.resetApiState())
+    dispatch(commentApi.util.resetApiState())
+    dispatch(feedApi.util.resetApiState())
+    dispatch(productsApi.util.resetApiState())
+    dispatch(chatApi.util.resetApiState())
     await persistor.purge()
     router.replace('/auth/login/Login')
   }, [dispatch])

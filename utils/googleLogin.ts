@@ -2,8 +2,10 @@
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   GoogleSignin,
+  isSuccessResponse,
   statusCodes
 } from '@react-native-google-signin/google-signin';
+import * as Sentry from '@sentry/react-native';
 import { useRouter } from 'expo-router';
 import {
   GoogleAuthProvider,
@@ -11,25 +13,33 @@ import {
   type UserCredential
 } from 'firebase/auth';
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { auth } from '../firebaseConfig';
-import { IOS_CLIENT_ID, OAUTH_WEB_CLIENT_ID } from './env';
+import { OAUTH_WEB_CLIENT_ID } from './env';
 
 /* ──────────────────────────────────────────────────
-   ⚙️  Configure Google Sign-In
+   ⚙️  Configure Google Sign-In (+ Sentry breadcrumb)
    ────────────────────────────────────────────────── */
 GoogleSignin.configure({
   webClientId: OAUTH_WEB_CLIENT_ID,
-  iosClientId: IOS_CLIENT_ID,
   offlineAccess: false,
   scopes: ['profile', 'email'],
 });
 
+// record that configure ran (helps when native crash happens later)
+Sentry.addBreadcrumb({
+  category: 'auth.google',
+  level: 'info',
+  message: 'GoogleSignin.configure() called',
+  data: {
+    hasWebClientId: Boolean(OAUTH_WEB_CLIENT_ID),
+    platform: Platform.OS,
+  },
+});
+
 type SignedUser = { uid: string; name: string | null; email: string | null };
 
-/* ──────────────────────────────────────────────────
-   📲  Hook: useGoogleSignIn
-   ────────────────────────────────────────────────── */
 export function useGoogleSignIn() {
   const [user, setUser] = useState<SignedUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,59 +48,133 @@ export function useGoogleSignIn() {
 
   /* interactive account picker */
   async function promptAsync() {
-    setIsLoading(true)
-    try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    setIsLoading(true);
 
-      const alreadySignedIn = GoogleSignin.getCurrentUser();
+    // breadcrumb: flow start
+    Sentry.addBreadcrumb({
+      category: 'auth.google',
+      level: 'info',
+      message: 'promptAsync start',
+    });
+
+    try {
+      if (Platform.OS === 'android') {
+        await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      }
+
+      const alreadySignedIn = await GoogleSignin.getCurrentUser();
       if (alreadySignedIn) {
+        Sentry.addBreadcrumb({
+          category: 'auth.google',
+          level: 'info',
+          message: 'Found existing Google session, signing out',
+        });
         await GoogleSignin.signOut();
       }
 
-      await GoogleSignin.signIn(); // GoogleUser
-      const { idToken } = await GoogleSignin.getTokens();
-      if (idToken) await firebaseSignIn(idToken);
+      Sentry.addBreadcrumb({
+        category: 'auth.google',
+        level: 'info',
+        message: 'Invoking GoogleSignin.signIn()',
+      });
+
+      const res = await GoogleSignin.signIn(); // { type, data }
+
+      Sentry.addBreadcrumb({
+        category: 'auth.google',
+        level: 'info',
+        message: 'Google sign-in returned',
+        data: { isSuccess: isSuccessResponse(res) },
+      });
+
+      if (isSuccessResponse(res)) {
+        let { idToken } = res.data || {};
+        if (!idToken) {
+          Sentry.addBreadcrumb({
+            category: 'auth.google',
+            level: 'info',
+            message: 'idToken missing from result, calling getTokens()',
+          });
+          ({ idToken } = await GoogleSignin.getTokens());
+        }
+
+        if (idToken) {
+          Sentry.addBreadcrumb({
+            category: 'auth.google',
+            level: 'info',
+            message: 'Got idToken, proceeding to Firebase sign-in',
+          });
+          await firebaseSignIn(idToken);
+        } else {
+          const e = new Error('Google sign-in succeeded but idToken is null/undefined');
+          Sentry.captureException(e);
+          Toast.show({ type: 'error', text1: 'Google sign-in failed to provide a token' });
+        }
+      }
     } catch (err: any) {
-      if (err.code === statusCodes.SIGN_IN_CANCELLED) return;            // user cancelled
-      if (err.code === statusCodes.IN_PROGRESS) return;                  // already running
-      if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Toast.show({ type: "error", text1: "Google Play services not available" })
+      // tag common plugin error codes
+      Sentry.withScope(scope => {
+        scope.setTag('auth.provider', 'google');
+        if (err?.code) scope.setTag('google.code', String(err.code));
+        Sentry.captureException(err);
+      });
+
+      if (err?.code === statusCodes.SIGN_IN_CANCELLED) return;
+      if (err?.code === statusCodes.IN_PROGRESS) return;
+      if (err?.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Toast.show({ type: 'error', text1: 'Google Play services not available' });
         return;
       }
+      Toast.show({ type: 'error', text1: 'Google Sign-In failed' });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
+      Sentry.addBreadcrumb({
+        category: 'auth.google',
+        level: 'info',
+        message: 'promptAsync end',
+      });
     }
   }
 
   /* exchange Google ID-token → Firebase credential */
   async function firebaseSignIn(idToken: string) {
-    setIsLoading(true)
+    Sentry.addBreadcrumb({
+      category: 'auth.google',
+      level: 'info',
+      message: 'firebaseSignIn start',
+    });
+
+    setIsLoading(true);
     try {
       const credential = GoogleAuthProvider.credential(idToken);
-      const { user: fbUser }: UserCredential = await signInWithCredential(
-        auth,
-        credential,
-      );
-      const { uid = "", displayName = "", email = "" } = fbUser || {}
-      console.log({ uid, displayName, email });
+      const { user: fbUser }: UserCredential = await signInWithCredential(auth, credential);
+      const { uid = '', displayName = '', email = '' } = fbUser || {};
 
-      setUser({
-        uid: uid,
-        name: displayName,
-        email: email,
-      });
-      await socialLogin({ firebaseUid: uid, fullName: displayName ?? "", email: email ?? "" });
-      // only runs if unwrap() succreeded
-      router.replace('/root/feed')
+      // optional: avoid PII; set only user id in Sentry context
+      Sentry.setUser({ id: uid });
+
+      setUser({ uid, name: displayName, email });
+      await socialLogin({ firebaseUid: uid, fullName: displayName ?? '', email: email ?? '' });
+
+      Sentry.captureMessage('Firebase sign-in success (Google)', { level: 'info' });
+
+      router.replace('/root/feed');
     } catch (error: any) {
-      const err = error?.data?.message || "Error while google login"
-      Toast.show({ type: 'error', text1: err })
+      Sentry.withScope(scope => {
+        scope.setTag('auth.step', 'firebaseSignIn');
+        Sentry.captureException(error);
+      });
+      const err = error?.data?.message || 'Error while Google login';
+      Toast.show({ type: 'error', text1: err });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
+      Sentry.addBreadcrumb({
+        category: 'auth.google',
+        level: 'info',
+        message: 'firebaseSignIn end',
+      });
     }
   }
 
-  /* match the signature you use elsewhere:
-     const { user, promptAsync } = useGoogleSignIn(); */
   return { user, promptAsync, isLoading };
 }

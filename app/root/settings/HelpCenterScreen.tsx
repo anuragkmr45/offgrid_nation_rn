@@ -11,10 +11,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
     ActivityIndicator,
     Keyboard,
+    Linking,
     StatusBar,
     StyleSheet,
     Text,
     TextInput,
+    TouchableOpacity,
     View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -55,7 +57,7 @@ const HelpCenterScreen: React.FC = () => {
     const user = useAppSelector(state => state.auth.user);
 
     const [selectedValues, setSelectedValues] = useState<string[]>([])
-    const [drowpDownOption, setDropdownOptions] = useState([]);
+    // const [drowpDownOption, setDropdownOptions] = useState([]);
     const [otherTitle, setOtherTitle] = useState('')
     const [description, setDescription] = useState('')
     const [isLoading, setIsloading] = useState(false)
@@ -85,7 +87,6 @@ const HelpCenterScreen: React.FC = () => {
                 user
             }
             // TODO: call your API with payload + auth token
-            console.log('Submitting help ticket:', payload)
             // const res = fetch('')
             timerRef.current = setTimeout(() => {
                 setIsloading(true)
@@ -123,16 +124,16 @@ const HelpCenterScreen: React.FC = () => {
     //     handleFetchCategroy()
     // }, [])
 
-    isLoading && (
+    if (isLoading) {
         <View style={styles.loadingOverlay}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
-    )
+    }
 
     return (
         <ProtectedLayout>
             <StatusBar animated backgroundColor={theme.colors.background} barStyle={'dark-content'} />
-            <SafeAreaView>
+            <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
                 <Header onBack={() => { router.back() }} title='Help Center' showShadow />
                 <View style={styles.container}>
                     <Text style={styles.label}>What problem are you facing?</Text>
@@ -166,7 +167,6 @@ const HelpCenterScreen: React.FC = () => {
                         style={[styles.input, styles.textArea]}
                         textAlignVertical="top"
                     />
-
                     <Button
                         text="Submit"
                         onPress={handleSubmit}
@@ -176,6 +176,9 @@ const HelpCenterScreen: React.FC = () => {
                         textColor={theme.colors.background}
                     />
                 </View>
+                <TouchableOpacity onPress={() => { Linking.openURL("mailto:hello@theoffgridnation.com") }}>
+                    <Text style={{textAlign: "center", color: 'blue'}}>hello@theoffgridnation.com</Text>
+                </TouchableOpacity>
             </SafeAreaView>
         </ProtectedLayout>
     )

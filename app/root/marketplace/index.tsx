@@ -8,6 +8,7 @@ import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { SectionHeader } from '@/components/marketplace/SectionHeader'
 import { SellSheet } from '@/components/marketplace/SellSheet'
 import { SortOptionsSheet } from '@/components/marketplace/SortOptionsSheet'
+import { AVATAR_FALLBACK } from '@/constants/AppConstants'
 import { theme } from '@/constants/theme'
 import { useListProductsQuery } from '@/features/products/api/productsApi'
 import { useListCategories } from '@/features/products/hooks/useProducts'
@@ -67,7 +68,7 @@ export default function MarketplaceScreen() {
 
   const fetchData = async (query?: string, categoryId?: string) => {
     try {
-      const granted = await requestLocationPermission()
+      const granted: boolean = await requestLocationPermission()
       if (!granted) return
 
       let formatted: string | null = null
@@ -165,7 +166,7 @@ export default function MarketplaceScreen() {
                   id: item._id,
                   title: item.title,
                   price: `$${item.price}`,
-                  imageUrl: item.images?.[0] ?? 'https://via.placeholder.com/300x300?text=No+Image',
+                  imageUrl: item.images?.[0] ?? AVATAR_FALLBACK,
                 }))}
                 onPress={(productId: string) =>
                   router.push({

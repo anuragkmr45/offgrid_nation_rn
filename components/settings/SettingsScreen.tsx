@@ -3,28 +3,35 @@
 import { SearchBar } from '@/components/common'
 import { theme } from '@/constants/theme'
 import { useAuth } from '@/features/auth/hooks/useAuth'
+import { useShareApp } from '@/features/general/hooks/useShareApp '
+import { useProfile } from '@/features/profile/hooks/useProfile'
 import { Ionicons } from '@expo/vector-icons'
 import { useRouter } from 'expo-router'
 import React, { useMemo, useState } from 'react'
 import {
+  ActivityIndicator,
   Modal,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Toast from 'react-native-toast-message'
+import { PrivacyPolicySheet } from '../common/PrivacyPolicySheet'
 import { SettingItem } from './SettingItem'
 
 export const SettingsScreen: React.FC = () => {
   const [query, setQuery] = useState('')
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const router = useRouter()
   const { logout } = useAuth()
-
+  const { share: handleShareApp } = useShareApp();
+  const [isPrivacyModal, setPrivacyModal] = useState(false)
+  const { deleteAccount, isDeleting, myProfile } = useProfile();
   const allItems = useMemo(() => [
     {
       key: 'profiles',
@@ -36,9 +43,10 @@ export const SettingsScreen: React.FC = () => {
     {
       key: 'privacy',
       icon: 'shield-outline' as const,
-      title: 'Privacy',
+      title: 'Privacy & Policy',
       subtitle: 'Blocked accounts, Account privacy',
-      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
+      // onPress: () => { setPrivacyModal(true) },
+      onPress: () => router.push('/root/settings/Privacy'),
     },
     {
       key: 'weather_details',
@@ -59,7 +67,7 @@ export const SettingsScreen: React.FC = () => {
       icon: 'globe-outline' as const,
       title: 'App Language',
       subtitle: `English (device's language)`,
-      onPress: () => {Toast.show({type: "info", text1: "COMMING SOON"})},
+      onPress: () => { Toast.show({ type: "info", text1: "COMMING SOON" }) },
     },
     {
       key: 'help',
@@ -72,7 +80,13 @@ export const SettingsScreen: React.FC = () => {
       key: 'invite',
       icon: 'people-outline' as const,
       title: 'Invite Friends',
-      onPress: () => console.log('Invite Friends'),
+      onPress: handleShareApp,
+    },
+    {
+      key: 'delete',
+      icon: 'person-remove-outline' as const,
+      title: 'Delete Account',
+      onPress: () => setShowDeleteConfirmation(true),
     },
     {
       key: 'logout',
@@ -90,6 +104,10 @@ export const SettingsScreen: React.FC = () => {
       ),
     [query, allItems]
   )
+
+  if (isDeleting) {
+    <ActivityIndicator size="small" color={theme.colors.background} />
+  }
 
   return (
     <>
@@ -154,9 +172,9 @@ export const SettingsScreen: React.FC = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.logoutButton]}
-                  onPress={() => {
+                  onPress={async () => {
                     setShowLogoutModal(false)
-                    logout()
+                    await logout()
                   }}
                 >
                   <Text style={styles.logoutText}>Log out</Text>
@@ -165,6 +183,46 @@ export const SettingsScreen: React.FC = () => {
             </View>
           </View>
         </Modal>
+        {/* DELETE CONFIRMATION MODAL */}
+        <Modal
+          visible={showDeleteConfirmation}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowDeleteConfirmation(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Delete your account?</Text>
+              <Text style={styles.modalMessage}>
+                This action is permanent. Once deleted, your account cannot be recovered.
+              </Text>
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowDeleteConfirmation(false)}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.logoutButton]}
+                  onPress={async () => {
+                    await deleteAccount({ id: myProfile?._id ?? "" }).unwrap()
+                    setShowDeleteConfirmation(false)
+                    Toast.show({type: 'error', text1: 'Account deleted!!'})
+                    await logout()
+                  }}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color={theme.colors.background} />
+                  ) : (
+                    <Text style={styles.logoutText}>Delete Account</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+        <PrivacyPolicySheet isPrivacyModal={isPrivacyModal} onClose={() => setPrivacyModal(false)} />
       </SafeAreaView>
     </>
   )

@@ -40,9 +40,9 @@ interface Props {
 }
 
 const { width, height: SCREEN_HEIGHT } = Dimensions.get('window')
-const CARD_HEIGHT = SCREEN_HEIGHT * 0.4
+// const CARD_HEIGHT = SCREEN_HEIGHT * 0.4
 const MEDIA_WIDTH = width - 24
-const MEDIA_HEIGHT = (MEDIA_WIDTH * 16) / 16
+const MEDIA_HEIGHT = (MEDIA_WIDTH * 9) / 16
 
 export const PremiumPostWidget: React.FC<Props> = ({ post, onProfileTap }) => {
   const { likePost } = usePost()

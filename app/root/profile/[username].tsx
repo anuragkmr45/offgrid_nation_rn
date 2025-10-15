@@ -3,6 +3,7 @@ import { ProfileScreen } from '@/components/profile/ProfileScreen'
 import { theme } from '@/constants/theme'
 import { usePost } from '@/features/content/post/hooks/usePost'
 import { useFollowers, useFollowing } from '@/features/list/hooks/useList'
+import { useProfile } from '@/features/profile/hooks/useProfile'
 import { useUserProfile } from '@/features/profile/hooks/useUserProfile'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import React from 'react'
@@ -10,14 +11,16 @@ import { ActivityIndicator, StatusBar, Text, View } from 'react-native'
 
 export default function UserProfileRoute() {
   const { username } = useLocalSearchParams<{ username?: string }>()
+    const { myProfile, isLoadingProfile } = useProfile()
   const router = useRouter()
 
   const { user, loading } = useUserProfile(username)
   const { followers } = useFollowers(username || '')
   const { following } = useFollowing(username || '')
   const { list: posts } = usePost(username || '')
+  const isSelf = user?._id === myProfile?._id
 
-  if (loading) {
+  if (loading && isLoadingProfile) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
@@ -43,7 +46,7 @@ export default function UserProfileRoute() {
         followers={followers}
         following={following}
         posts={posts}
-        isSelf={false}
+        isSelf={isSelf ?? false}
         onAvatarEdit={() => { }}
         onFieldEdit={() => { }}
         onUserPress={(u) => router.push(`/root/profile/${u}`)}

@@ -22,3 +22,8 @@ export interface FollowingResponse {
 export interface SearchUsersResponse {
   users: UserListItem[];
 }
+
+export interface BlockedResponse {
+  count: number;
+  blocked: UserListItem[];
+}
