@@ -9,6 +9,26 @@
 
 ---
 
+## 📲 Get the app
+
+<p align="center">
+  <!-- Android -->
+  <a href="https://play.google.com/store/apps/details?id=com.anuragkmr45.offgridnation&hl=en" target="_blank" rel="noopener noreferrer">
+    <img
+      alt="Get it on Google Play"
+      src="https://img.shields.io/badge/Android-Get%20it%20on%20Google%20Play-3DDC84?logo=android&logoColor=white"
+    />
+  </a>
+  &nbsp;&nbsp;
+  <!-- iOS (temporarily points to the same Play link, per your note) -->
+  <a href="https://play.google.com/store/apps/details?id=com.anuragkmr45.offgridnation&hl=en" target="_blank" rel="noopener noreferrer">
+    <img
+      alt="Download on the App Store"
+      src="https://img.shields.io/badge/iOS-Get%20it%20on%20the%20App%20Store-000000?logo=apple&logoColor=white"
+    />
+  </a>
+</p>
+
 ## 📱 Features
 
 ### 🔐 Authentication
@@ -35,6 +55,7 @@
 - Real-time push notifications
 
 ### 💎 Premium Features
+- IOS in-app purchase
 - Premium-only posts
 - Only premium users can comment/like/reply
 - Integrated with Stripe for secure payments
@@ -61,12 +82,11 @@
 | Framework        | React Native (Expo)                        |
 | Language         | TypeScript                                 |
 | State Management | Redux Toolkit, RTK Query, Redux Persist    |
-| Storage          | AsyncStorage                               |
+| App Storage      | AsyncStorage                               |
 | Auth             | Firebase Auth, Google, Apple Sign-In       |
-| Payments         | Stripe                                     |
+| Payments         | IAP, Stripe                                |
 | Real-time        | Pusher                                     |
 | Routing          | Expo Router                                |
-| Forms & Validations | Custom validation, helper utilities     |
 
 ---
 
@@ -98,3 +118,37 @@ npm install
 ├── scripts/                   # Custom scripts
 ├── .env.*                     # Environment configs
 └── app.config.js              # Expo configuration
+```
+
+## Sample envs 
+
+```
+# === Public (bundled in the app). Use only values you're OK exposing. ===
+EXPO_PUBLIC_BASE_URL=https://apiv2.theoffgridnation.com
+
+# Firebase (web keys are public but should be restricted in the Firebase console)
+EXPO_PUBLIC_FIREBASE_API_KEY=<your-firebase-api-key>
+EXPO_PUBLIC_FIREBASE_APP_ID=<your-firebase-app-id>
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=offgrid-nation.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_DB_URL=https://offgrid-nation-default-rtdb.asia-southeast1.firebasedatabase.app
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=offgrid-nation
+EXPO_PUBLIC_FIREBASE_SENDER_ID=<your-firebase-sender-id>
+EXPO_PUBLIC_FIREBASE_STORAGE=offgrid-nation.firebasestorage.app
+
+# Google OAuth
+EXPO_PUBLIC_IOS_CLIENT_ID=<your-ios-client-id>.apps.googleusercontent.com
+EXPO_PUBLIC_OAUTH_WEB_CLIENT_ID=<your-web-client-id>.apps.googleusercontent.com
+
+# Pusher (public key; lock down in Pusher dashboard)
+EXPO_PUBLIC_PUSHER_CLUSTER=us3
+EXPO_PUBLIC_PUSHER_KEY=<your-pusher-key>
+
+# YouTube Data API (restrict by referrers / bundle IDs)
+EXPO_PUBLIC_YOUTUBE_API_KEY=<your-youtube-api-key>
+
+# Sentry (DSN can be public; auth token must NOT be here)
+EXPO_PUBLIC_SENTRY_DSN=<your-sentry-dsn>
+
+# RevenueCat
+EXPO_PUBLIC_RC_IOS_KEY=<your-revenuecat-ios-public-key>
+```
