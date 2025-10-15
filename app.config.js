@@ -25,7 +25,9 @@ export default {
         ITSAppUsesNonExemptEncryption: false,
         NSCameraUsageDescription: "Take photos and videos for posts and marketplace listings (e.g., your solar setup or gear for sale).",
         NSPhotoLibraryUsageDescription: "Select photos and videos to attach to posts and listings (e.g., pictures of items you are selling).",
-        NSLocationWhenInUseUsageDescription: "Show nearby listings and meetups and tag posts with your location (e.g., find swap spots within 10 km).",
+        NSLocationAlwaysAndWhenInUseUsageDescription:
+          "Offgrid Nation uses your location in the background to keep your live listing’s address up to date and to notify you about new nearby projects (e.g., “New listing within 500 m”).",
+        NSLocationWhenInUseUsageDescription: "Offgrid Nation uses your location to show marketplace projects near you and to prefill the address when you list a project.",
       },
       googleServicesFile: process.env.GOOGLE_SERVICE_INFO_PLIST ?? "./GoogleService-Info.plist",
       usesAppleSignIn: true
@@ -63,7 +65,7 @@ export default {
         {
           // "locationAlwaysAndWhenInUsePermission": `Allow Offgrid Nation to use your location.`
           locationAlwaysAndWhenInUsePermission: 'Allow Offgrid Nation to use your location.',
-          locationWhenInUsePermission: 'Allow Offgrid Nation to access your location while using the app.',
+          locationWhenInUsePermission: 'Allow Offgrid Nation to access your location to show nearby projects and prefill listing addresses.',
           isIosBackgroundLocationEnabled: false
         }
       ],

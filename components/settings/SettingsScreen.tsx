@@ -44,7 +44,7 @@ export const SettingsScreen: React.FC = () => {
       key: 'privacy',
       icon: 'shield-outline' as const,
       title: 'Privacy & Policy',
-      subtitle: 'App Privacy & Policy',
+      subtitle: 'Blocked accounts, Account privacy',
       // onPress: () => { setPrivacyModal(true) },
       onPress: () => router.push('/root/settings/Privacy'),
     },

@@ -28,6 +28,29 @@ export default function PremiumScreen() {
 
   const flatListRef = useRef<FlatList>(null)
 
+// inside PremiumScreen component:
+const handlePayTap = async () => {
+  try {
+    const url = await initiatePayment();        // Android returns URL; iOS returns null or throws
+    if (Platform.OS === 'android') {
+      if (!url) throw new Error('Checkout unavailable');
+      router.push({
+        pathname: '/root/premium/webview',
+        params: { url: encodeURIComponent(url) }, // encode in case of query chars
+      });
+    } else {
+      // iOS flow is native via RevenueCat; initiatePayment already refetches on success.
+      await refetchPremiumFeed();
+    }
+  } catch (e: any) {
+    // Swallow "USER_CANCELLED" as a benign path
+    const msg = e?.message?.toString?.() ?? '';
+    if (msg.toUpperCase().includes('USER_CANCELLED')) return;
+    Toast.show({ type: 'error', text1: msg || 'Unable to start checkout' });
+  }
+};
+
+
   useEffect(() => {
     const listener = () => {
       flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
@@ -45,7 +68,7 @@ export default function PremiumScreen() {
   useFocusEffect(
     useCallback(() => {
       refetchPremiumFeed();
-    }, [])
+    }, [refetchPremiumFeed])
   );
 
   // Show checkout errors
@@ -58,11 +81,6 @@ export default function PremiumScreen() {
       Toast.show({ type: "error", text1: errorMsg })
     }
   }, [checkoutError])
-
-  // Loading state
-  if (premiumFeedLoading) {
-    return <WithLayout><PremiumFeedLoader /></WithLayout>
-  }
 
   if (premiumFeedLoading || premiumFeedFetching) {
     return (
@@ -78,18 +96,7 @@ export default function PremiumScreen() {
       <WithLayout>
         <ProtectedLayout>
           <PremiumSubscribeOverlay
-            onPayTap={async () => {
-              const url = await initiatePayment();
-
-              if (Platform.OS === "android" ) {
-                if (url) {
-                  router.push({ pathname: '/root/premium/webview', params: { url } });
-                }
-              } else {
-                // iOS: native purchase already attempted; just refresh UI
-                refetchPremiumFeed();
-              }
-            }}
+            onPayTap={handlePayTap}
             isLoading={checkoutLoading}
           />
         </ProtectedLayout>
